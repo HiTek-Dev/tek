@@ -68,11 +68,11 @@ Plans:
   2. CLI displays bash commands, tool calls, and reasoning inline in the conversation flow (Claude Code style)
   3. User can use slash commands for session management, model switching, and configuration
   4. CLI renders markdown responses with syntax-highlighted code blocks
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Gateway discovery, WebSocket hook, chat state hook, chat command entry point
+- [ ] 03-02-PLAN.md — UI components (MessageBubble, StatusBar, InputBar, MarkdownRenderer), slash commands, markdown rendering, default command
 
 ### Phase 4: Multi-Provider Intelligence
 **Goal**: Users can leverage multiple LLM providers and the system intelligently routes tasks to the most appropriate model, with full user control over routing decisions
