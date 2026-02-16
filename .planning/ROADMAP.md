@@ -99,12 +99,12 @@ Plans:
   3. User can search past conversations and memories using natural language queries (semantic vector search)
   4. Agent has a soul document (SOUL.md) that defines its personality and communication style, and this document evolves over time based on user interactions
   5. Conversations persist in SQLite with multiple threads, search, and archival; user can manage per-thread and global system prompts
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
-- [ ] 05-03: TBD
+- [ ] 05-01-PLAN.md — DB schemas (threads/memories/global_prompts), sqlite-vec integration, memory file scaffolding (SOUL.md, MEMORY.md)
+- [ ] 05-02-PLAN.md — Daily logger, memory curator, soul manager, embedding generation/storage wrapper
+- [ ] 05-03-PLAN.md — Vector search, memory pressure detection, thread management, context assembler integration, WS protocol extensions
 
 ### Phase 6: Agent Capabilities
 **Goal**: The agent can use tools, access the filesystem and shell, and users have granular control over what the agent is allowed to do
