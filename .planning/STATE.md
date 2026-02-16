@@ -5,29 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 1: Foundation & Security -- COMPLETE
+**Current focus:** Phase 2: Gateway Core
 
 ## Current Position
 
-Phase: 1 of 10 (Foundation & Security) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-16 -- Completed 01-03 (security mode enforcement, key-serving API, onboarding)
+Phase: 2 of 10 (Gateway Core)
+Plan: 1 of 3 in current phase
+Status: Plan 02-01 complete
+Last activity: 2026-02-16 -- Completed 02-01 (WebSocket gateway infrastructure)
 
-Progress: [███░░░░░░░] 10%
+Progress: [████░░░░░░] 13%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 3min
-- Total execution time: 0.13 hours
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3/3 | 8min | 3min |
+| 02 | 1/3 | 4min | 4min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -54,6 +55,10 @@ Recent decisions affecting current work:
 - [01-03]: Scoped bearer-auth to /keys/* routes only, leaving /health unauthenticated
 - [01-03]: Runtime.json written on server start with PID/port/timestamp, cleaned on exit
 - [01-03]: Onboarding wizard uses multi-step Ink component with state machine flow
+- [02-01]: Refactored createKeyServer into createServer/start for pre-listen plugin registration
+- [02-01]: WeakMap for per-connection state with automatic garbage collection
+- [02-01]: DEFAULT_MODEL set to claude-sonnet-4-5-20250514
+- [02-01]: Localhost-only WebSocket access via preValidation hook
 
 ### Pending Todos
 
@@ -66,5 +71,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 01-03-PLAN.md (Phase 1 complete -- security mode, key-serving API, onboarding)
+Stopped at: Completed 02-01-PLAN.md (WebSocket gateway infrastructure with protocol, session management, DB schemas)
 Resume file: None
