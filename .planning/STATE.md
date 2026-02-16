@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 1 of 10 (Foundation & Security)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing phase
-Last activity: 2026-02-16 -- Completed 01-01 (monorepo scaffold + foundation packages)
+Last activity: 2026-02-16 -- Completed 01-02 (credential vault + CLI key management)
 
-Progress: [█░░░░░░░░░] 3%
+Progress: [██░░░░░░░░] 7%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 4min
-- Total execution time: 0.07 hours
+- Total plans completed: 2
+- Average duration: 3min
+- Total execution time: 0.10 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 1/3 | 4min | 4min |
+| 01 | 2/3 | 6min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -48,6 +48,9 @@ Recent decisions affecting current work:
 - [01-01]: Used Zod 4.x with factory function defaults for nested object schemas
 - [01-01]: Auto-create audit_log table in getDb() for zero-friction first run
 - [01-01]: Singleton database connection pattern for SQLite
+- [01-02]: Hidden input for CLI key prompts uses raw stdin, not Ink TextInput
+- [01-02]: Key prefix validation is advisory-only (warnings, not enforcement)
+- [01-02]: Vault functions are synchronous, matching better-sqlite3 sync API
 
 ### Pending Todos
 
@@ -60,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 01-01-PLAN.md (monorepo scaffold + foundation packages)
+Stopped at: Completed 01-02-PLAN.md (credential vault + CLI key management)
 Resume file: None
