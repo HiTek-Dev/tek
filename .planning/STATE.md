@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 2: Gateway Core -- COMPLETE
+**Current focus:** Phase 3: CLI Interface -- IN PROGRESS
 
 ## Current Position
 
-Phase: 2 of 10 (Gateway Core) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase 02 complete -- all 5 success criteria verified
-Last activity: 2026-02-16 -- Completed 02-03 (end-to-end gateway verification, all tests pass)
+Phase: 3 of 10 (CLI Interface)
+Plan: 1 of 2 in current phase
+Status: Completed 03-01 (CLI communication layer)
+Last activity: 2026-02-16 -- Completed 03-01 (gateway discovery, WebSocket hooks, chat command)
 
-Progress: [██████░░░░] 20%
+Progress: [███████░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 3min
-- Total execution time: 0.25 hours
+- Total execution time: 0.30 hours
 
 **By Phase:**
 
@@ -29,6 +29,7 @@ Progress: [██████░░░░] 20%
 |-------|-------|-------|----------|
 | 01 | 3/3 | 8min | 3min |
 | 02 | 3/3 | 8min | 3min |
+| 03 | 1/2 | 3min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - [02-02]: Handlers dispatched from WS message handler with .catch() error boundary
 - [02-02]: UsageTracker singleton pattern consistent with SessionManager
 - [02-03]: Updated DEFAULT_MODEL to claude-sonnet-4-5-20250929 (previous ID returned 404)
+- [03-01]: Downgraded marked to ^15.0.0 to satisfy marked-terminal peer dep
+- [03-01]: WebSocket callbacks stored in refs to prevent stale closures in useEffect
+- [03-01]: setStreamingText callback form for atomic promotion of streaming text to messages
 
 ### Pending Todos
 
@@ -75,5 +79,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 02-03-PLAN.md (Phase 2 complete -- all 5 success criteria verified by human tester)
+Stopped at: Completed 03-01-PLAN.md (CLI communication layer -- discovery, hooks, chat command)
 Resume file: None
