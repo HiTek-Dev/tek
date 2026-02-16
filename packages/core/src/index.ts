@@ -9,6 +9,7 @@ export {
 	CONFIG_PATH,
 	DB_PATH,
 	RUNTIME_PATH,
+	isPathWithinWorkspace,
 } from "./config/index.js";
 export type { AppConfig, SecurityMode } from "./config/index.js";
 

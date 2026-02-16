@@ -1,20 +1,13 @@
 {
-  "name": "@agentspace/cli",
+  "name": "@agentspace/gateway",
   "version": "0.1.0",
   "type": "module",
-  "bin": {
-    "agentspace": "./dist/index.js"
-  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./vault": {
-      "import": "./dist/vault/index.js",
-      "types": "./dist/vault/index.d.ts"
     }
   },
   "scripts": {
@@ -23,11 +16,9 @@
   "dependencies": {
     "@agentspace/core": "workspace:*",
     "@agentspace/db": "workspace:*",
-    "@napi-rs/keyring": "^1.2.0",
-    "chalk": "^5.0.0",
-    "commander": "^12.0.0",
-    "ink": "^6.0.0",
-    "@inkjs/ui": "^2.0.0"
+    "@agentspace/cli": "workspace:*",
+    "fastify": "^5.0.0",
+    "@fastify/bearer-auth": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.3"
