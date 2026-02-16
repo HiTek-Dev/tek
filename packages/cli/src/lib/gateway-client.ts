@@ -1,12 +1,46 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage } from "@agentspace/gateway";
 
-export interface ChatMessage {
+// ── ChatMessage discriminated union ────────────────────────────────────
+
+type ChatMessageBase = {
 	id: string;
+	timestamp: string;
+};
+
+export type TextMessage = ChatMessageBase & {
+	type: "text";
 	role: "user" | "assistant" | "system";
 	content: string;
-	timestamp: string;
-}
+};
+
+export type ToolCallMessage = ChatMessageBase & {
+	type: "tool_call";
+	toolName: string;
+	input: string;
+	output?: string;
+	status: "pending" | "complete" | "error";
+};
+
+export type BashCommandMessage = ChatMessageBase & {
+	type: "bash_command";
+	command: string;
+	output?: string;
+	exitCode?: number;
+};
+
+export type ReasoningMessage = ChatMessageBase & {
+	type: "reasoning";
+	content: string;
+};
+
+export type ChatMessage =
+	| TextMessage
+	| ToolCallMessage
+	| BashCommandMessage
+	| ReasoningMessage;
+
+// ── Message factory functions ──────────────────────────────────────────
 
 /** Create a chat.send message for the gateway WebSocket protocol. */
 export function createChatSendMessage(

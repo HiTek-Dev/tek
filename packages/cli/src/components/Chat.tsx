@@ -73,16 +73,16 @@ export function Chat({ wsUrl, initialModel, resumeSessionId }: ChatProps) {
 					<Box key={msg.id}>
 						<Text
 							color={
-								msg.role === "user"
+								msg.type === "text" && msg.role === "user"
 									? "blue"
-									: msg.role === "assistant"
+									: msg.type === "text" && msg.role === "assistant"
 										? "green"
 										: "yellow"
 							}
 						>
-							{msg.role}:{" "}
+							{msg.type === "text" ? msg.role : msg.type}:{" "}
 						</Text>
-						<Text>{msg.content}</Text>
+						<Text>{msg.type === "text" || msg.type === "reasoning" ? msg.content : msg.type === "tool_call" ? msg.toolName : msg.type === "bash_command" ? msg.command : ""}</Text>
 					</Box>
 				)}
 			</Static>
