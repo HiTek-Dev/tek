@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 3: CLI Interface -- IN PROGRESS
+**Current focus:** Phase 3: CLI Interface -- COMPLETE
 
 ## Current Position
 
-Phase: 3 of 10 (CLI Interface)
-Plan: 1 of 2 in current phase
-Status: Completed 03-01 (CLI communication layer)
-Last activity: 2026-02-16 -- Completed 03-01 (gateway discovery, WebSocket hooks, chat command)
+Phase: 3 of 10 (CLI Interface) -- COMPLETE
+Plan: 2 of 2 in current phase -- COMPLETE
+Status: Completed 03-02 (CLI UI components, slash commands, auto-launch)
+Last activity: 2026-02-16 -- Completed 03-02 (markdown rendering, message styling, slash commands, status bar)
 
-Progress: [███████░░░] 25%
+Progress: [████████░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 3min
-- Total execution time: 0.30 hours
+- Total execution time: 0.37 hours
 
 **By Phase:**
 
@@ -29,7 +29,7 @@ Progress: [███████░░░] 25%
 |-------|-------|-------|----------|
 | 01 | 3/3 | 8min | 3min |
 | 02 | 3/3 | 8min | 3min |
-| 03 | 1/2 | 3min | 3min |
+| 03 | 2/2 | 7min | 4min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -67,6 +67,10 @@ Recent decisions affecting current work:
 - [03-01]: Downgraded marked to ^15.0.0 to satisfy marked-terminal peer dep
 - [03-01]: WebSocket callbacks stored in refs to prevent stale closures in useEffect
 - [03-01]: setStreamingText callback form for atomic promotion of streaming text to messages
+- [03-02]: ChatMessage refactored to discriminated union on type field for forward-compatible tool_call/bash_command/reasoning
+- [03-02]: Plain text during streaming, markdown only on completion (avoids partial-parse artifacts)
+- [03-02]: Used markedTerminal() extension API with marked.use() for marked v15 compatibility
+- [03-02]: Custom type declarations for marked-terminal (no @types package available)
 
 ### Pending Todos
 
@@ -79,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 03-01-PLAN.md (CLI communication layer -- discovery, hooks, chat command)
+Stopped at: Completed 03-02-PLAN.md (CLI UI components -- markdown, slash commands, status bar, auto-launch)
 Resume file: None
