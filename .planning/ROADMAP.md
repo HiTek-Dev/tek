@@ -116,12 +116,13 @@ Plans:
   3. Before complex tasks, agent generates a pre-flight checklist showing steps, estimated cost, required permissions, and risks; user can review and edit before execution begins
   4. Agent can read/write files in its workspace (or system-wide in Full Control mode) and execute shell commands with output displayed inline
   5. Skills directory exists with SKILL.md metadata format supporting workspace and managed tiers
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
-- [ ] 06-03: TBD
+- [ ] 06-01-PLAN.md — Config schema extensions, MCP client manager, built-in filesystem/shell tools, tool registry, approval gate
+- [ ] 06-02-PLAN.md — Skills directory with SKILL.md metadata parsing, workspace/managed tier discovery
+- [ ] 06-03-PLAN.md — Tool-aware streaming (fullStream), WS protocol extensions, agent tool loop, context assembler wiring
+- [ ] 06-04-PLAN.md — Pre-flight checklist generator, CLI tool rendering, approval prompt UI, /tools and /approve commands
 
 ### Phase 7: Agent Self-Improvement
 **Goal**: The agent can learn from its failures, author new skills, and interact with interactive terminal applications
