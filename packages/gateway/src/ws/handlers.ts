@@ -3,15 +3,21 @@ import { createLogger } from "@agentspace/core";
 import type {
 	ServerMessage,
 	ChatSend,
+	ChatRouteConfirm,
 	ContextInspect,
 	UsageQuery,
 } from "./protocol.js";
 import type { ConnectionState } from "./connection.js";
 import { sessionManager } from "../session/index.js";
 import { DEFAULT_MODEL } from "../session/types.js";
-import { streamChatResponse, resolveModelId } from "../llm/index.js";
+import {
+	streamChatResponse,
+	resolveModelId,
+	routeMessage,
+} from "../llm/index.js";
 import { assembleContext } from "../context/index.js";
 import { inspectContext } from "../context/index.js";
+import type { AssembledContext } from "../context/types.js";
 import { calculateCost } from "../usage/pricing.js";
 import { usageTracker } from "../usage/index.js";
 
@@ -27,7 +33,98 @@ function send(ws: WebSocket, msg: ServerMessage): void {
 }
 
 /**
+ * Shared streaming helper: streams an LLM response to the client.
+ *
+ * Extracted from handleChatSend to be reused by handleChatRouteConfirm.
+ */
+async function streamToClient(
+	socket: WebSocket,
+	model: string,
+	sessionId: string,
+	requestId: string,
+	context: Pick<AssembledContext, "messages" | "system">,
+	connState: ConnectionState,
+	routingInfo?: { tier: "high" | "standard" | "budget"; reason: string },
+): Promise<void> {
+	connState.streaming = true;
+	connState.streamRequestId = requestId;
+
+	send(socket, {
+		type: "chat.stream.start",
+		requestId,
+		sessionId,
+		model,
+		...(routingInfo ? { routing: routingInfo } : {}),
+	});
+
+	let fullResponse = "";
+
+	try {
+		for await (const chunk of streamChatResponse(
+			model,
+			context.messages,
+			context.system,
+		)) {
+			if (chunk.type === "delta") {
+				fullResponse += chunk.text;
+				send(socket, {
+					type: "chat.stream.delta",
+					requestId,
+					delta: chunk.text,
+				});
+			} else if (chunk.type === "done") {
+				const { inputTokens, outputTokens, totalTokens } = chunk.usage;
+				const cost = calculateCost(model, inputTokens, outputTokens);
+
+				// Record usage
+				usageTracker.record({
+					sessionId,
+					model,
+					inputTokens,
+					outputTokens,
+					totalTokens,
+					cost: cost.totalCost,
+					timestamp: new Date().toISOString(),
+				});
+
+				// Add assistant message to session
+				sessionManager.addMessage(
+					sessionId,
+					"assistant",
+					fullResponse,
+				);
+
+				// Send stream end with usage and cost
+				send(socket, {
+					type: "chat.stream.end",
+					requestId,
+					usage: { inputTokens, outputTokens, totalTokens },
+					cost,
+				});
+			}
+		}
+	} catch (err: unknown) {
+		const message =
+			err instanceof Error ? err.message : "Unknown LLM error";
+		logger.error(`LLM streaming error: ${message}`);
+		send(socket, {
+			type: "error",
+			requestId,
+			code: "LLM_ERROR",
+			message,
+		});
+	} finally {
+		connState.streaming = false;
+		connState.streamRequestId = null;
+	}
+}
+
+/**
  * Handle chat.send: stream an LLM response to the client.
+ *
+ * Routing behavior:
+ * - If msg.model is explicitly set: skip routing (user chose the model)
+ * - Otherwise: auto mode (route silently, include tier in stream.start)
  */
 export async function handleChatSend(
 	socket: WebSocket,
@@ -48,6 +145,7 @@ export async function handleChatSend(
 	// Resolve or create session
 	let sessionId: string;
 	let model: string;
+	const explicitModel = !!msg.model;
 
 	if (msg.sessionId) {
 		const session = sessionManager.get(msg.sessionId);
@@ -97,77 +195,71 @@ export async function handleChatSend(
 	const sessionMessages = sessionManager.getMessages(sessionId);
 	const context = assembleContext(sessionMessages, msg.content, model);
 
-	// Start streaming
-	connState.streaming = true;
-	connState.streamRequestId = msg.id;
+	// Routing decision (only when no explicit model)
+	let routingInfo: { tier: "high" | "standard" | "budget"; reason: string } | undefined;
 
-	send(socket, {
-		type: "chat.stream.start",
-		requestId: msg.id,
-		sessionId,
+	if (!explicitModel) {
+		// Auto mode: route silently, include routing info in stream.start
+		const decision = routeMessage(msg.content, sessionMessages.length);
+		model = `${decision.provider}:${decision.model}`;
+		routingInfo = { tier: decision.tier, reason: decision.reason };
+		logger.info(
+			`Auto-routed to ${model} (tier: ${decision.tier}, confidence: ${decision.confidence})`,
+		);
+	}
+
+	// Stream response
+	await streamToClient(
+		socket,
 		model,
-	});
+		sessionId,
+		msg.id,
+		context,
+		connState,
+		routingInfo,
+	);
+}
 
-	let fullResponse = "";
-
-	try {
-		for await (const chunk of streamChatResponse(
-			model,
-			context.messages,
-			context.system,
-		)) {
-			if (chunk.type === "delta") {
-				fullResponse += chunk.text;
-				send(socket, {
-					type: "chat.stream.delta",
-					requestId: msg.id,
-					delta: chunk.text,
-				});
-			} else if (chunk.type === "done") {
-				const { inputTokens, outputTokens, totalTokens } = chunk.usage;
-				const cost = calculateCost(model, inputTokens, outputTokens);
-
-				// Record usage
-				usageTracker.record({
-					sessionId,
-					model,
-					inputTokens,
-					outputTokens,
-					totalTokens,
-					cost: cost.totalCost,
-					timestamp: new Date().toISOString(),
-				});
-
-				// Add assistant message to session
-				sessionManager.addMessage(
-					sessionId,
-					"assistant",
-					fullResponse,
-				);
-
-				// Send stream end with usage and cost
-				send(socket, {
-					type: "chat.stream.end",
-					requestId: msg.id,
-					usage: { inputTokens, outputTokens, totalTokens },
-					cost,
-				});
-			}
-		}
-	} catch (err: unknown) {
-		const message =
-			err instanceof Error ? err.message : "Unknown LLM error";
-		logger.error(`LLM streaming error: ${message}`);
+/**
+ * Handle chat.route.confirm: continue streaming after a manual routing proposal.
+ *
+ * If accept=true, use the originally proposed model.
+ * If accept=false and override provided, use the override model.
+ */
+export async function handleChatRouteConfirm(
+	socket: WebSocket,
+	msg: ChatRouteConfirm,
+	connState: ConnectionState,
+): Promise<void> {
+	const pending = connState.pendingRouting;
+	if (!pending) {
 		send(socket, {
 			type: "error",
 			requestId: msg.id,
-			code: "LLM_ERROR",
-			message,
+			code: "NO_PENDING_ROUTING",
+			message: "No pending routing proposal to confirm",
 		});
-	} finally {
-		connState.streaming = false;
-		connState.streamRequestId = null;
+		return;
 	}
+
+	let model: string;
+	if (msg.accept) {
+		model = pending.routedModel;
+	} else if (msg.override) {
+		model = resolveModelId(`${msg.override.provider}:${msg.override.model}`);
+	} else {
+		// accept=false with no override: use the original proposed model
+		model = pending.routedModel;
+	}
+
+	const { sessionId, content, requestId } = pending;
+	connState.pendingRouting = null;
+
+	// Re-assemble context (messages already added during original handleChatSend)
+	const sessionMessages = sessionManager.getMessages(sessionId);
+	const context = assembleContext(sessionMessages, content, model);
+
+	await streamToClient(socket, model, sessionId, requestId, context, connState);
 }
 
 /**

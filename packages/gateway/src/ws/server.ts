@@ -12,6 +12,7 @@ import {
 import { sessionManager } from "../session/index.js";
 import {
 	handleChatSend,
+	handleChatRouteConfirm,
 	handleContextInspect,
 	handleUsageQuery,
 } from "./handlers.js";
@@ -102,6 +103,16 @@ export async function registerGatewayWebSocket(
 							handleChatSend(socket, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled chat.send error: ${err.message}`);
+								},
+							);
+							break;
+						}
+
+						case "chat.route.confirm": {
+							logger.info(`chat.route.confirm from client (requestId: ${msg.requestId})`);
+							handleChatRouteConfirm(socket, msg, connState).catch(
+								(err: Error) => {
+									logger.error(`Unhandled chat.route.confirm error: ${err.message}`);
 								},
 							);
 							break;

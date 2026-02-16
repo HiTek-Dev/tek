@@ -1,9 +1,17 @@
 import type { WebSocket } from "ws";
 
+export interface PendingRouting {
+	requestId: string;
+	sessionId: string;
+	content: string;
+	routedModel: string;
+}
+
 export interface ConnectionState {
 	sessionId: string | null;
 	streaming: boolean;
 	streamRequestId: string | null;
+	pendingRouting: PendingRouting | null;
 }
 
 const connections = new WeakMap<WebSocket, ConnectionState>();
@@ -16,6 +24,7 @@ export function initConnection(ws: WebSocket): ConnectionState {
 		sessionId: null,
 		streaming: false,
 		streamRequestId: null,
+		pendingRouting: null,
 	};
 	connections.set(ws, state);
 	return state;

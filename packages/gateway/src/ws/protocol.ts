@@ -27,11 +27,25 @@ const SessionListSchema = z.object({
 	id: z.string(),
 });
 
+const ChatRouteConfirmSchema = z.object({
+	type: z.literal("chat.route.confirm"),
+	id: z.string(),
+	requestId: z.string(), // matches the proposal's requestId
+	accept: z.boolean(),
+	override: z
+		.object({
+			provider: z.string(),
+			model: z.string(),
+		})
+		.optional(), // present when accept=false
+});
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ChatSendSchema,
 	ContextInspectSchema,
 	UsageQuerySchema,
 	SessionListSchema,
+	ChatRouteConfirmSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -39,6 +53,7 @@ export type ChatSend = z.infer<typeof ChatSendSchema>;
 export type ContextInspect = z.infer<typeof ContextInspectSchema>;
 export type UsageQuery = z.infer<typeof UsageQuerySchema>;
 export type SessionList = z.infer<typeof SessionListSchema>;
+export type ChatRouteConfirm = z.infer<typeof ChatRouteConfirmSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -47,6 +62,32 @@ const ChatStreamStartSchema = z.object({
 	requestId: z.string(),
 	sessionId: z.string(),
 	model: z.string(),
+	routing: z
+		.object({
+			tier: z.enum(["high", "standard", "budget"]),
+			reason: z.string(),
+		})
+		.optional(),
+});
+
+const ChatRouteProposalSchema = z.object({
+	type: z.literal("chat.route.propose"),
+	requestId: z.string(),
+	sessionId: z.string(),
+	routing: z.object({
+		tier: z.enum(["high", "standard", "budget"]),
+		provider: z.string(),
+		model: z.string(),
+		reason: z.string(),
+		confidence: z.number(),
+	}),
+	alternatives: z.array(
+		z.object({
+			provider: z.string(),
+			model: z.string(),
+			tier: z.enum(["high", "standard", "budget"]),
+		}),
+	),
 });
 
 const ChatStreamDeltaSchema = z.object({
@@ -140,6 +181,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ChatStreamStartSchema,
 	ChatStreamDeltaSchema,
 	ChatStreamEndSchema,
+	ChatRouteProposalSchema,
 	ContextInspectionSchema,
 	UsageReportSchema,
 	ErrorSchema,
@@ -151,6 +193,7 @@ export type ServerMessage = z.infer<typeof ServerMessageSchema>;
 export type ChatStreamStart = z.infer<typeof ChatStreamStartSchema>;
 export type ChatStreamDelta = z.infer<typeof ChatStreamDeltaSchema>;
 export type ChatStreamEnd = z.infer<typeof ChatStreamEndSchema>;
+export type ChatRouteProposal = z.infer<typeof ChatRouteProposalSchema>;
 export type ContextInspection = z.infer<typeof ContextInspectionSchema>;
 export type UsageReport = z.infer<typeof UsageReportSchema>;
 export type ErrorMessage = z.infer<typeof ErrorSchema>;
