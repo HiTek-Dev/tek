@@ -1,0 +1,66 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Path to the soul identity document */
+const SOUL_PATH = resolve(__dirname, "../../memory-files/SOUL.md");
+
+/**
+ * Get the path to the SOUL.md file.
+ */
+export function getSoulPath(): string {
+	return SOUL_PATH;
+}
+
+/**
+ * Load the contents of SOUL.md.
+ * Returns empty string if the file doesn't exist.
+ */
+export function loadSoul(): string {
+	if (!existsSync(SOUL_PATH)) {
+		return "";
+	}
+	return readFileSync(SOUL_PATH, "utf-8");
+}
+
+/**
+ * Append a learned preference to the `## Learned Preferences` section of SOUL.md.
+ * This is called after user approval (not auto-evolved).
+ */
+export function evolveSoul(preference: string): void {
+	let content = loadSoul();
+	if (!content) {
+		return;
+	}
+
+	const sectionHeader = "## Learned Preferences";
+	const headerIndex = content.indexOf(sectionHeader);
+	if (headerIndex === -1) {
+		return;
+	}
+
+	// Find the end of the header line
+	const afterHeader = content.indexOf("\n", headerIndex);
+	if (afterHeader === -1) {
+		return;
+	}
+
+	// Find where the next section starts
+	const remaining = content.slice(afterHeader + 1);
+	const nextSectionMatch = remaining.search(/^## /m);
+
+	let insertPos: number;
+	if (nextSectionMatch !== -1) {
+		insertPos = afterHeader + 1 + nextSectionMatch;
+	} else {
+		insertPos = content.length;
+	}
+
+	const today = new Date().toISOString().slice(0, 10);
+	const newEntry = `- ${preference} (learned ${today})\n`;
+	content = content.slice(0, insertPos) + newEntry + content.slice(insertPos);
+
+	writeFileSync(SOUL_PATH, content, "utf-8");
+}
