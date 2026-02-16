@@ -7,6 +7,7 @@ import { keysCommand } from "./commands/keys.js";
 import { initCommand } from "./commands/init.js";
 import { configCommand } from "./commands/config.js";
 import { auditCommand } from "./commands/audit.js";
+import { chatCommand } from "./commands/chat.js";
 
 const program = new Command();
 
@@ -21,8 +22,9 @@ program.addCommand(keysCommand);
 program.addCommand(initCommand);
 program.addCommand(configCommand);
 program.addCommand(auditCommand);
+program.addCommand(chatCommand);
 
-// Default action: suggest init if not configured
+// Default action: suggest init if not configured, or hint at chat if gateway is available
 program.action(() => {
 	if (!configExists()) {
 		console.log(
