@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 5 of 10 (Memory & Persistence) -- IN PROGRESS
-Plan: 1 of 3 in current phase -- COMPLETE
-Status: Completed 05-01 (database schemas, sqlite-vec vector store, memory file scaffolding)
-Last activity: 2026-02-16 -- Completed 05-01 (threads/memories/globalPrompts schemas, vec_memories, SOUL.md/MEMORY.md)
+Plan: 2 of 3 in current phase -- COMPLETE
+Status: Completed 05-02 (memory layer: daily logger, memory curator, soul manager, embeddings)
+Last activity: 2026-02-16 -- Completed 05-02 (daily logs, MEMORY.md curation, SOUL.md management, AI SDK embeddings)
 
-Progress: [██████████████░] 44%
+Progress: [████████████████░] 48%
 
 ## Performance Metrics
 
@@ -31,7 +31,7 @@ Progress: [██████████████░] 44%
 | 02 | 3/3 | 8min | 3min |
 | 03 | 2/2 | 7min | 4min |
 | 04 | 2/2 | 7min | 4min |
-| 05 | 1/3 | 2min | 2min |
+| 05 | 2/3 | 4min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -87,6 +87,10 @@ Recent decisions affecting current work:
 - [05-01]: sqlite-vec loaded before table creation in getDb() initialization sequence
 - [05-01]: vec_memories uses application-level join with memories.id (virtual tables don't support FK constraints)
 - [05-01]: 1536 dimensions for OpenAI text-embedding-3-small compatibility
+- [05-02]: File paths resolved via import.meta.url for ESM compatibility regardless of CWD
+- [05-02]: All file-based memory operations are synchronous, consistent with better-sqlite3 sync API
+- [05-02]: Raw better-sqlite3 client via (db as any).$client for vec0 virtual table operations
+- [05-02]: embedAndStore combines memory record + vector storage in single async call
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 05-01-PLAN.md (database schemas, sqlite-vec, memory file scaffolding)
+Stopped at: Completed 05-02-PLAN.md (memory layer: daily logger, memory curator, soul manager, embeddings)
 Resume file: None
