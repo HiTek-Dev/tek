@@ -11,16 +11,17 @@ const DEFAULT_PORT = 3271;
 const MAX_PORT_RETRIES = 10;
 
 /**
- * Create and start the key-serving API server.
- * Binds to 127.0.0.1 only. Applies bearer-auth to /keys/* routes.
- * Writes runtime.json with PID and port on successful startup.
+ * Create a Fastify instance with key-server routes registered but NOT yet listening.
+ * Returns the server instance and a start() function to begin listening.
+ * This allows additional plugins (e.g., WebSocket gateway) to be registered
+ * before the server starts.
  */
-export async function createKeyServer(
-	opts?: { port?: number },
-): Promise<FastifyInstance> {
+export async function createServer(opts?: { port?: number }): Promise<{
+	server: FastifyInstance;
+	start: () => Promise<FastifyInstance>;
+}> {
 	const config = loadConfig();
-	const basePort =
-		opts?.port ?? config?.apiEndpoint?.port ?? DEFAULT_PORT;
+	const basePort = opts?.port ?? config?.apiEndpoint?.port ?? DEFAULT_PORT;
 
 	const server = Fastify({
 		logger: {
@@ -48,55 +49,77 @@ export async function createKeyServer(
 		await scopedServer.register(registerKeyRoutes);
 	});
 
-	// Try binding to port, retry on EADDRINUSE
-	let boundPort = basePort;
-	for (let attempt = 0; attempt <= MAX_PORT_RETRIES; attempt++) {
-		const port = basePort + attempt;
-		try {
-			await server.listen({ port, host: "127.0.0.1" });
-			boundPort = port;
-			if (attempt > 0) {
-				logger.info(
-					`Port ${basePort} was in use, bound to port ${boundPort} instead`,
-				);
+	const start = async (): Promise<FastifyInstance> => {
+		// Try binding to port, retry on EADDRINUSE
+		let boundPort = basePort;
+		for (let attempt = 0; attempt <= MAX_PORT_RETRIES; attempt++) {
+			const port = basePort + attempt;
+			try {
+				await server.listen({ port, host: "127.0.0.1" });
+				boundPort = port;
+				if (attempt > 0) {
+					logger.info(
+						`Port ${basePort} was in use, bound to port ${boundPort} instead`,
+					);
+				}
+				break;
+			} catch (err: unknown) {
+				const error = err as NodeJS.ErrnoException;
+				if (error.code === "EADDRINUSE" && attempt < MAX_PORT_RETRIES) {
+					continue;
+				}
+				throw err;
 			}
-			break;
-		} catch (err: unknown) {
-			const error = err as NodeJS.ErrnoException;
-			if (error.code === "EADDRINUSE" && attempt < MAX_PORT_RETRIES) {
-				continue;
+		}
+
+		// Write runtime.json with PID and port
+		const runtimeData = {
+			pid: process.pid,
+			port: boundPort,
+			startedAt: new Date().toISOString(),
+		};
+		writeFileSync(
+			RUNTIME_PATH,
+			JSON.stringify(runtimeData, null, 2),
+			"utf-8",
+		);
+		logger.info(`Runtime info written to ${RUNTIME_PATH}`);
+
+		// Clean up runtime.json on process exit
+		const cleanup = () => {
+			try {
+				unlinkSync(RUNTIME_PATH);
+			} catch {
+				// Ignore if already cleaned up
 			}
-			throw err;
-		}
-	}
+		};
 
-	// Write runtime.json with PID and port
-	const runtimeData = {
-		pid: process.pid,
-		port: boundPort,
-		startedAt: new Date().toISOString(),
-	};
-	writeFileSync(RUNTIME_PATH, JSON.stringify(runtimeData, null, 2), "utf-8");
-	logger.info(`Runtime info written to ${RUNTIME_PATH}`);
+		process.on("SIGTERM", () => {
+			cleanup();
+			process.exit(0);
+		});
 
-	// Clean up runtime.json on process exit
-	const cleanup = () => {
-		try {
-			unlinkSync(RUNTIME_PATH);
-		} catch {
-			// Ignore if already cleaned up
-		}
+		process.on("SIGINT", () => {
+			cleanup();
+			process.exit(0);
+		});
+
+		return server;
 	};
 
-	process.on("SIGTERM", () => {
-		cleanup();
-		process.exit(0);
-	});
+	return { server, start };
+}
 
-	process.on("SIGINT", () => {
-		cleanup();
-		process.exit(0);
-	});
-
+/**
+ * Create and start the key-serving API server.
+ * Convenience wrapper that calls createServer() then start().
+ * Binds to 127.0.0.1 only. Applies bearer-auth to /keys/* routes.
+ * Writes runtime.json with PID and port on successful startup.
+ */
+export async function createKeyServer(
+	opts?: { port?: number },
+): Promise<FastifyInstance> {
+	const { server, start } = await createServer(opts);
+	await start();
 	return server;
 }
