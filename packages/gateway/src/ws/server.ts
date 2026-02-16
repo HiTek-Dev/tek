@@ -10,6 +10,11 @@ import {
 	removeConnection,
 } from "./connection.js";
 import { sessionManager } from "../session/index.js";
+import {
+	handleChatSend,
+	handleContextInspect,
+	handleUsageQuery,
+} from "./handlers.js";
 
 const logger = createLogger("gateway-ws");
 
@@ -93,62 +98,32 @@ export async function registerGatewayWebSocket(
 						}
 
 						case "chat.send": {
-							// If no sessionId, create a new session
-							if (!msg.sessionId) {
-								const session = sessionManager.create(
-									"default",
-									msg.model,
-								);
-								connState.sessionId = session.id;
-								send(socket, {
-									type: "session.created",
-									sessionId: session.id,
-									sessionKey: session.sessionKey,
-								});
-							} else {
-								// Validate session exists
-								const session = sessionManager.get(msg.sessionId);
-								if (!session) {
-									send(socket, {
-										type: "error",
-										requestId: msg.id,
-										code: "SESSION_NOT_FOUND",
-										message: `Session ${msg.sessionId} not found`,
-									});
-									return;
-								}
-								connState.sessionId = session.id;
-							}
-
-							// Stub: actual LLM streaming will be implemented in Plan 02-02
-							send(socket, {
-								type: "error",
-								requestId: msg.id,
-								code: "NOT_IMPLEMENTED",
-								message:
-									"chat.send streaming not yet implemented",
-							});
+							logger.info(`chat.send from client (requestId: ${msg.id})`);
+							handleChatSend(socket, msg, connState).catch(
+								(err: Error) => {
+									logger.error(`Unhandled chat.send error: ${err.message}`);
+								},
+							);
 							break;
 						}
 
 						case "context.inspect": {
-							send(socket, {
-								type: "error",
-								requestId: msg.id,
-								code: "NOT_IMPLEMENTED",
-								message:
-									"context.inspect not yet implemented",
-							});
+							logger.info(`context.inspect for session ${msg.sessionId}`);
+							handleContextInspect(socket, msg).catch(
+								(err: Error) => {
+									logger.error(`Unhandled context.inspect error: ${err.message}`);
+								},
+							);
 							break;
 						}
 
 						case "usage.query": {
-							send(socket, {
-								type: "error",
-								requestId: msg.id,
-								code: "NOT_IMPLEMENTED",
-								message: "usage.query not yet implemented",
-							});
+							logger.info("usage.query from client");
+							handleUsageQuery(socket, msg).catch(
+								(err: Error) => {
+									logger.error(`Unhandled usage.query error: ${err.message}`);
+								},
+							);
 							break;
 						}
 					}

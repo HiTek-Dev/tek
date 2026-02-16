@@ -14,6 +14,19 @@ export type {
 export { sessionManager, DEFAULT_MODEL } from "./session/index.js";
 export type { Session, SessionSummary, MessageRow } from "./session/index.js";
 
+// LLM module
+export { getAnthropicProvider, streamChatResponse } from "./llm/index.js";
+export type { StreamChunk, StreamDelta, StreamDone } from "./llm/index.js";
+
+// Context module
+export { assembleContext, inspectContext } from "./context/index.js";
+export type { ContextSection, AssembledContext } from "./context/index.js";
+
+// Usage module
+export { MODEL_PRICING, getModelPricing, calculateCost } from "./usage/index.js";
+export { usageTracker } from "./usage/index.js";
+export type { UsageRecord, UsageRow, UsageTotals } from "./usage/index.js";
+
 // When run directly, start the key server with WebSocket gateway
 const isDirectRun =
 	process.argv[1] &&
