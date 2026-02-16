@@ -25,3 +25,6 @@ export {
 	embedAndStore,
 	EMBEDDING_DIMS,
 } from "./embeddings.js";
+
+export { searchMemories } from "./vector-search.js";
+export type { SearchResult } from "./vector-search.js";

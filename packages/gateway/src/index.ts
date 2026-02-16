@@ -27,6 +27,10 @@ export { MODEL_PRICING, getModelPricing, calculateCost } from "./usage/index.js"
 export { usageTracker } from "./usage/index.js";
 export type { UsageRecord, UsageRow, UsageTotals } from "./usage/index.js";
 
+// Memory module
+export { MemoryManager, MemoryPressureDetector, ThreadManager } from "./memory/index.js";
+export type { ThreadRow, GlobalPromptRow } from "./memory/index.js";
+
 // When run directly, start the key server with WebSocket gateway
 const isDirectRun =
 	process.argv[1] &&
