@@ -215,13 +215,15 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 8. Workflows & Scheduling | 0/3 | Not started | - |
 | 9. Telegram Channel | 0/2 | Not started | - |
 | 10. Claude Code & System Skills | 0/3 | Complete    | 2026-02-17 |
-| 11. Install & Update System | 0/0 | Not started | - |
+| 11. Install & Update System | 0/3 | Not started | - |
 
 ### Phase 11: Install & Update System
 
 **Goal**: Users can install AgentSpace to any directory, update to the latest build without losing personality/memory/config files, and optionally reset to a clean state — enabling rapid develop-test-update cycles
 **Depends on**: Phase 1
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 11 to break down)
+- [ ] 11-01-PLAN.md — Relocate memory file paths from package tree to ~/.config/agentspace/memory/
+- [ ] 11-02-PLAN.md — Install and update shell scripts (build, deploy, sync node_modules, version tracking)
+- [ ] 11-03-PLAN.md — Fresh-start reset script with confirmation and cleanup
