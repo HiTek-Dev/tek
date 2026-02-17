@@ -144,6 +144,23 @@ export function getDb() {
 			completed_at TEXT,
 			error TEXT
 		);
+
+		CREATE TABLE IF NOT EXISTS telegram_users (
+			id TEXT PRIMARY KEY,
+			telegram_chat_id INTEGER NOT NULL UNIQUE,
+			telegram_username TEXT,
+			paired_at TEXT NOT NULL,
+			active INTEGER NOT NULL DEFAULT 1
+		);
+
+		CREATE TABLE IF NOT EXISTS pairing_codes (
+			code TEXT PRIMARY KEY,
+			telegram_chat_id INTEGER NOT NULL,
+			telegram_username TEXT,
+			created_at TEXT NOT NULL,
+			expires_at TEXT NOT NULL,
+			used INTEGER NOT NULL DEFAULT 0
+		);
 	`);
 
 	dbInstance = drizzle(sqlite, { schema });
