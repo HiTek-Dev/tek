@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 6 of 10 (Agent Capabilities)
-Plan: 2 of 4 in current phase
-Status: Completed 06-01 (tool infrastructure: MCP client manager, filesystem/shell tools, tool registry, approval gate)
-Last activity: 2026-02-16 -- Completed 06-01 (MCP client, filesystem/shell tools, tool registry, approval gate)
+Plan: 3 of 4 in current phase
+Status: Completed 06-03 (agent tool loop, WS protocol extensions, context assembler wiring)
+Last activity: 2026-02-16 -- Completed 06-03 (agent tool loop, WS protocol extensions, skills/tools context wiring)
 
-Progress: [██████████████████████░] 56%
+Progress: [████████████████████████░] 64%
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [██████████████████████░
 | 03 | 2/2 | 7min | 4min |
 | 04 | 2/2 | 7min | 4min |
 | 05 | 3/3 | 8min | 3min |
-| 06 | 2/4 | 9min | 5min |
+| 06 | 3/4 | 15min | 5min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -103,6 +103,10 @@ Recent decisions affecting current work:
 - [Phase 06]: [06-02]: Used readdirSync instead of glob for flat skill directory scanning (avoids unnecessary dependency)
 - [Phase 06]: [06-02]: safeParse for SKILL.md validation to skip invalid files silently without crashing
 - [Phase 06]: [06-02]: Cast Dirent entries for Node.js v24 type compatibility with withFileTypes
+- [Phase 06]: [06-03]: AI SDK tool-result uses 'output' property not 'result'
+- [Phase 06]: [06-03]: Tool registry lazily built on first chat.send and cached on ConnectionState
+- [Phase 06]: [06-03]: Approval timeout auto-denies after 60s to prevent indefinite blocking
+- [Phase 06]: [06-03]: ConnectionState extended with pendingApprovals/tools/approvalPolicy for agent loop
 
 ### Pending Todos
 
@@ -115,5 +119,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 06-01-PLAN.md (tool infrastructure: MCP client manager, filesystem/shell tools, tool registry, approval gate)
+Stopped at: Completed 06-03-PLAN.md (agent tool loop, WS protocol extensions, context assembler wiring)
 Resume file: None
