@@ -152,13 +152,14 @@ Plans:
   3. User can configure a heartbeat that runs at a set interval, follows a user-defined checklist, and only alerts when action is needed
   4. User can set active hours for heartbeat to avoid off-hours alerts
   5. User can schedule one-shot and recurring tasks via cron expressions
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
 - [ ] 08-01-PLAN.md — DB schemas (workflows/executions/schedules), Zod types, install croner+yaml
 - [ ] 08-02-PLAN.md — Workflow engine (loader, executor, state persistence, templates, branching)
 - [ ] 08-03-PLAN.md — Cron scheduler with active hours, heartbeat runner with HEARTBEAT.md
 - [ ] 08-04-PLAN.md — WS protocol extensions and gateway handler wiring for all workflow/schedule/heartbeat messages
+- [ ] 08-05-PLAN.md — Gap closure: wire handleHeartbeatConfigure to scheduleHeartbeat with real onAlert
 
 ### Phase 9: Telegram Channel
 **Goal**: Users can communicate with their agent from mobile via Telegram with the same capabilities as the CLI
