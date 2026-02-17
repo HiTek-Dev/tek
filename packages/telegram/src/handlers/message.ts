@@ -65,10 +65,11 @@ export async function handleTelegramMessage(
 		return;
 	}
 
-	// Send typing indicator
-	await ctx.api.sendChatAction(chatId, "typing").catch(() => {
-		// Non-critical, ignore errors
-	});
+	// Send typing indicator and keep it alive while processing
+	await ctx.api.sendChatAction(chatId, "typing").catch(() => {});
+	const typingInterval = setInterval(() => {
+		bot.api.sendChatAction(chatId, "typing").catch(() => {});
+	}, 4000);
 
 	// Construct ChatSend message and route through gateway
 	const chatSendMsg: ChatSend = {
@@ -78,5 +79,9 @@ export async function handleTelegramMessage(
 		sessionId: connState.sessionId ?? undefined,
 	};
 
-	await handleChatSend(transport, chatSendMsg, connState);
+	try {
+		await handleChatSend(transport, chatSendMsg, connState);
+	} finally {
+		clearInterval(typingInterval);
+	}
 }
