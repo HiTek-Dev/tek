@@ -4,6 +4,7 @@ import { streamText, stepCountIs } from "ai";
 import { createLogger } from "@agentspace/core";
 import { getRegistry } from "../llm/registry.js";
 import { checkApproval, recordSessionApproval, type ApprovalPolicy } from "./approval-gate.js";
+import { classifyFailurePattern, type StepRecord } from "./failure-detector.js";
 import type { ConnectionState } from "../ws/connection.js";
 import type { ServerMessage } from "../ws/protocol.js";
 
@@ -63,6 +64,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 	const registry = getRegistry();
 	const languageModel = registry.languageModel(model as never);
 
+	const stepHistory: StepRecord[] = [];
+
 	try {
 		const result = streamText({
 			model: languageModel,
@@ -70,6 +73,33 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 			system,
 			tools: tools as any,
 			stopWhen: stepCountIs(maxSteps),
+			onStepFinish: async (stepResult) => {
+				const record: StepRecord = {
+					stepType: stepHistory.length === 0 ? "initial" : "continue",
+					finishReason: stepResult.finishReason,
+					toolCalls: stepResult.toolCalls?.map((tc: any) => ({
+						toolName: String(tc.toolName),
+						input: tc.input,
+					})),
+					toolResults: stepResult.toolResults?.map((tr: any) => ({
+						toolName: String(tr.toolName),
+						output: tr.output,
+					})),
+					text: stepResult.text,
+				};
+				stepHistory.push(record);
+				const failure = classifyFailurePattern(stepHistory, maxSteps);
+				if (failure) {
+					send(socket, {
+						type: "failure.detected",
+						requestId,
+						pattern: failure.pattern,
+						description: failure.description,
+						suggestedAction: failure.suggestedAction,
+						...(failure.affectedTool ? { affectedTool: failure.affectedTool } : {}),
+					});
+				}
+			},
 		});
 
 		for await (const part of result.fullStream) {

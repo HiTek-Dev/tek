@@ -14,3 +14,5 @@ export {
 	generatePreflight,
 } from "./preflight.js";
 export type { PreflightChecklist } from "./preflight.js";
+export { classifyFailurePattern } from "./failure-detector.js";
+export type { StepRecord, FailurePattern } from "./failure-detector.js";

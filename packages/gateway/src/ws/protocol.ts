@@ -379,6 +379,20 @@ const PreflightChecklistSchema = z.object({
 	warnings: z.array(z.string()),
 });
 
+const FailureDetectedSchema = z.object({
+	type: z.literal("failure.detected"),
+	requestId: z.string(),
+	pattern: z.enum([
+		"repeated-tool-error",
+		"no-progress",
+		"max-steps-approaching",
+		"tool-rejection-loop",
+	]),
+	description: z.string(),
+	suggestedAction: z.string(),
+	affectedTool: z.string().optional(),
+});
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ChatStreamStartSchema,
 	ChatStreamDeltaSchema,
@@ -399,6 +413,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ToolResultNotifySchema,
 	ToolApprovalRequestSchema,
 	PreflightChecklistSchema,
+	FailureDetectedSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -421,3 +436,4 @@ export type ToolCallNotify = z.infer<typeof ToolCallNotifySchema>;
 export type ToolResultNotify = z.infer<typeof ToolResultNotifySchema>;
 export type ToolApprovalRequest = z.infer<typeof ToolApprovalRequestSchema>;
 export type PreflightChecklist = z.infer<typeof PreflightChecklistSchema>;
+export type FailureDetected = z.infer<typeof FailureDetectedSchema>;
