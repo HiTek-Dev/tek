@@ -1,18 +1,16 @@
 import { existsSync, readFileSync, appendFileSync, mkdirSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from "node:path";
+import { CONFIG_DIR } from "@agentspace/core";
 
 /** Directory for daily log markdown files */
-const MEMORY_DIR = resolve(__dirname, "../../memory-files/daily");
+const MEMORY_DIR = join(CONFIG_DIR, "memory", "daily");
 
 /**
  * Get the path to today's daily log file (YYYY-MM-DD.md).
  */
 export function getTodayLogPath(): string {
 	const today = new Date().toISOString().slice(0, 10);
-	return resolve(MEMORY_DIR, `${today}.md`);
+	return join(MEMORY_DIR, `${today}.md`);
 }
 
 /**
@@ -20,7 +18,7 @@ export function getTodayLogPath(): string {
  */
 export function getYesterdayLogPath(): string {
 	const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-	return resolve(MEMORY_DIR, `${yesterday}.md`);
+	return join(MEMORY_DIR, `${yesterday}.md`);
 }
 
 /**

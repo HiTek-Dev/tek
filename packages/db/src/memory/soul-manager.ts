@@ -1,11 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from "node:path";
+import { CONFIG_DIR } from "@agentspace/core";
 
 /** Path to the soul identity document */
-const SOUL_PATH = resolve(__dirname, "../../memory-files/SOUL.md");
+const SOUL_PATH = join(CONFIG_DIR, "memory", "SOUL.md");
 
 /**
  * Get the path to the SOUL.md file.

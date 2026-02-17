@@ -1,11 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from "node:path";
+import { CONFIG_DIR } from "@agentspace/core";
 
 /** Path to the long-term memory file */
-const MEMORY_PATH = resolve(__dirname, "../../memory-files/MEMORY.md");
+const MEMORY_PATH = join(CONFIG_DIR, "memory", "MEMORY.md");
 
 /** Valid section headers in MEMORY.md */
 export type MemorySection =
