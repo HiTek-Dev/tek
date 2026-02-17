@@ -2,6 +2,10 @@ export {
 	AppConfigSchema,
 	ApiEndpointConfigSchema,
 	SecurityModeSchema,
+	MCPServerConfigSchema,
+	MCPTransportSchema,
+	ApprovalTierSchema,
+	ToolApprovalConfigSchema,
 	loadConfig,
 	saveConfig,
 	configExists,
@@ -11,7 +15,13 @@ export {
 	RUNTIME_PATH,
 	isPathWithinWorkspace,
 } from "./config/index.js";
-export type { AppConfig, SecurityMode } from "./config/index.js";
+export type {
+	AppConfig,
+	SecurityMode,
+	MCPServerConfig,
+	ToolApprovalConfig,
+	ApprovalTier,
+} from "./config/index.js";
 
 export { generateAuthToken } from "./crypto/index.js";
 
