@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 11 of 11 (Install & Update System)
-Plan: 3 of 3 in current phase (11-03 complete)
-Status: Completed 11-03 (Reset script)
-Last activity: 2026-02-17 -- Completed 11-03 reset script
+Plan: 3 of 3 in current phase (all complete)
+Status: Completed 11-02 (Install & Update scripts) -- all phase 11 plans done
+Last activity: 2026-02-17 -- Completed 11-02 install and update scripts
 
-Progress: [████████████████████████████████████████] ~97%
+Progress: [████████████████████████████████████████] ~100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 29
 - Average duration: 3min
-- Total execution time: 1.0 hours
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -37,7 +37,7 @@ Progress: [███████████████████████
 | 08 | 5/5 | 13min | 3min |
 | 09 | 4/4 | 12min | 3min |
 | 10 | 4/4 | 7min | 2min |
-| 11 | 2/3 | 3min | 2min |
+| 11 | 3/3 | 7min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -179,6 +179,9 @@ Recent decisions affecting current work:
 - [11-01]: Shared ensure-memory.ts utility over inline logic in each module
 - [11-01]: import.meta.url kept only in ensure-memory.ts for template path derivation
 - [11-01]: Template files retained in packages/db/memory-files/ as seeding source
+- [11-02]: Build packages individually via tsc (turbo fails on cli<->gateway cyclic dependency)
+- [11-02]: rsync --delete with shared exclude patterns between install.sh and update.sh
+- [11-02]: .version JSON at install root preserves installedAt across updates
 - [11-03]: Reset script does NOT delete keychain entries (stored in macOS Keychain, not filesystem)
 - [11-03]: Destructive scripts require explicit confirmation string (RESET), not just y/n
 - [11-03]: Reset exits 0 on cancellation (not an error condition)
@@ -198,5 +201,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 11-03-PLAN.md -- Reset script for fresh-start data wipe
+Stopped at: Completed 11-02-PLAN.md -- Install and update scripts
 Resume file: None
