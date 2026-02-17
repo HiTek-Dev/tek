@@ -1,4 +1,4 @@
-import { query, type Query } from "@anthropic-ai/claude-agent-sdk";
+import { query, type Query, type PermissionMode, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { createLogger } from "@agentspace/core";
 import type { Transport } from "../transport.js";
 import type { ClaudeCodeSession, SpawnSessionOptions } from "./types.js";
@@ -120,6 +120,85 @@ export class ClaudeCodeSessionManager {
 		this.clearPostCompletionTimeout(sessionId);
 		this.sessions.delete(sessionId);
 		logger.info("Cleaned up session", { sessionId });
+	}
+
+	/**
+	 * Run a Claude Code session to completion without relaying to a transport.
+	 * Designed for workflow integration where sessions run headlessly with
+	 * pre-approved permissions (acceptEdits mode).
+	 *
+	 * Collects text output from the async generator and returns the final result.
+	 */
+	async runToCompletion(
+		prompt: string,
+		options: {
+			cwd?: string;
+			maxTurns?: number;
+			permissionMode?: PermissionMode;
+		} = {},
+	): Promise<{ text: string; costUsd: number }> {
+		const abortController = new AbortController();
+		const sessionId = crypto.randomUUID();
+		const cwd = options.cwd ?? process.cwd();
+
+		logger.info("Running Claude Code to completion", {
+			sessionId,
+			cwd,
+			maxTurns: options.maxTurns,
+			permissionMode: options.permissionMode ?? "acceptEdits",
+		});
+
+		const queryInstance: Query = query({
+			prompt,
+			options: {
+				cwd,
+				abortController,
+				permissionMode: options.permissionMode ?? "acceptEdits",
+				maxTurns: options.maxTurns,
+			},
+		});
+
+		let resultText = "";
+		let costUsd = 0;
+
+		// Set up post-completion timeout
+		let postCompletionTimer: ReturnType<typeof setTimeout> | null = null;
+
+		try {
+			for await (const message of queryInstance) {
+				if (message.type === "result") {
+					const resultMsg = message as SDKMessage & { type: "result" };
+					costUsd = (resultMsg as any).total_cost_usd ?? 0;
+					if ((resultMsg as any).subtype === "success") {
+						resultText = (resultMsg as any).result ?? "";
+					} else {
+						// Error result
+						const errors = (resultMsg as any).errors ?? [];
+						throw new Error(
+							`Claude Code session failed: ${errors.join(", ") || (resultMsg as any).subtype}`,
+						);
+					}
+
+					// Schedule post-completion timeout for CLI hanging bug
+					postCompletionTimer = setTimeout(() => {
+						logger.warn("Post-completion timeout in runToCompletion, closing query", { sessionId });
+						queryInstance.close();
+					}, POST_COMPLETION_TIMEOUT_MS);
+				}
+			}
+		} finally {
+			if (postCompletionTimer) {
+				clearTimeout(postCompletionTimer);
+			}
+		}
+
+		logger.info("Claude Code session completed", {
+			sessionId,
+			costUsd,
+			resultLength: resultText.length,
+		});
+
+		return { text: resultText, costUsd };
 	}
 
 	/**
