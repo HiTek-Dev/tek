@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 10 of 10 (Claude Code System Skills)
-Plan: 1 of 4 in current phase (10-01, 10-03 complete)
-Status: Completed 10-01 (Claude Code session manager and event relay)
-Last activity: 2026-02-17 -- Completed 10-01 session manager and event relay
+Plan: 4 of 4 in current phase (10-01, 10-02, 10-03, 10-04 complete)
+Status: Completed 10-04 (Google Workspace integration)
+Last activity: 2026-02-17 -- Completed 10-04 Google Workspace integration
 
 Progress: [████████████████████████████████████████] 100%
 
@@ -36,7 +36,7 @@ Progress: [███████████████████████
 | 07 | 4/4 | 11min | 3min |
 | 08 | 5/5 | 13min | 3min |
 | 09 | 4/4 | 12min | 3min |
-| 10 | 2/4 | 4min | 2min |
+| 10 | 4/4 | 7min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -167,6 +167,10 @@ Recent decisions affecting current work:
 - [10-03]: Conditional tool registration: skills only registered when API keys provided
 - [10-03]: Web search uses auto approval tier (read-only); image gen uses session tier (costs money)
 - [10-03]: Playwright browser automation via existing MCP infrastructure with zero custom code
+- [10-04]: OAuth 2.0 for personal accounts via googleapis built-in token refresh
+- [10-04]: inputSchema (AI SDK v6) not parameters for tool definitions
+- [10-04]: Conditional registration: Google tools only added when googleAuth config provided
+- [10-04]: Read ops use auto approval tier; write ops use session approval tier
 
 ### Pending Todos
 
@@ -179,5 +183,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 10-01-PLAN.md -- Claude Code session manager and event relay
+Stopped at: Completed 10-04-PLAN.md -- Google Workspace integration
 Resume file: None
