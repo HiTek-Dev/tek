@@ -7,6 +7,16 @@ export interface PendingRouting {
 	routedModel: string;
 }
 
+export interface PendingPreflight {
+	requestId: string;
+	sessionId: string;
+	model: string;
+	content: string;
+	context: { messages: import("ai").ModelMessage[]; system: string };
+	tools: Record<string, unknown>;
+	routingInfo?: { tier: "high" | "standard" | "budget"; reason: string };
+}
+
 export interface ConnectionState {
 	sessionId: string | null;
 	streaming: boolean;
@@ -15,6 +25,7 @@ export interface ConnectionState {
 	pendingApprovals: Map<string, { resolve: (approved: boolean) => void }>;
 	tools: Record<string, unknown> | null;
 	approvalPolicy: import("../agent/approval-gate.js").ApprovalPolicy | null;
+	pendingPreflight: PendingPreflight | null;
 }
 
 const connections = new WeakMap<WebSocket, ConnectionState>();
@@ -31,6 +42,7 @@ export function initConnection(ws: WebSocket): ConnectionState {
 		pendingApprovals: new Map(),
 		tools: null,
 		approvalPolicy: null,
+		pendingPreflight: null,
 	};
 	connections.set(ws, state);
 	return state;

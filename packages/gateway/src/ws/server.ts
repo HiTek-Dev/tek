@@ -22,6 +22,7 @@ import {
 	handlePromptSet,
 	handlePromptList,
 	handleToolApprovalResponse,
+	handlePreflightApproval,
 } from "./handlers.js";
 
 const logger = createLogger("gateway-ws");
@@ -212,8 +213,12 @@ export async function registerGatewayWebSocket(
 						}
 
 						case "preflight.approval": {
-							// Stub for Plan 04: preflight approval handling
 							logger.info(`preflight.approval from client (requestId: ${msg.requestId})`);
+							handlePreflightApproval(socket, msg, connState).catch(
+								(err: Error) => {
+									logger.error(`Unhandled preflight.approval error: ${err.message}`);
+								},
+							);
 							break;
 						}
 					}

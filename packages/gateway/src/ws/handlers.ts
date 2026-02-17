@@ -33,7 +33,10 @@ import {
 	buildToolRegistry,
 	createApprovalPolicy,
 	recordSessionApproval,
+	shouldTriggerPreflight,
+	generatePreflight,
 } from "../agent/index.js";
+import type { PreflightApproval } from "./protocol.js";
 import { MCPClientManager } from "../mcp/client-manager.js";
 import { loadMCPConfigs } from "../mcp/config.js";
 
@@ -315,6 +318,42 @@ export async function handleChatSend(
 		} catch (err) {
 			logger.warn(
 				`Failed to build tool registry, falling back to text-only: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
+	}
+
+	// Pre-flight checklist: for complex tasks, generate a checklist and wait for approval
+	if (tools && Object.keys(tools).length > 0 && shouldTriggerPreflight(msg.content, tools)) {
+		try {
+			const checklist = await generatePreflight(model, msg.content, tools);
+
+			// Store pending preflight context so we can resume after approval
+			connState.pendingPreflight = {
+				requestId: msg.id,
+				sessionId,
+				model,
+				content: msg.content,
+				context: { messages: context.messages, system: context.system ?? "" },
+				tools,
+				routingInfo,
+			};
+
+			// Send checklist to client for review
+			send(socket, {
+				type: "preflight.checklist",
+				requestId: msg.id,
+				steps: checklist.steps,
+				estimatedCost: checklist.estimatedCost,
+				requiredPermissions: checklist.requiredPermissions,
+				warnings: checklist.warnings,
+			});
+
+			// Return and wait for preflight.approval message
+			return;
+		} catch (err) {
+			// If preflight generation fails, proceed without it
+			logger.warn(
+				`Preflight generation failed, proceeding without: ${err instanceof Error ? err.message : String(err)}`,
 			);
 		}
 	}
@@ -688,4 +727,112 @@ export function handleToolApprovalResponse(
 	}
 
 	pending.resolve(msg.approved);
+}
+
+// ── Preflight Approval Handler ──────────────────────────────────────
+
+/**
+ * Handle preflight.approval: proceed with or cancel the agent loop
+ * after the user reviews the pre-flight checklist.
+ *
+ * If approved: run the agent loop with the stored context.
+ * If rejected: send an error message and clean up.
+ */
+export async function handlePreflightApproval(
+	socket: WebSocket,
+	msg: PreflightApproval,
+	connState: ConnectionState,
+): Promise<void> {
+	const pending = connState.pendingPreflight;
+	if (!pending) {
+		logger.warn(`No pending preflight for requestId: ${msg.requestId}`);
+		send(socket, {
+			type: "error",
+			requestId: msg.id,
+			code: "NO_PENDING_PREFLIGHT",
+			message: "No pending preflight checklist to approve",
+		});
+		return;
+	}
+
+	// Clear the pending preflight
+	connState.pendingPreflight = null;
+
+	if (!msg.approved) {
+		send(socket, {
+			type: "error",
+			requestId: pending.requestId,
+			code: "PREFLIGHT_REJECTED",
+			message: "Pre-flight checklist rejected by user",
+		});
+		return;
+	}
+
+	// Proceed with the agent loop using stored context
+	const { model, sessionId, context, tools, requestId, routingInfo } = pending;
+
+	connState.streaming = true;
+	connState.streamRequestId = requestId;
+
+	send(socket, {
+		type: "chat.stream.start",
+		requestId,
+		sessionId,
+		model,
+		...(routingInfo ? { routing: routingInfo } : {}),
+	});
+
+	if (connState.approvalPolicy) {
+		try {
+			await runAgentLoop({
+				socket,
+				model,
+				messages: context.messages,
+				system: context.system,
+				tools,
+				requestId,
+				sessionId,
+				connState,
+				approvalPolicy: connState.approvalPolicy,
+				onUsage: (usage) => {
+					const inputTokens = usage.inputTokens ?? 0;
+					const outputTokens = usage.outputTokens ?? 0;
+					const totalTokens = usage.totalTokens ?? inputTokens + outputTokens;
+					const cost = calculateCost(model, inputTokens, outputTokens);
+
+					usageTracker.record({
+						sessionId,
+						model,
+						inputTokens,
+						outputTokens,
+						totalTokens,
+						cost: cost.totalCost,
+						timestamp: new Date().toISOString(),
+					});
+
+					send(socket, {
+						type: "chat.stream.end",
+						requestId,
+						usage: { inputTokens, outputTokens, totalTokens },
+						cost,
+					});
+				},
+			});
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : "Unknown agent error";
+			logger.error(`Agent loop error (post-preflight): ${message}`);
+			send(socket, {
+				type: "error",
+				requestId,
+				code: "AGENT_ERROR",
+				message,
+			});
+		} finally {
+			connState.streaming = false;
+			connState.streamRequestId = null;
+		}
+	} else {
+		// Fallback: text-only streaming
+		await streamToClient(socket, model, sessionId, requestId, context, connState, routingInfo);
+	}
 }
