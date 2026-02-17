@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 8 of 10 (Workflows & Scheduling) -- COMPLETE
-Plan: 4 of 4 in current phase (08-04 complete)
-Status: Completed 08-04 (WebSocket protocol integration)
-Last activity: 2026-02-17 -- Completed 08-04 protocol wiring
+Plan: 5 of 5 in current phase (08-05 complete)
+Status: Completed 08-05 (Heartbeat handler wiring gap closure)
+Last activity: 2026-02-17 -- Completed 08-05 heartbeat handler wiring
 
 Progress: [█████████████████████████████████████░░░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 3min
 - Total execution time: 1.0 hours
 
@@ -34,7 +34,7 @@ Progress: [███████████████████████
 | 05 | 3/3 | 8min | 3min |
 | 06 | 5/5 | 20min | 4min |
 | 07 | 4/4 | 11min | 3min |
-| 08 | 4/4 | 12min | 3min |
+| 08 | 5/5 | 13min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -141,6 +141,8 @@ Recent decisions affecting current work:
 - [08-04]: Dynamic imports in handlers for workflow/scheduler modules to avoid circular dependencies
 - [08-04]: Workflow approval gates use ConnectionState pendingWorkflowApprovals map keyed by executionId:stepId
 - [08-04]: Heartbeat configure creates cron schedule with WS-based alert callback pattern
+- [08-05]: Used anthropic:claude-sonnet-4-5-20250514 as heartbeat model via registry (same pattern as executor.ts)
+- [08-05]: heartbeatPath is a required field on HeartbeatConfigureSchema (client must specify HEARTBEAT.md location)
 
 ### Pending Todos
 
@@ -153,5 +155,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 08-04-PLAN.md -- WebSocket protocol integration (Phase 8 complete)
+Stopped at: Completed 08-05-PLAN.md -- Heartbeat handler wiring (Phase 8 fully complete with gap closure)
 Resume file: None
