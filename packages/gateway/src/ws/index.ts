@@ -17,6 +17,8 @@ export type {
 	ThreadUpdate,
 	PromptSet,
 	PromptList,
+	ToolApprovalResponse,
+	PreflightApproval,
 	ChatStreamStart,
 	ChatStreamDelta,
 	ChatStreamEnd,
@@ -31,6 +33,10 @@ export type {
 	ThreadUpdated,
 	PromptSetResult,
 	PromptListResult,
+	ToolCallNotify,
+	ToolResultNotify,
+	ToolApprovalRequest,
+	PreflightChecklist,
 } from "./protocol.js";
 export {
 	initConnection,

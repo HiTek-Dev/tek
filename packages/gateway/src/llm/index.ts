@@ -15,6 +15,8 @@ export type {
 	StreamChunk,
 	StreamDelta,
 	StreamDone,
+	StreamToolCall,
+	StreamToolResult,
 	ProviderName,
 	ModelTier,
 	RoutingMode,

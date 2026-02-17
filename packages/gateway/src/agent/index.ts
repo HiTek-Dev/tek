@@ -7,3 +7,5 @@ export {
 	wrapToolWithApproval,
 } from "./approval-gate.js";
 export type { ApprovalPolicy } from "./approval-gate.js";
+export { runAgentLoop } from "./tool-loop.js";
+export type { AgentLoopOptions } from "./tool-loop.js";

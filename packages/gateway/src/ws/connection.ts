@@ -12,6 +12,9 @@ export interface ConnectionState {
 	streaming: boolean;
 	streamRequestId: string | null;
 	pendingRouting: PendingRouting | null;
+	pendingApprovals: Map<string, { resolve: (approved: boolean) => void }>;
+	tools: Record<string, unknown> | null;
+	approvalPolicy: import("../agent/approval-gate.js").ApprovalPolicy | null;
 }
 
 const connections = new WeakMap<WebSocket, ConnectionState>();
@@ -25,6 +28,9 @@ export function initConnection(ws: WebSocket): ConnectionState {
 		streaming: false,
 		streamRequestId: null,
 		pendingRouting: null,
+		pendingApprovals: new Map(),
+		tools: null,
+		approvalPolicy: null,
 	};
 	connections.set(ws, state);
 	return state;

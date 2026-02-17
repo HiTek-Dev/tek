@@ -85,6 +85,32 @@ const PromptListSchema = z.object({
 	id: z.string(),
 });
 
+// ── Tool & Preflight Client Messages ──────────────────────────────────
+
+const ToolApprovalResponseSchema = z.object({
+	type: z.literal("tool.approval.response"),
+	id: z.string(),
+	toolCallId: z.string(),
+	approved: z.boolean(),
+	sessionApprove: z.boolean().optional(),
+});
+
+const PreflightApprovalSchema = z.object({
+	type: z.literal("preflight.approval"),
+	id: z.string(),
+	requestId: z.string(),
+	approved: z.boolean(),
+	editedSteps: z
+		.array(
+			z.object({
+				description: z.string(),
+				toolName: z.string().optional(),
+				skip: z.boolean().optional(),
+			}),
+		)
+		.optional(),
+});
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ChatSendSchema,
 	ContextInspectSchema,
@@ -97,6 +123,8 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ThreadUpdateSchema,
 	PromptSetSchema,
 	PromptListSchema,
+	ToolApprovalResponseSchema,
+	PreflightApprovalSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -111,6 +139,8 @@ export type ThreadList = z.infer<typeof ThreadListSchema>;
 export type ThreadUpdate = z.infer<typeof ThreadUpdateSchema>;
 export type PromptSet = z.infer<typeof PromptSetSchema>;
 export type PromptList = z.infer<typeof PromptListSchema>;
+export type ToolApprovalResponse = z.infer<typeof ToolApprovalResponseSchema>;
+export type PreflightApproval = z.infer<typeof PreflightApprovalSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -302,6 +332,53 @@ const PromptListResultSchema = z.object({
 	),
 });
 
+// ── Tool & Preflight Server Messages ──────────────────────────────────
+
+const ToolCallNotifySchema = z.object({
+	type: z.literal("tool.call"),
+	requestId: z.string(),
+	toolCallId: z.string(),
+	toolName: z.string(),
+	args: z.unknown(),
+});
+
+const ToolResultNotifySchema = z.object({
+	type: z.literal("tool.result"),
+	requestId: z.string(),
+	toolCallId: z.string(),
+	toolName: z.string(),
+	result: z.unknown(),
+});
+
+const ToolApprovalRequestSchema = z.object({
+	type: z.literal("tool.approval.request"),
+	requestId: z.string(),
+	toolCallId: z.string(),
+	toolName: z.string(),
+	args: z.unknown(),
+	risk: z.enum(["low", "medium", "high"]).optional(),
+});
+
+const PreflightChecklistSchema = z.object({
+	type: z.literal("preflight.checklist"),
+	requestId: z.string(),
+	steps: z.array(
+		z.object({
+			description: z.string(),
+			toolName: z.string().optional(),
+			risk: z.enum(["low", "medium", "high"]),
+			needsApproval: z.boolean(),
+		}),
+	),
+	estimatedCost: z.object({
+		inputTokens: z.number(),
+		outputTokens: z.number(),
+		estimatedUSD: z.number(),
+	}),
+	requiredPermissions: z.array(z.string()),
+	warnings: z.array(z.string()),
+});
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ChatStreamStartSchema,
 	ChatStreamDeltaSchema,
@@ -318,6 +395,10 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ThreadUpdatedSchema,
 	PromptSetResultSchema,
 	PromptListResultSchema,
+	ToolCallNotifySchema,
+	ToolResultNotifySchema,
+	ToolApprovalRequestSchema,
+	PreflightChecklistSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -336,3 +417,7 @@ export type ThreadListResult = z.infer<typeof ThreadListResultSchema>;
 export type ThreadUpdated = z.infer<typeof ThreadUpdatedSchema>;
 export type PromptSetResult = z.infer<typeof PromptSetResultSchema>;
 export type PromptListResult = z.infer<typeof PromptListResultSchema>;
+export type ToolCallNotify = z.infer<typeof ToolCallNotifySchema>;
+export type ToolResultNotify = z.infer<typeof ToolResultNotifySchema>;
+export type ToolApprovalRequest = z.infer<typeof ToolApprovalRequestSchema>;
+export type PreflightChecklist = z.infer<typeof PreflightChecklistSchema>;
