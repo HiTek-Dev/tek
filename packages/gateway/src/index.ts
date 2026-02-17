@@ -31,6 +31,23 @@ export type { UsageRecord, UsageRow, UsageTotals } from "./usage/index.js";
 export { MemoryManager, MemoryPressureDetector, ThreadManager } from "./memory/index.js";
 export type { ThreadRow, GlobalPromptRow } from "./memory/index.js";
 
+// MCP module
+export { MCPClientManager, loadMCPConfigs } from "./mcp/index.js";
+
+// Tools module
+export { createFilesystemTools } from "./tools/index.js";
+export { createShellTool } from "./tools/index.js";
+
+// Agent module
+export {
+	buildToolRegistry,
+	createApprovalPolicy,
+	checkApproval,
+	recordSessionApproval,
+	wrapToolWithApproval,
+} from "./agent/index.js";
+export type { ToolRegistryOptions, ApprovalPolicy } from "./agent/index.js";
+
 // When run directly, start the key server with WebSocket gateway
 const isDirectRun =
 	process.argv[1] &&
