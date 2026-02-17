@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 9 of 10 (Telegram Channel)
-Plan: 2 of 4 in current phase (09-02 complete)
-Status: Completed 09-02 (Telegram package scaffold)
-Last activity: 2026-02-17 -- Completed 09-02 telegram package scaffold
+Plan: 2 of 4 in current phase (09-01, 09-02 complete)
+Status: Completed 09-01 (Transport abstraction) and 09-02 (Telegram package scaffold)
+Last activity: 2026-02-17 -- Completed 09-01 transport abstraction
 
 Progress: [██████████████████████████████████████░░] 94%
 
@@ -35,7 +35,7 @@ Progress: [███████████████████████
 | 06 | 5/5 | 20min | 4min |
 | 07 | 4/4 | 11min | 3min |
 | 08 | 5/5 | 13min | 3min |
-| 09 | 2/4 | 3min | 2min |
+| 09 | 2/4 | 8min | 4min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -144,6 +144,9 @@ Recent decisions affecting current work:
 - [08-04]: Heartbeat configure creates cron schedule with WS-based alert callback pattern
 - [08-05]: Used anthropic:claude-sonnet-4-5-20250514 as heartbeat model via registry (same pattern as executor.ts)
 - [08-05]: heartbeatPath is a required field on HeartbeatConfigureSchema (client must specify HEARTBEAT.md location)
+- [09-01]: Used crypto.randomUUID() for transport IDs in server.ts (synchronous, no async import needed in WS handler)
+- [09-01]: Transport interface uses send(ServerMessage) method matching existing send helper pattern
+- [09-01]: WebSocketTransport exposes raw getter for close/error event binding only
 - [09-02]: tool.result formatter uses msg.result (not msg.output) matching ToolResultNotify schema field name
 - [09-02]: HTML parse_mode over MarkdownV2 for predictable escaping in Telegram messages
 
@@ -158,5 +161,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 09-02-PLAN.md -- Telegram package scaffold with DB schemas and TelegramTransport
+Stopped at: Completed 09-01-PLAN.md -- Transport abstraction for channel-agnostic handlers
 Resume file: None
