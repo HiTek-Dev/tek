@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_DIR } from "@agentspace/core";
+import { ensureMemoryFile } from "./ensure-memory.js";
 
 /** Path to the long-term memory file */
 const MEMORY_PATH = join(CONFIG_DIR, "memory", "MEMORY.md");
@@ -21,9 +22,11 @@ export function getMemoryPath(): string {
 
 /**
  * Load the contents of MEMORY.md.
- * Returns empty string if the file doesn't exist.
+ * Seeds from template on first run, migrates from old location if needed.
+ * Returns empty string if the file doesn't exist and no template is available.
  */
 export function loadLongTermMemory(): string {
+	ensureMemoryFile("MEMORY.md", "MEMORY.md");
 	if (!existsSync(MEMORY_PATH)) {
 		return "";
 	}

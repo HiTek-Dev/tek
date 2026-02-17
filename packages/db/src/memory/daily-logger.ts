@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, appendFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_DIR } from "@agentspace/core";
+import { ensureDailyDir } from "./ensure-memory.js";
 
 /** Directory for daily log markdown files */
 const MEMORY_DIR = join(CONFIG_DIR, "memory", "daily");
@@ -26,7 +27,7 @@ export function getYesterdayLogPath(): string {
  * Creates the file and directory if they don't exist.
  */
 export function appendDailyLog(content: string): void {
-	mkdirSync(MEMORY_DIR, { recursive: true });
+	ensureDailyDir();
 	const logPath = getTodayLogPath();
 	const timestamp = new Date().toISOString();
 	const entry = `## ${timestamp}\n\n${content}\n\n`;

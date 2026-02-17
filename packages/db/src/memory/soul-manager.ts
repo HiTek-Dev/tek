@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_DIR } from "@agentspace/core";
+import { ensureMemoryFile } from "./ensure-memory.js";
 
 /** Path to the soul identity document */
 const SOUL_PATH = join(CONFIG_DIR, "memory", "SOUL.md");
@@ -14,9 +15,11 @@ export function getSoulPath(): string {
 
 /**
  * Load the contents of SOUL.md.
- * Returns empty string if the file doesn't exist.
+ * Seeds from template on first run, migrates from old location if needed.
+ * Returns empty string if the file doesn't exist and no template is available.
  */
 export function loadSoul(): string {
+	ensureMemoryFile("SOUL.md", "SOUL.md");
 	if (!existsSync(SOUL_PATH)) {
 		return "";
 	}
