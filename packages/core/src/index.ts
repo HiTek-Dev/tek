@@ -34,5 +34,6 @@ export {
 	discoverSkills,
 	getSkillsDirs,
 	formatSkillsForContext,
+	writeSkill,
 } from "./skills/index.js";
 export type { SkillMetadata, SkillTier, LoadedSkill } from "./skills/index.js";
