@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 8 in progress -- Workflows & Scheduling
+**Current focus:** Phase 9 in progress -- Telegram Channel
 
 ## Current Position
 
-Phase: 8 of 10 (Workflows & Scheduling) -- COMPLETE
-Plan: 5 of 5 in current phase (08-05 complete)
-Status: Completed 08-05 (Heartbeat handler wiring gap closure)
-Last activity: 2026-02-17 -- Completed 08-05 heartbeat handler wiring
+Phase: 9 of 10 (Telegram Channel)
+Plan: 2 of 4 in current phase (09-02 complete)
+Status: Completed 09-02 (Telegram package scaffold)
+Last activity: 2026-02-17 -- Completed 09-02 telegram package scaffold
 
-Progress: [█████████████████████████████████████░░░] 92%
+Progress: [██████████████████████████████████████░░] 94%
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Progress: [███████████████████████
 | 06 | 5/5 | 20min | 4min |
 | 07 | 4/4 | 11min | 3min |
 | 08 | 5/5 | 13min | 3min |
+| 09 | 2/4 | 3min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -143,6 +144,8 @@ Recent decisions affecting current work:
 - [08-04]: Heartbeat configure creates cron schedule with WS-based alert callback pattern
 - [08-05]: Used anthropic:claude-sonnet-4-5-20250514 as heartbeat model via registry (same pattern as executor.ts)
 - [08-05]: heartbeatPath is a required field on HeartbeatConfigureSchema (client must specify HEARTBEAT.md location)
+- [09-02]: tool.result formatter uses msg.result (not msg.output) matching ToolResultNotify schema field name
+- [09-02]: HTML parse_mode over MarkdownV2 for predictable escaping in Telegram messages
 
 ### Pending Todos
 
@@ -155,5 +158,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 08-05-PLAN.md -- Heartbeat handler wiring (Phase 8 fully complete with gap closure)
+Stopped at: Completed 09-02-PLAN.md -- Telegram package scaffold with DB schemas and TelegramTransport
 Resume file: None
