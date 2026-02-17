@@ -85,6 +85,85 @@ const PromptListSchema = z.object({
 	id: z.string(),
 });
 
+// ── Workflow Client Messages ──────────────────────────────────────────
+
+const WorkflowTriggerSchema = z.object({
+	type: z.literal("workflow.trigger"),
+	id: z.string(),
+	workflowId: z.string(),
+	input: z.record(z.string(), z.unknown()).optional(),
+});
+
+const WorkflowApprovalSchema = z.object({
+	type: z.literal("workflow.approval"),
+	id: z.string(),
+	executionId: z.string(),
+	stepId: z.string(),
+	approved: z.boolean(),
+});
+
+const WorkflowListSchema = z.object({
+	type: z.literal("workflow.list"),
+	id: z.string(),
+});
+
+const WorkflowExecutionListSchema = z.object({
+	type: z.literal("workflow.execution.list"),
+	id: z.string(),
+	workflowId: z.string().optional(),
+	status: z.string().optional(),
+});
+
+// ── Schedule Client Messages ──────────────────────────────────────────
+
+const ActiveHoursShape = z.object({
+	start: z.string(),
+	end: z.string(),
+	daysOfWeek: z.array(z.number()).optional(),
+});
+
+const ScheduleCreateSchema = z.object({
+	type: z.literal("schedule.create"),
+	id: z.string(),
+	name: z.string(),
+	cronExpression: z.string(),
+	timezone: z.string().optional(),
+	workflowId: z.string().optional(),
+	activeHours: ActiveHoursShape.optional(),
+	maxRuns: z.number().optional(),
+});
+
+const ScheduleUpdateSchema = z.object({
+	type: z.literal("schedule.update"),
+	id: z.string(),
+	scheduleId: z.string(),
+	enabled: z.boolean().optional(),
+	cronExpression: z.string().optional(),
+	activeHours: ActiveHoursShape.optional(),
+});
+
+const ScheduleDeleteSchema = z.object({
+	type: z.literal("schedule.delete"),
+	id: z.string(),
+	scheduleId: z.string(),
+});
+
+const ScheduleListSchema = z.object({
+	type: z.literal("schedule.list"),
+	id: z.string(),
+});
+
+// ── Heartbeat Client Messages ──────────────────────────────────────────
+
+const HeartbeatConfigureSchema = z.object({
+	type: z.literal("heartbeat.configure"),
+	id: z.string(),
+	interval: z.number().default(30),
+	timezone: z.string().optional(),
+	activeHours: ActiveHoursShape.optional(),
+	enabled: z.boolean().default(true),
+});
+
 // ── Terminal Client Messages ──────────────────────────────────────────
 
 const TerminalSnapshotSchema = z.object({
@@ -150,6 +229,15 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
 	TerminalSnapshotSchema,
 	TerminalControlGrantSchema,
 	TerminalControlRevokeSchema,
+	WorkflowTriggerSchema,
+	WorkflowApprovalSchema,
+	WorkflowListSchema,
+	WorkflowExecutionListSchema,
+	ScheduleCreateSchema,
+	ScheduleUpdateSchema,
+	ScheduleDeleteSchema,
+	ScheduleListSchema,
+	HeartbeatConfigureSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -169,6 +257,15 @@ export type PreflightApproval = z.infer<typeof PreflightApprovalSchema>;
 export type TerminalSnapshot = z.infer<typeof TerminalSnapshotSchema>;
 export type TerminalControlGrant = z.infer<typeof TerminalControlGrantSchema>;
 export type TerminalControlRevoke = z.infer<typeof TerminalControlRevokeSchema>;
+export type WorkflowTrigger = z.infer<typeof WorkflowTriggerSchema>;
+export type WorkflowApproval = z.infer<typeof WorkflowApprovalSchema>;
+export type WorkflowList = z.infer<typeof WorkflowListSchema>;
+export type WorkflowExecutionList = z.infer<typeof WorkflowExecutionListSchema>;
+export type ScheduleCreate = z.infer<typeof ScheduleCreateSchema>;
+export type ScheduleUpdate = z.infer<typeof ScheduleUpdateSchema>;
+export type ScheduleDelete = z.infer<typeof ScheduleDeleteSchema>;
+export type ScheduleList = z.infer<typeof ScheduleListSchema>;
+export type HeartbeatConfigure = z.infer<typeof HeartbeatConfigureSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -421,6 +518,104 @@ const FailureDetectedSchema = z.object({
 	affectedTool: z.string().optional(),
 });
 
+// ── Workflow Server Messages ──────────────────────────────────────────
+
+const WorkflowStatusSchema = z.object({
+	type: z.literal("workflow.status"),
+	executionId: z.string(),
+	workflowId: z.string(),
+	status: z.enum(["running", "paused", "completed", "failed"]),
+	currentStepId: z.string().optional(),
+	stepResults: z.record(z.string(), z.unknown()).optional(),
+});
+
+const WorkflowApprovalRequestSchema = z.object({
+	type: z.literal("workflow.approval.request"),
+	executionId: z.string(),
+	workflowId: z.string(),
+	stepId: z.string(),
+	stepDescription: z.string(),
+	args: z.unknown().optional(),
+});
+
+const WorkflowListResultSchema = z.object({
+	type: z.literal("workflow.list.result"),
+	id: z.string(),
+	workflows: z.array(
+		z.object({
+			id: z.string(),
+			name: z.string(),
+			description: z.string().optional(),
+			definitionPath: z.string(),
+		}),
+	),
+});
+
+const WorkflowExecutionListResultSchema = z.object({
+	type: z.literal("workflow.execution.list.result"),
+	id: z.string(),
+	executions: z.array(
+		z.object({
+			id: z.string(),
+			workflowId: z.string(),
+			status: z.string(),
+			currentStepId: z.string().optional(),
+			startedAt: z.string(),
+			completedAt: z.string().optional(),
+		}),
+	),
+});
+
+// ── Schedule Server Messages ──────────────────────────────────────────
+
+const ScheduleListResultSchema = z.object({
+	type: z.literal("schedule.list.result"),
+	id: z.string(),
+	schedules: z.array(
+		z.object({
+			id: z.string(),
+			name: z.string(),
+			cronExpression: z.string(),
+			timezone: z.string().optional(),
+			enabled: z.boolean(),
+			nextRun: z.string().optional(),
+			workflowId: z.string().optional(),
+		}),
+	),
+});
+
+const ScheduleCreatedSchema = z.object({
+	type: z.literal("schedule.created"),
+	id: z.string(),
+	scheduleId: z.string(),
+});
+
+const ScheduleUpdatedSchema = z.object({
+	type: z.literal("schedule.updated"),
+	id: z.string(),
+	scheduleId: z.string(),
+});
+
+// ── Heartbeat Server Messages ──────────────────────────────────────────
+
+const HeartbeatAlertSchema = z.object({
+	type: z.literal("heartbeat.alert"),
+	checks: z.array(
+		z.object({
+			description: z.string(),
+			actionNeeded: z.boolean(),
+			details: z.string().optional(),
+		}),
+	),
+	timestamp: z.string(),
+});
+
+const HeartbeatConfiguredSchema = z.object({
+	type: z.literal("heartbeat.configured"),
+	id: z.string(),
+	scheduleId: z.string(),
+});
+
 // ── Terminal Server Messages ──────────────────────────────────────────
 
 const TerminalInputSchema = z.object({
@@ -459,6 +654,15 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	FailureDetectedSchema,
 	TerminalInputSchema,
 	TerminalProxyStartSchema,
+	WorkflowStatusSchema,
+	WorkflowApprovalRequestSchema,
+	WorkflowListResultSchema,
+	WorkflowExecutionListResultSchema,
+	ScheduleListResultSchema,
+	ScheduleCreatedSchema,
+	ScheduleUpdatedSchema,
+	HeartbeatAlertSchema,
+	HeartbeatConfiguredSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -484,3 +688,12 @@ export type PreflightChecklist = z.infer<typeof PreflightChecklistSchema>;
 export type FailureDetected = z.infer<typeof FailureDetectedSchema>;
 export type TerminalInput = z.infer<typeof TerminalInputSchema>;
 export type TerminalProxyStart = z.infer<typeof TerminalProxyStartSchema>;
+export type WorkflowStatus = z.infer<typeof WorkflowStatusSchema>;
+export type WorkflowApprovalRequest = z.infer<typeof WorkflowApprovalRequestSchema>;
+export type WorkflowListResult = z.infer<typeof WorkflowListResultSchema>;
+export type WorkflowExecutionListResult = z.infer<typeof WorkflowExecutionListResultSchema>;
+export type ScheduleListResult = z.infer<typeof ScheduleListResultSchema>;
+export type ScheduleCreated = z.infer<typeof ScheduleCreatedSchema>;
+export type ScheduleUpdated = z.infer<typeof ScheduleUpdatedSchema>;
+export type HeartbeatAlert = z.infer<typeof HeartbeatAlertSchema>;
+export type HeartbeatConfigured = z.infer<typeof HeartbeatConfiguredSchema>;

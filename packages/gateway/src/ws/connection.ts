@@ -28,6 +28,7 @@ export interface ConnectionState {
 	pendingPreflight: PendingPreflight | null;
 	lastTerminalSnapshot: string | null;
 	terminalControlGranted: boolean;
+	pendingWorkflowApprovals: Map<string, { executionId: string; resolve: (approved: boolean) => void }>;
 }
 
 const connections = new WeakMap<WebSocket, ConnectionState>();
@@ -47,6 +48,7 @@ export function initConnection(ws: WebSocket): ConnectionState {
 		pendingPreflight: null,
 		lastTerminalSnapshot: null,
 		terminalControlGranted: false,
+		pendingWorkflowApprovals: new Map(),
 	};
 	connections.set(ws, state);
 	return state;
