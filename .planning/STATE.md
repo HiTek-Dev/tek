@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 9 complete -- Telegram Channel
+**Current focus:** Phase 10 in progress -- Claude Code System Skills
 
 ## Current Position
 
-Phase: 9 of 10 (Telegram Channel)
-Plan: 4 of 4 in current phase (09-01, 09-02, 09-03, 09-04 complete)
-Status: Completed 09-04 (Streaming + tool approval)
-Last activity: 2026-02-17 -- Completed 09-04 streaming accumulator and tool approval buttons
+Phase: 10 of 10 (Claude Code System Skills)
+Plan: 3 of 4 in current phase (10-03 complete)
+Status: Completed 10-03 (System skills: web search, image gen, browser automation)
+Last activity: 2026-02-17 -- Completed 10-03 system skills plan
 
 Progress: [████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
+- Total plans completed: 26
 - Average duration: 3min
 - Total execution time: 1.0 hours
 
@@ -36,6 +36,7 @@ Progress: [███████████████████████
 | 07 | 4/4 | 11min | 3min |
 | 08 | 5/5 | 13min | 3min |
 | 09 | 4/4 | 12min | 3min |
+| 10 | 1/4 | 2min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -157,6 +158,11 @@ Recent decisions affecting current work:
 - [09-04]: InlineKeyboard from grammy imported directly in transport for tool approval rendering
 - [09-04]: Chat-transport map in callback module for resolving Telegram chatId to gateway transportId
 - [09-04]: Typing indicator kept alive via setInterval(4s) cleared in finally block
+- [10-03]: Raw fetch for Tavily and Stability AI APIs (no SDK dependencies)
+- [10-03]: gpt-image-1.5 model for OpenAI image gen (not deprecated DALL-E 3)
+- [10-03]: Conditional tool registration: skills only registered when API keys provided
+- [10-03]: Web search uses auto approval tier (read-only); image gen uses session tier (costs money)
+- [10-03]: Playwright browser automation via existing MCP infrastructure with zero custom code
 
 ### Pending Todos
 
@@ -169,5 +175,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 09-04-PLAN.md -- Streaming accumulator and tool approval buttons (Phase 09 complete)
+Stopped at: Completed 10-03-PLAN.md -- System skills (web search, image gen, browser automation)
 Resume file: None
