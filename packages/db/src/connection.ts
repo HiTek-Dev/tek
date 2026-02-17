@@ -106,6 +106,28 @@ export function getDb() {
 			memory_id INTEGER PRIMARY KEY,
 			content_embedding FLOAT[1536] distance_metric=cosine
 		);
+
+		CREATE TABLE IF NOT EXISTS workflows (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			description TEXT,
+			definition_path TEXT NOT NULL,
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS workflow_executions (
+			id TEXT PRIMARY KEY,
+			workflow_id TEXT NOT NULL REFERENCES workflows(id),
+			status TEXT NOT NULL,
+			current_step_id TEXT,
+			step_results TEXT,
+			triggered_by TEXT NOT NULL,
+			started_at TEXT NOT NULL,
+			paused_at TEXT,
+			completed_at TEXT,
+			error TEXT
+		);
 	`);
 
 	dbInstance = drizzle(sqlite, { schema });
