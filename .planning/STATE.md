@@ -112,6 +112,9 @@ Recent decisions affecting current work:
 - [Phase 06]: [06-04]: PendingPreflight stores full context on ConnectionState for post-approval agent loop resumption
 - [Phase 06]: [06-04]: ToolApprovalPrompt and PreflightChecklist replace InputBar when active (mutual exclusion)
 - [Phase 06]: [06-04]: /tools and /approve are local-only MVP slash commands (no server round-trip)
+- [07-01]: StepRecord adapts AI SDK StepResult via mapping in onStepFinish (SDK has no stepType field)
+- [07-01]: Failure detection is informational only -- emits WS message, does not stop agent loop
+- [07-01]: Used logger.info instead of logger.debug since createLogger has no debug level
 - [07-03]: Callback prop pattern (onProxyRequest) to pass data from Ink component to post-exit entrypoint
 - [07-03]: xterm-256color TERM for full color support in proxied terminal apps
 - [07-03]: isTTY guard on setRawMode for safety in non-interactive environments
