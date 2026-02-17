@@ -1,0 +1,26 @@
+{
+  "name": "@agentspace/telegram",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@agentspace/core": "workspace:*",
+    "@agentspace/db": "workspace:*",
+    "@agentspace/gateway": "workspace:*",
+    "grammy": "^1.40.0",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3"
+  }
+}
