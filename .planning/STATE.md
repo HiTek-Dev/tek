@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 6 of 10 (Agent Capabilities)
-Plan: 3 of 4 in current phase
-Status: Completed 06-03 (agent tool loop, WS protocol extensions, context assembler wiring)
-Last activity: 2026-02-16 -- Completed 06-03 (agent tool loop, WS protocol extensions, skills/tools context wiring)
+Phase: 6 of 10 (Agent Capabilities) -- PHASE COMPLETE
+Plan: 4 of 4 in current phase (all complete)
+Status: Completed 06-04 (preflight checklist, tool approval prompts, CLI tool experience)
+Last activity: 2026-02-16 -- Completed Phase 6 (all 4 plans)
 
-Progress: [████████████████████████░] 64%
+Progress: [██████████████████████████░] 68%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 4min
-- Total execution time: 0.72 hours
+- Total execution time: 0.79 hours
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: [███████████████████████
 | 03 | 2/2 | 7min | 4min |
 | 04 | 2/2 | 7min | 4min |
 | 05 | 3/3 | 8min | 3min |
-| 06 | 3/4 | 15min | 5min |
+| 06 | 4/4 | 19min | 5min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -107,6 +107,10 @@ Recent decisions affecting current work:
 - [Phase 06]: [06-03]: Tool registry lazily built on first chat.send and cached on ConnectionState
 - [Phase 06]: [06-03]: Approval timeout auto-denies after 60s to prevent indefinite blocking
 - [Phase 06]: [06-03]: ConnectionState extended with pendingApprovals/tools/approvalPolicy for agent loop
+- [Phase 06]: [06-04]: Preflight generation fails gracefully -- proceed without checklist if generateObject errors
+- [Phase 06]: [06-04]: PendingPreflight stores full context on ConnectionState for post-approval agent loop resumption
+- [Phase 06]: [06-04]: ToolApprovalPrompt and PreflightChecklist replace InputBar when active (mutual exclusion)
+- [Phase 06]: [06-04]: /tools and /approve are local-only MVP slash commands (no server round-trip)
 
 ### Pending Todos
 
@@ -119,5 +123,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 06-03-PLAN.md (agent tool loop, WS protocol extensions, context assembler wiring)
+Stopped at: Completed 06-04-PLAN.md -- Phase 6 complete (preflight checklist, tool approval, CLI tool experience)
 Resume file: None
