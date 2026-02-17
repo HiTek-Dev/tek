@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { generateText, stepCountIs } from "ai";
+import type { LanguageModel } from "ai";
 import { HeartbeatConfigSchema } from "./types.js";
 import type { HeartbeatConfig } from "./types.js";
 
@@ -56,7 +57,7 @@ export class HeartbeatRunner {
 	 */
 	async run(
 		tools: Record<string, unknown>,
-		model: Parameters<typeof generateText>[0]["model"],
+		model: LanguageModel,
 	): Promise<HeartbeatCheckResult[]> {
 		const { checklistItems } = loadHeartbeatConfig(this.heartbeatPath);
 		const results: HeartbeatCheckResult[] = [];
@@ -84,7 +85,7 @@ export class HeartbeatRunner {
 	private async checkItem(
 		item: string,
 		tools: Record<string, unknown>,
-		model: Parameters<typeof generateText>[0]["model"],
+		model: LanguageModel,
 	): Promise<HeartbeatCheckResult> {
 		try {
 			const response = await generateText({
