@@ -12,9 +12,12 @@ export type SlashCommandResult = {
 	handled: boolean;
 	message?: ChatMessage;
 	wsMessage?: ClientMessage;
-	action?: "clear" | "quit" | "help" | "model-switch";
+	action?: "clear" | "quit" | "help" | "model-switch" | "proxy";
 	/** Extracted model name for model-switch action */
 	modelName?: string;
+	/** Proxy command and args for proxy action */
+	proxyCommand?: string;
+	proxyArgs?: string[];
 };
 
 interface SlashCommandContext {
@@ -42,6 +45,7 @@ const HELP_TEXT = [
 	"/approve <tool> <tier>  Set approval tier (auto/ask/deny)",
 	"/clear           Clear screen",
 	"/quit            Exit",
+	"/proxy <cmd>    Run interactive terminal app (vim, git rebase, etc.)",
 	"/help            Show this help",
 ].join("\n");
 
@@ -166,6 +170,24 @@ export function useSlashCommands() {
 						message: systemMessage(
 							`Approval preference set: ${toolName} -> ${tier}`,
 						),
+					};
+				}
+
+				case "proxy": {
+					const cmd = args[0];
+					if (!cmd) {
+						return {
+							handled: true,
+							message: systemMessage(
+								"Usage: /proxy <command> [args...]\nExample: /proxy vim file.txt",
+							),
+						};
+					}
+					return {
+						handled: true,
+						action: "proxy",
+						proxyCommand: cmd,
+						proxyArgs: args.slice(1),
 					};
 				}
 

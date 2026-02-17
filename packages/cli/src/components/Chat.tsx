@@ -14,19 +14,21 @@ import { StreamingResponse } from "./StreamingResponse.js";
 import { InputBar } from "./InputBar.js";
 import { StatusBar } from "./StatusBar.js";
 import { ToolApprovalPrompt } from "./ToolApprovalPrompt.js";
+import { SkillApprovalPrompt } from "./SkillApprovalPrompt.js";
 import { PreflightChecklist } from "./PreflightChecklist.js";
 
 interface ChatProps {
 	wsUrl: string;
 	initialModel?: string;
 	resumeSessionId?: string;
+	onProxyRequest?: (command: string, args: string[]) => void;
 }
 
 /**
  * Full chat interface component. Wires together StatusBar, MessageList,
  * StreamingResponse, InputBar, and slash command dispatch.
  */
-export function Chat({ wsUrl, initialModel, resumeSessionId }: ChatProps) {
+export function Chat({ wsUrl, initialModel, resumeSessionId, onProxyRequest }: ChatProps) {
 	const { exit } = useApp();
 
 	const {
@@ -86,6 +88,15 @@ export function Chat({ wsUrl, initialModel, resumeSessionId }: ChatProps) {
 					setModel(result.modelName);
 					return;
 				}
+				if (
+					result.action === "proxy" &&
+					result.proxyCommand &&
+					onProxyRequest
+				) {
+					onProxyRequest(result.proxyCommand, result.proxyArgs ?? []);
+					exit();
+					return;
+				}
 				if (input.startsWith("/session") && input.includes("new")) {
 					setSessionId(null);
 					return;
@@ -113,6 +124,7 @@ export function Chat({ wsUrl, initialModel, resumeSessionId }: ChatProps) {
 			clearMessages,
 			setModel,
 			setSessionId,
+			onProxyRequest,
 		],
 	);
 
