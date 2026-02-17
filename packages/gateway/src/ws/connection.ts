@@ -22,7 +22,7 @@ export interface ConnectionState {
 	streaming: boolean;
 	streamRequestId: string | null;
 	pendingRouting: PendingRouting | null;
-	pendingApprovals: Map<string, { resolve: (approved: boolean) => void }>;
+	pendingApprovals: Map<string, { toolName: string; resolve: (approved: boolean) => void }>;
 	tools: Record<string, unknown> | null;
 	approvalPolicy: import("../agent/approval-gate.js").ApprovalPolicy | null;
 	pendingPreflight: PendingPreflight | null;

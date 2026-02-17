@@ -132,6 +132,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 						// Wait for client approval response
 						const approved = await waitForApproval(
 							toolCallId,
+							toolName,
 							connState,
 							APPROVAL_TIMEOUT_MS,
 						);
@@ -196,6 +197,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
  */
 function waitForApproval(
 	toolCallId: string,
+	toolName: string,
 	connState: ConnectionState,
 	timeoutMs: number,
 ): Promise<boolean> {
@@ -208,6 +210,7 @@ function waitForApproval(
 		}, timeoutMs);
 
 		connState.pendingApprovals.set(toolCallId, {
+			toolName,
 			resolve: (approved: boolean) => {
 				clearTimeout(timer);
 				connState.pendingApprovals.delete(toolCallId);

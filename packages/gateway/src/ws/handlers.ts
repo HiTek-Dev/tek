@@ -719,11 +719,8 @@ export function handleToolApprovalResponse(
 
 	// If session-approve, record it so future calls skip approval
 	if (msg.sessionApprove && msg.approved && connState.approvalPolicy) {
-		// Derive tool name from the pending state - not available directly,
-		// so we just record the toolCallId pattern. The approval gate tracks by tool name.
-		// The agent loop handles session approval via the policy.
-		// For now, we just resolve the approval.
-		logger.info(`Session-approved tool for toolCallId: ${msg.toolCallId}`);
+		recordSessionApproval(pending.toolName, connState.approvalPolicy);
+		logger.info(`Session-approved tool "${pending.toolName}" for toolCallId: ${msg.toolCallId}`);
 	}
 
 	pending.resolve(msg.approved);
