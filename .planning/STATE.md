@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 8 of 10 (Workflows & Scheduling) -- IN PROGRESS
-Plan: 1 of 4 in current phase (08-01 complete)
-Status: Completed 08-01 (workflow & schedule data foundation)
-Last activity: 2026-02-17 -- Completed 08-01 workflow & schedule data foundation
+Plan: 2 of 4 in current phase (08-02 complete)
+Status: Completed 08-02 (workflow engine)
+Last activity: 2026-02-17 -- Completed 08-02 workflow engine
 
-Progress: [█████████████████████████████████░░░░░░░] 83%
+Progress: [██████████████████████████████████░░░░░░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 3min
 - Total execution time: 0.95 hours
 
@@ -34,7 +34,7 @@ Progress: [███████████████████████
 | 05 | 3/3 | 8min | 3min |
 | 06 | 5/5 | 20min | 4min |
 | 07 | 4/4 | 11min | 3min |
-| 08 | 1/4 | 2min | 2min |
+| 08 | 2/4 | 5min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -130,6 +130,10 @@ Recent decisions affecting current work:
 - [08-01]: Workflow steps use action enum (tool|model|noop) for extensible step types
 - [08-01]: Branching via condition/goto pairs on steps for DAG-style workflow execution
 - [08-01]: Schedule active hours stored as JSON string columns for flexible day-of-week filtering
+- [08-02]: Condition evaluation via new Function with restricted scope (only result variable accessible)
+- [08-02]: Durable execution: state persisted to SQLite after every step transition
+- [08-02]: Approval gates pause execution and store paused status in stepResults for resume
+- [08-02]: Template resolver only processes prompt/args fields (prevents template injection)
 
 ### Pending Todos
 
@@ -142,5 +146,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 08-01-PLAN.md -- Workflow & schedule data foundation
+Stopped at: Completed 08-02-PLAN.md -- Workflow engine
 Resume file: None
