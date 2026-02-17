@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 10 of 10 (Claude Code System Skills)
-Plan: 3 of 4 in current phase (10-03 complete)
-Status: Completed 10-03 (System skills: web search, image gen, browser automation)
-Last activity: 2026-02-17 -- Completed 10-03 system skills plan
+Plan: 1 of 4 in current phase (10-01, 10-03 complete)
+Status: Completed 10-01 (Claude Code session manager and event relay)
+Last activity: 2026-02-17 -- Completed 10-01 session manager and event relay
 
 Progress: [████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
+- Total plans completed: 27
 - Average duration: 3min
 - Total execution time: 1.0 hours
 
@@ -36,7 +36,7 @@ Progress: [███████████████████████
 | 07 | 4/4 | 11min | 3min |
 | 08 | 5/5 | 13min | 3min |
 | 09 | 4/4 | 12min | 3min |
-| 10 | 1/4 | 2min | 2min |
+| 10 | 2/4 | 4min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -158,6 +158,10 @@ Recent decisions affecting current work:
 - [09-04]: InlineKeyboard from grammy imported directly in transport for tool approval rendering
 - [09-04]: Chat-transport map in callback module for resolving Telegram chatId to gateway transportId
 - [09-04]: Typing indicator kept alive via setInterval(4s) cleared in finally block
+- [10-01]: Query.close() for post-completion timeout instead of abortController.abort() (SDK-native cleanup)
+- [10-01]: RelayCallbacks pattern (onResult/onDone) to decouple session manager from relay internals
+- [10-01]: SDK events mapped to existing ServerMessage types (no new protocol types for Claude Code)
+- [10-01]: 30-second post-completion timeout to handle known CLI hanging bug
 - [10-03]: Raw fetch for Tavily and Stability AI APIs (no SDK dependencies)
 - [10-03]: gpt-image-1.5 model for OpenAI image gen (not deprecated DALL-E 3)
 - [10-03]: Conditional tool registration: skills only registered when API keys provided
@@ -175,5 +179,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 10-03-PLAN.md -- System skills (web search, image gen, browser automation)
+Stopped at: Completed 10-01-PLAN.md -- Claude Code session manager and event relay
 Resume file: None
