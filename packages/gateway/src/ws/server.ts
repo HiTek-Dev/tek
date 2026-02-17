@@ -3,10 +3,9 @@ import websocket from "@fastify/websocket";
 import type { WebSocket } from "ws";
 import { createLogger } from "@agentspace/core";
 import { ClientMessageSchema } from "./protocol.js";
-import type { ServerMessage } from "./protocol.js";
+import { WebSocketTransport } from "../transport.js";
 import {
 	initConnection,
-	getConnectionState,
 	removeConnection,
 } from "./connection.js";
 import { sessionManager } from "../session/index.js";
@@ -37,15 +36,6 @@ import {
 const logger = createLogger("gateway-ws");
 
 /**
- * Send a typed server message over a WebSocket.
- */
-function send(ws: WebSocket, msg: ServerMessage): void {
-	if (ws.readyState === ws.OPEN) {
-		ws.send(JSON.stringify(msg));
-	}
-}
-
-/**
  * Register the WebSocket gateway endpoint on a Fastify instance.
  * Adds a /gateway route that handles typed JSON messages.
  */
@@ -73,8 +63,11 @@ export async function registerGatewayWebSocket(
 			"/gateway",
 			{ websocket: true },
 			(socket: WebSocket, _req: FastifyRequest) => {
+				// Generate a unique ID for this connection using built-in crypto (synchronous)
+				const transport = new WebSocketTransport(socket, crypto.randomUUID());
+
 				// CRITICAL: Attach handlers synchronously (Pitfall 2)
-				const connState = initConnection(socket);
+				const connState = initConnection(transport.transportId);
 				logger.info("WebSocket client connected");
 
 				socket.on("message", (raw: Buffer | string) => {
@@ -84,7 +77,7 @@ export async function registerGatewayWebSocket(
 							typeof raw === "string" ? raw : raw.toString("utf-8"),
 						);
 					} catch {
-						send(socket, {
+						transport.send({
 							type: "error",
 							code: "INVALID_MESSAGE",
 							message: "Invalid JSON",
@@ -94,7 +87,7 @@ export async function registerGatewayWebSocket(
 
 					const result = ClientMessageSchema.safeParse(data);
 					if (!result.success) {
-						send(socket, {
+						transport.send({
 							type: "error",
 							code: "INVALID_MESSAGE",
 							message: `Invalid message: ${result.error.issues.map((i: { message: string }) => i.message).join(", ")}`,
@@ -107,7 +100,7 @@ export async function registerGatewayWebSocket(
 					switch (msg.type) {
 						case "session.list": {
 							const sessions = sessionManager.list();
-							send(socket, {
+							transport.send({
 								type: "session.list",
 								requestId: msg.id,
 								sessions,
@@ -117,7 +110,7 @@ export async function registerGatewayWebSocket(
 
 						case "chat.send": {
 							logger.info(`chat.send from client (requestId: ${msg.id})`);
-							handleChatSend(socket, msg, connState).catch(
+							handleChatSend(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled chat.send error: ${err.message}`);
 								},
@@ -127,7 +120,7 @@ export async function registerGatewayWebSocket(
 
 						case "chat.route.confirm": {
 							logger.info(`chat.route.confirm from client (requestId: ${msg.requestId})`);
-							handleChatRouteConfirm(socket, msg, connState).catch(
+							handleChatRouteConfirm(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled chat.route.confirm error: ${err.message}`);
 								},
@@ -137,7 +130,7 @@ export async function registerGatewayWebSocket(
 
 						case "context.inspect": {
 							logger.info(`context.inspect for session ${msg.sessionId}`);
-							handleContextInspect(socket, msg).catch(
+							handleContextInspect(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled context.inspect error: ${err.message}`);
 								},
@@ -147,7 +140,7 @@ export async function registerGatewayWebSocket(
 
 						case "usage.query": {
 							logger.info("usage.query from client");
-							handleUsageQuery(socket, msg).catch(
+							handleUsageQuery(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled usage.query error: ${err.message}`);
 								},
@@ -157,7 +150,7 @@ export async function registerGatewayWebSocket(
 
 						case "memory.search": {
 							logger.info(`memory.search query: "${msg.query.slice(0, 50)}"`);
-							handleMemorySearch(socket, msg).catch(
+							handleMemorySearch(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled memory.search error: ${err.message}`);
 								},
@@ -167,7 +160,7 @@ export async function registerGatewayWebSocket(
 
 						case "thread.create": {
 							logger.info(`thread.create: "${msg.title}"`);
-							handleThreadCreate(socket, msg).catch(
+							handleThreadCreate(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled thread.create error: ${err.message}`);
 								},
@@ -177,7 +170,7 @@ export async function registerGatewayWebSocket(
 
 						case "thread.list": {
 							logger.info("thread.list from client");
-							handleThreadList(socket, msg).catch(
+							handleThreadList(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled thread.list error: ${err.message}`);
 								},
@@ -187,7 +180,7 @@ export async function registerGatewayWebSocket(
 
 						case "thread.update": {
 							logger.info(`thread.update: ${msg.threadId}`);
-							handleThreadUpdate(socket, msg).catch(
+							handleThreadUpdate(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled thread.update error: ${err.message}`);
 								},
@@ -197,7 +190,7 @@ export async function registerGatewayWebSocket(
 
 						case "prompt.set": {
 							logger.info(`prompt.set: "${msg.name}"`);
-							handlePromptSet(socket, msg).catch(
+							handlePromptSet(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled prompt.set error: ${err.message}`);
 								},
@@ -207,7 +200,7 @@ export async function registerGatewayWebSocket(
 
 						case "prompt.list": {
 							logger.info("prompt.list from client");
-							handlePromptList(socket, msg).catch(
+							handlePromptList(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled prompt.list error: ${err.message}`);
 								},
@@ -217,13 +210,13 @@ export async function registerGatewayWebSocket(
 
 						case "tool.approval.response": {
 							logger.info(`tool.approval.response for toolCallId: ${msg.toolCallId}`);
-							handleToolApprovalResponse(socket, msg, connState);
+							handleToolApprovalResponse(transport, msg, connState);
 							break;
 						}
 
 						case "preflight.approval": {
 							logger.info(`preflight.approval from client (requestId: ${msg.requestId})`);
-							handlePreflightApproval(socket, msg, connState).catch(
+							handlePreflightApproval(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled preflight.approval error: ${err.message}`);
 								},
@@ -251,7 +244,7 @@ export async function registerGatewayWebSocket(
 
 						case "workflow.trigger": {
 							logger.info(`workflow.trigger: ${msg.workflowId}`);
-							handleWorkflowTrigger(socket, msg, connState).catch(
+							handleWorkflowTrigger(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled workflow.trigger error: ${err.message}`);
 								},
@@ -261,7 +254,7 @@ export async function registerGatewayWebSocket(
 
 						case "workflow.approval": {
 							logger.info(`workflow.approval: ${msg.executionId} step ${msg.stepId}`);
-							handleWorkflowApproval(socket, msg, connState).catch(
+							handleWorkflowApproval(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled workflow.approval error: ${err.message}`);
 								},
@@ -271,7 +264,7 @@ export async function registerGatewayWebSocket(
 
 						case "workflow.list": {
 							logger.info("workflow.list from client");
-							handleWorkflowList(socket, msg).catch(
+							handleWorkflowList(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled workflow.list error: ${err.message}`);
 								},
@@ -281,7 +274,7 @@ export async function registerGatewayWebSocket(
 
 						case "workflow.execution.list": {
 							logger.info("workflow.execution.list from client");
-							handleWorkflowExecutionList(socket, msg).catch(
+							handleWorkflowExecutionList(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled workflow.execution.list error: ${err.message}`);
 								},
@@ -291,7 +284,7 @@ export async function registerGatewayWebSocket(
 
 						case "schedule.create": {
 							logger.info(`schedule.create: ${msg.name}`);
-							handleScheduleCreate(socket, msg).catch(
+							handleScheduleCreate(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled schedule.create error: ${err.message}`);
 								},
@@ -301,7 +294,7 @@ export async function registerGatewayWebSocket(
 
 						case "schedule.update": {
 							logger.info(`schedule.update: ${msg.scheduleId}`);
-							handleScheduleUpdate(socket, msg).catch(
+							handleScheduleUpdate(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled schedule.update error: ${err.message}`);
 								},
@@ -311,7 +304,7 @@ export async function registerGatewayWebSocket(
 
 						case "schedule.delete": {
 							logger.info(`schedule.delete: ${msg.scheduleId}`);
-							handleScheduleDelete(socket, msg).catch(
+							handleScheduleDelete(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled schedule.delete error: ${err.message}`);
 								},
@@ -321,7 +314,7 @@ export async function registerGatewayWebSocket(
 
 						case "schedule.list": {
 							logger.info("schedule.list from client");
-							handleScheduleList(socket, msg).catch(
+							handleScheduleList(transport, msg).catch(
 								(err: Error) => {
 									logger.error(`Unhandled schedule.list error: ${err.message}`);
 								},
@@ -331,7 +324,7 @@ export async function registerGatewayWebSocket(
 
 						case "heartbeat.configure": {
 							logger.info(`heartbeat.configure: interval=${msg.interval}`);
-							handleHeartbeatConfigure(socket, msg, connState).catch(
+							handleHeartbeatConfigure(transport, msg, connState).catch(
 								(err: Error) => {
 									logger.error(`Unhandled heartbeat.configure error: ${err.message}`);
 								},
@@ -343,12 +336,12 @@ export async function registerGatewayWebSocket(
 
 				socket.on("close", () => {
 					logger.info("WebSocket client disconnected");
-					removeConnection(socket);
+					removeConnection(transport.transportId);
 				});
 
 				socket.on("error", (err: Error) => {
 					logger.error(`WebSocket error: ${err.message}`);
-					removeConnection(socket);
+					removeConnection(transport.transportId);
 				});
 			},
 		);

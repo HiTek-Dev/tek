@@ -1,7 +1,6 @@
-import type { WebSocket } from "ws";
+import type { Transport } from "../transport.js";
 import { createLogger, loadConfig } from "@agentspace/core";
 import type {
-	ServerMessage,
 	ChatSend,
 	ChatRouteConfirm,
 	ContextInspect,
@@ -72,15 +71,6 @@ function getPressureDetector(): MemoryPressureDetector {
 }
 
 /**
- * Send a typed server message over a WebSocket.
- */
-function send(ws: WebSocket, msg: ServerMessage): void {
-	if (ws.readyState === ws.OPEN) {
-		ws.send(JSON.stringify(msg));
-	}
-}
-
-/**
  * Check memory pressure after context assembly and flush if needed.
  * Best-effort: if flush fails, proceed anyway.
  */
@@ -131,7 +121,7 @@ async function checkAndFlushPressure(context: AssembledContext): Promise<void> {
  * Extracted from handleChatSend to be reused by handleChatRouteConfirm.
  */
 async function streamToClient(
-	socket: WebSocket,
+	transport: Transport,
 	model: string,
 	sessionId: string,
 	requestId: string,
@@ -142,7 +132,7 @@ async function streamToClient(
 	connState.streaming = true;
 	connState.streamRequestId = requestId;
 
-	send(socket, {
+	transport.send({
 		type: "chat.stream.start",
 		requestId,
 		sessionId,
@@ -160,7 +150,7 @@ async function streamToClient(
 		)) {
 			if (chunk.type === "delta") {
 				fullResponse += chunk.text;
-				send(socket, {
+				transport.send({
 					type: "chat.stream.delta",
 					requestId,
 					delta: chunk.text,
@@ -188,7 +178,7 @@ async function streamToClient(
 				);
 
 				// Send stream end with usage and cost
-				send(socket, {
+				transport.send({
 					type: "chat.stream.end",
 					requestId,
 					usage: { inputTokens, outputTokens, totalTokens },
@@ -200,7 +190,7 @@ async function streamToClient(
 		const message =
 			err instanceof Error ? err.message : "Unknown LLM error";
 		logger.error(`LLM streaming error: ${message}`);
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId,
 			code: "LLM_ERROR",
@@ -220,13 +210,13 @@ async function streamToClient(
  * - Otherwise: auto mode (route silently, include tier in stream.start)
  */
 export async function handleChatSend(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ChatSend,
 	connState: ConnectionState,
 ): Promise<void> {
 	// Guard against concurrent streams
 	if (connState.streaming) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "STREAM_IN_PROGRESS",
@@ -243,7 +233,7 @@ export async function handleChatSend(
 	if (msg.sessionId) {
 		const session = sessionManager.get(msg.sessionId);
 		if (!session) {
-			send(socket, {
+			transport.send({
 				type: "error",
 				requestId: msg.id,
 				code: "SESSION_NOT_FOUND",
@@ -269,7 +259,7 @@ export async function handleChatSend(
 		const session = sessionManager.create("default", requestedModel);
 		sessionId = session.id;
 		model = session.model;
-		send(socket, {
+		transport.send({
 			type: "session.created",
 			sessionId: session.id,
 			sessionKey: session.sessionKey,
@@ -348,7 +338,7 @@ export async function handleChatSend(
 			};
 
 			// Send checklist to client for review
-			send(socket, {
+			transport.send({
 				type: "preflight.checklist",
 				requestId: msg.id,
 				steps: checklist.steps,
@@ -370,7 +360,7 @@ export async function handleChatSend(
 	connState.streaming = true;
 	connState.streamRequestId = msg.id;
 
-	send(socket, {
+	transport.send({
 		type: "chat.stream.start",
 		requestId: msg.id,
 		sessionId,
@@ -382,7 +372,7 @@ export async function handleChatSend(
 		// Agent mode: tool-aware streaming with multi-step loop
 		try {
 			await runAgentLoop({
-				socket,
+				transport,
 				model,
 				messages: context.messages,
 				system: context.system ?? "",
@@ -407,7 +397,7 @@ export async function handleChatSend(
 						timestamp: new Date().toISOString(),
 					});
 
-					send(socket, {
+					transport.send({
 						type: "chat.stream.end",
 						requestId: msg.id,
 						usage: { inputTokens, outputTokens, totalTokens },
@@ -418,7 +408,7 @@ export async function handleChatSend(
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Unknown agent error";
 			logger.error(`Agent loop error: ${message}`);
-			send(socket, {
+			transport.send({
 				type: "error",
 				requestId: msg.id,
 				code: "AGENT_ERROR",
@@ -431,7 +421,7 @@ export async function handleChatSend(
 	} else {
 		// Fallback: text-only streaming (no tools available)
 		await streamToClient(
-			socket,
+			transport,
 			model,
 			sessionId,
 			msg.id,
@@ -449,13 +439,13 @@ export async function handleChatSend(
  * If accept=false and override provided, use the override model.
  */
 export async function handleChatRouteConfirm(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ChatRouteConfirm,
 	connState: ConnectionState,
 ): Promise<void> {
 	const pending = connState.pendingRouting;
 	if (!pending) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "NO_PENDING_ROUTING",
@@ -481,19 +471,19 @@ export async function handleChatRouteConfirm(
 	const sessionMessages = sessionManager.getMessages(sessionId);
 	const context = assembleContext(sessionMessages, content, model);
 
-	await streamToClient(socket, model, sessionId, requestId, context, connState);
+	await streamToClient(transport, model, sessionId, requestId, context, connState);
 }
 
 /**
  * Handle context.inspect: return section-by-section breakdown.
  */
 export async function handleContextInspect(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ContextInspect,
 ): Promise<void> {
 	const session = sessionManager.get(msg.sessionId);
 	if (!session) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "SESSION_NOT_FOUND",
@@ -505,7 +495,7 @@ export async function handleContextInspect(
 	const sessionMessages = sessionManager.getMessages(session.id);
 	const inspection = inspectContext(sessionMessages, session.model);
 
-	send(socket, {
+	transport.send({
 		type: "context.inspection",
 		requestId: msg.id,
 		sections: inspection.sections,
@@ -517,7 +507,7 @@ export async function handleContextInspect(
  * Handle usage.query: return per-model usage breakdown.
  */
 export async function handleUsageQuery(
-	socket: WebSocket,
+	transport: Transport,
 	msg: UsageQuery,
 ): Promise<void> {
 	if (msg.sessionId) {
@@ -559,7 +549,7 @@ export async function handleUsageQuery(
 			grandTotalRequests += 1;
 		}
 
-		send(socket, {
+		transport.send({
 			type: "usage.report",
 			requestId: msg.id,
 			perModel,
@@ -572,7 +562,7 @@ export async function handleUsageQuery(
 	} else {
 		// Global totals
 		const totals = usageTracker.queryTotals();
-		send(socket, {
+		transport.send({
 			type: "usage.report",
 			requestId: msg.id,
 			perModel: totals.perModel,
@@ -587,7 +577,7 @@ export async function handleUsageQuery(
  * Handle memory.search: semantic search over stored memories.
  */
 export async function handleMemorySearch(
-	socket: WebSocket,
+	transport: Transport,
 	msg: MemorySearch,
 ): Promise<void> {
 	const manager = getMemoryManager();
@@ -596,7 +586,7 @@ export async function handleMemorySearch(
 			topK: msg.topK,
 			threadId: msg.threadId,
 		});
-		send(socket, {
+		transport.send({
 			type: "memory.search.result",
 			id: msg.id,
 			results: results.map((r) => ({
@@ -607,7 +597,7 @@ export async function handleMemorySearch(
 			})),
 		});
 	} catch (err) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "MEMORY_SEARCH_ERROR",
@@ -620,12 +610,12 @@ export async function handleMemorySearch(
  * Handle thread.create: create a new conversation thread.
  */
 export async function handleThreadCreate(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ThreadCreate,
 ): Promise<void> {
 	const manager = getThreadManager();
 	const thread = manager.createThread(msg.title, msg.systemPrompt);
-	send(socket, {
+	transport.send({
 		type: "thread.created",
 		id: msg.id,
 		thread: {
@@ -641,12 +631,12 @@ export async function handleThreadCreate(
  * Handle thread.list: list conversation threads.
  */
 export async function handleThreadList(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ThreadList,
 ): Promise<void> {
 	const manager = getThreadManager();
 	const threads = manager.listThreads(msg.includeArchived);
-	send(socket, {
+	transport.send({
 		type: "thread.list.result",
 		id: msg.id,
 		threads,
@@ -657,7 +647,7 @@ export async function handleThreadList(
  * Handle thread.update: update a conversation thread.
  */
 export async function handleThreadUpdate(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ThreadUpdate,
 ): Promise<void> {
 	const manager = getThreadManager();
@@ -666,7 +656,7 @@ export async function handleThreadUpdate(
 		systemPrompt: msg.systemPrompt,
 		archived: msg.archived,
 	});
-	send(socket, {
+	transport.send({
 		type: "thread.updated",
 		id: msg.id,
 		threadId: msg.threadId,
@@ -677,7 +667,7 @@ export async function handleThreadUpdate(
  * Handle prompt.set: add or create a global system prompt.
  */
 export async function handlePromptSet(
-	socket: WebSocket,
+	transport: Transport,
 	msg: PromptSet,
 ): Promise<void> {
 	const manager = getThreadManager();
@@ -686,7 +676,7 @@ export async function handlePromptSet(
 		msg.content,
 		msg.priority,
 	);
-	send(socket, {
+	transport.send({
 		type: "prompt.set.result",
 		id: msg.id,
 		promptId,
@@ -697,12 +687,12 @@ export async function handlePromptSet(
  * Handle prompt.list: list all global system prompts.
  */
 export async function handlePromptList(
-	socket: WebSocket,
+	transport: Transport,
 	msg: PromptList,
 ): Promise<void> {
 	const manager = getThreadManager();
 	const prompts = manager.listGlobalPrompts();
-	send(socket, {
+	transport.send({
 		type: "prompt.list.result",
 		id: msg.id,
 		prompts,
@@ -716,7 +706,7 @@ export async function handlePromptList(
  * If sessionApprove is true, record the tool as approved for the session.
  */
 export function handleToolApprovalResponse(
-	_socket: WebSocket,
+	_transport: Transport,
 	msg: ToolApprovalResponse,
 	connState: ConnectionState,
 ): void {
@@ -745,14 +735,14 @@ export function handleToolApprovalResponse(
  * If rejected: send an error message and clean up.
  */
 export async function handlePreflightApproval(
-	socket: WebSocket,
+	transport: Transport,
 	msg: PreflightApproval,
 	connState: ConnectionState,
 ): Promise<void> {
 	const pending = connState.pendingPreflight;
 	if (!pending) {
 		logger.warn(`No pending preflight for requestId: ${msg.requestId}`);
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "NO_PENDING_PREFLIGHT",
@@ -765,7 +755,7 @@ export async function handlePreflightApproval(
 	connState.pendingPreflight = null;
 
 	if (!msg.approved) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: pending.requestId,
 			code: "PREFLIGHT_REJECTED",
@@ -780,7 +770,7 @@ export async function handlePreflightApproval(
 	connState.streaming = true;
 	connState.streamRequestId = requestId;
 
-	send(socket, {
+	transport.send({
 		type: "chat.stream.start",
 		requestId,
 		sessionId,
@@ -791,7 +781,7 @@ export async function handlePreflightApproval(
 	if (connState.approvalPolicy) {
 		try {
 			await runAgentLoop({
-				socket,
+				transport,
 				model,
 				messages: context.messages,
 				system: context.system,
@@ -816,7 +806,7 @@ export async function handlePreflightApproval(
 						timestamp: new Date().toISOString(),
 					});
 
-					send(socket, {
+					transport.send({
 						type: "chat.stream.end",
 						requestId,
 						usage: { inputTokens, outputTokens, totalTokens },
@@ -827,7 +817,7 @@ export async function handlePreflightApproval(
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Unknown agent error";
 			logger.error(`Agent loop error (post-preflight): ${message}`);
-			send(socket, {
+			transport.send({
 				type: "error",
 				requestId,
 				code: "AGENT_ERROR",
@@ -839,7 +829,7 @@ export async function handlePreflightApproval(
 		}
 	} else {
 		// Fallback: text-only streaming
-		await streamToClient(socket, model, sessionId, requestId, context, connState, routingInfo);
+		await streamToClient(transport, model, sessionId, requestId, context, connState, routingInfo);
 	}
 }
 
@@ -849,7 +839,7 @@ export async function handlePreflightApproval(
  * Handle workflow.trigger: execute a workflow and stream status updates.
  */
 export async function handleWorkflowTrigger(
-	socket: WebSocket,
+	transport: Transport,
 	msg: WorkflowTrigger,
 	connState: ConnectionState,
 ): Promise<void> {
@@ -865,7 +855,7 @@ export async function handleWorkflowTrigger(
 		.get();
 
 	if (!workflow) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "WORKFLOW_NOT_FOUND",
@@ -891,7 +881,7 @@ export async function handleWorkflowTrigger(
 				},
 			);
 
-			send(socket, {
+			transport.send({
 				type: "workflow.approval.request",
 				executionId,
 				workflowId: msg.workflowId,
@@ -902,7 +892,7 @@ export async function handleWorkflowTrigger(
 		},
 	);
 
-	send(socket, {
+	transport.send({
 		type: "workflow.status",
 		executionId: execution.id,
 		workflowId: msg.workflowId,
@@ -916,7 +906,7 @@ export async function handleWorkflowTrigger(
  * Handle workflow.approval: approve or deny a workflow approval gate.
  */
 export async function handleWorkflowApproval(
-	socket: WebSocket,
+	transport: Transport,
 	msg: WorkflowApproval,
 	connState: ConnectionState,
 ): Promise<void> {
@@ -926,7 +916,7 @@ export async function handleWorkflowApproval(
 	const pending = connState.pendingWorkflowApprovals.get(key);
 
 	if (!pending) {
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId: msg.id,
 			code: "NO_PENDING_APPROVAL",
@@ -938,7 +928,7 @@ export async function handleWorkflowApproval(
 	connState.pendingWorkflowApprovals.delete(key);
 
 	if (!msg.approved) {
-		send(socket, {
+		transport.send({
 			type: "workflow.status",
 			executionId: msg.executionId,
 			workflowId: "",
@@ -962,7 +952,7 @@ export async function handleWorkflowApproval(
 				},
 			);
 
-			send(socket, {
+			transport.send({
 				type: "workflow.approval.request",
 				executionId,
 				workflowId: execution.workflowId,
@@ -973,7 +963,7 @@ export async function handleWorkflowApproval(
 		},
 	);
 
-	send(socket, {
+	transport.send({
 		type: "workflow.status",
 		executionId: execution.id,
 		workflowId: execution.workflowId,
@@ -987,7 +977,7 @@ export async function handleWorkflowApproval(
  * Handle workflow.list: list all registered workflows.
  */
 export async function handleWorkflowList(
-	socket: WebSocket,
+	transport: Transport,
 	msg: WorkflowList,
 ): Promise<void> {
 	const { getDb, workflows } = await import("@agentspace/db");
@@ -995,7 +985,7 @@ export async function handleWorkflowList(
 	const db = getDb();
 	const rows = db.select().from(workflows).all();
 
-	send(socket, {
+	transport.send({
 		type: "workflow.list.result",
 		id: msg.id,
 		workflows: rows.map((r) => ({
@@ -1011,14 +1001,14 @@ export async function handleWorkflowList(
  * Handle workflow.execution.list: list workflow executions with optional filters.
  */
 export async function handleWorkflowExecutionList(
-	socket: WebSocket,
+	transport: Transport,
 	msg: WorkflowExecutionList,
 ): Promise<void> {
 	const { listExecutions } = await import("../workflow/state.js");
 
 	const executions = listExecutions(msg.workflowId, msg.status);
 
-	send(socket, {
+	transport.send({
 		type: "workflow.execution.list.result",
 		id: msg.id,
 		executions: executions.map((e) => ({
@@ -1038,7 +1028,7 @@ export async function handleWorkflowExecutionList(
  * Handle schedule.create: create a new schedule and optionally register with scheduler.
  */
 export async function handleScheduleCreate(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ScheduleCreate,
 ): Promise<void> {
 	const { nanoid } = await import("nanoid");
@@ -1063,7 +1053,7 @@ export async function handleScheduleCreate(
 		cronScheduler.scheduleWorkflow(config, {});
 	}
 
-	send(socket, {
+	transport.send({
 		type: "schedule.created",
 		id: msg.id,
 		scheduleId,
@@ -1074,7 +1064,7 @@ export async function handleScheduleCreate(
  * Handle schedule.update: update an existing schedule.
  */
 export async function handleScheduleUpdate(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ScheduleUpdate,
 ): Promise<void> {
 	const { updateSchedule, getSchedule } = await import("../scheduler/store.js");
@@ -1094,7 +1084,7 @@ export async function handleScheduleUpdate(
 		cronScheduler.scheduleWorkflow(updated, {});
 	}
 
-	send(socket, {
+	transport.send({
 		type: "schedule.updated",
 		id: msg.id,
 		scheduleId: msg.scheduleId,
@@ -1105,7 +1095,7 @@ export async function handleScheduleUpdate(
  * Handle schedule.delete: remove a schedule.
  */
 export async function handleScheduleDelete(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ScheduleDelete,
 ): Promise<void> {
 	const { deleteSchedule } = await import("../scheduler/store.js");
@@ -1114,7 +1104,7 @@ export async function handleScheduleDelete(
 	cronScheduler.stop(msg.scheduleId);
 	deleteSchedule(msg.scheduleId);
 
-	send(socket, {
+	transport.send({
 		type: "schedule.updated",
 		id: msg.id,
 		scheduleId: msg.scheduleId,
@@ -1125,7 +1115,7 @@ export async function handleScheduleDelete(
  * Handle schedule.list: list all schedules with next run times.
  */
 export async function handleScheduleList(
-	socket: WebSocket,
+	transport: Transport,
 	msg: ScheduleList,
 ): Promise<void> {
 	const { loadSchedules } = await import("../scheduler/store.js");
@@ -1133,7 +1123,7 @@ export async function handleScheduleList(
 
 	const configs = loadSchedules();
 
-	send(socket, {
+	transport.send({
 		type: "schedule.list.result",
 		id: msg.id,
 		schedules: configs.map((c) => {
@@ -1157,7 +1147,7 @@ export async function handleScheduleList(
  * Handle heartbeat.configure: set up a heartbeat cron schedule.
  */
 export async function handleHeartbeatConfigure(
-	socket: WebSocket,
+	transport: Transport,
 	msg: HeartbeatConfigure,
 	connState: ConnectionState,
 ): Promise<void> {
@@ -1193,7 +1183,7 @@ export async function handleHeartbeatConfigure(
 		tools,
 		model,
 		(results) => {
-			send(socket, {
+			transport.send({
 				type: "heartbeat.alert",
 				checks: results.map((r) => ({
 					description: r.description,
@@ -1205,7 +1195,7 @@ export async function handleHeartbeatConfigure(
 		},
 	);
 
-	send(socket, {
+	transport.send({
 		type: "heartbeat.configured",
 		id: msg.id,
 		scheduleId,

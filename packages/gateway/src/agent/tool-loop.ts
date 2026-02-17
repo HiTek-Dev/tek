@@ -1,4 +1,4 @@
-import type { WebSocket } from "ws";
+import type { Transport } from "../transport.js";
 import type { ModelMessage, LanguageModelUsage } from "ai";
 import { streamText, stepCountIs } from "ai";
 import { createLogger } from "@agentspace/core";
@@ -6,7 +6,6 @@ import { getRegistry } from "../llm/registry.js";
 import { checkApproval, recordSessionApproval, type ApprovalPolicy } from "./approval-gate.js";
 import { classifyFailurePattern, type StepRecord } from "./failure-detector.js";
 import type { ConnectionState } from "../ws/connection.js";
-import type { ServerMessage } from "../ws/protocol.js";
 
 const logger = createLogger("agent-tool-loop");
 
@@ -17,7 +16,7 @@ const APPROVAL_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_STEPS = 10;
 
 export interface AgentLoopOptions {
-	socket: WebSocket;
+	transport: Transport;
 	model: string;
 	messages: ModelMessage[];
 	system: string;
@@ -31,24 +30,15 @@ export interface AgentLoopOptions {
 }
 
 /**
- * Send a typed server message over a WebSocket.
- */
-function send(ws: WebSocket, msg: ServerMessage): void {
-	if (ws.readyState === ws.OPEN) {
-		ws.send(JSON.stringify(msg));
-	}
-}
-
-/**
  * Run the agent tool loop: streams text, executes tool calls,
- * relays results over WebSocket, and pauses for approval when needed.
+ * relays results over the transport, and pauses for approval when needed.
  *
  * Uses AI SDK's `streamText` with `fullStream` to capture tool-call,
  * tool-result, and tool-approval-request events alongside text deltas.
  */
 export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 	const {
-		socket,
+		transport,
 		model,
 		messages,
 		system,
@@ -90,7 +80,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 				stepHistory.push(record);
 				const failure = classifyFailurePattern(stepHistory, maxSteps);
 				if (failure) {
-					send(socket, {
+					transport.send({
 						type: "failure.detected",
 						requestId,
 						pattern: failure.pattern,
@@ -105,7 +95,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 		for await (const part of result.fullStream) {
 			switch (part.type) {
 				case "text-delta": {
-					send(socket, {
+					transport.send({
 						type: "chat.stream.delta",
 						requestId,
 						delta: part.text,
@@ -118,7 +108,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 					const toolName = String(part.toolName);
 					const args = part.input;
 
-					send(socket, {
+					transport.send({
 						type: "tool.call",
 						requestId,
 						toolCallId,
@@ -132,7 +122,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 					const toolCallId = part.toolCallId;
 					const toolName = String(part.toolName);
 
-					send(socket, {
+					transport.send({
 						type: "tool.result",
 						requestId,
 						toolCallId,
@@ -151,7 +141,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 					const needsApproval = checkApproval(toolName, approvalPolicy);
 
 					if (needsApproval) {
-						send(socket, {
+						transport.send({
 							type: "tool.approval.request",
 							requestId,
 							toolCallId,
@@ -192,7 +182,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 
 				case "error": {
 					logger.error(`Stream error: ${part.error}`);
-					send(socket, {
+					transport.send({
 						type: "error",
 						requestId,
 						code: "AGENT_STREAM_ERROR",
@@ -212,7 +202,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : "Unknown agent loop error";
 		logger.error(`Agent loop error: ${message}`);
-		send(socket, {
+		transport.send({
 			type: "error",
 			requestId,
 			code: "AGENT_LOOP_ERROR",
