@@ -170,11 +170,13 @@ Plans:
   2. Telegram messages route through the gateway with the same session management as CLI (sessions are unified across channels)
   3. User can approve or deny tool calls via Telegram inline buttons
   4. Telegram bot authenticates users via pairing code; unauthenticated users cannot interact with the agent
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Transport abstraction (Transport interface, WebSocketTransport, refactor handlers to channel-agnostic)
+- [ ] 09-02-PLAN.md — Telegram package scaffold (DB schemas, grammY setup, TelegramTransport, response formatter)
+- [ ] 09-03-PLAN.md — Bot core (pairing-code auth, command handlers, text message routing to gateway)
+- [ ] 09-04-PLAN.md — Streaming accumulator, inline tool approval buttons, response formatting
 
 ### Phase 10: Claude Code & System Skills
 **Goal**: AgentSpace can orchestrate Claude Code as a development tool and provides built-in skills for web search, image generation, browser automation, and Google Workspace
