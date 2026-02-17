@@ -82,3 +82,37 @@ export function createSessionListMessage(): ClientMessage {
 		id: nanoid(),
 	};
 }
+
+/** Create a tool.approval.response message for the gateway WebSocket protocol. */
+export function createToolApprovalResponse(
+	toolCallId: string,
+	approved: boolean,
+	sessionApprove?: boolean,
+): ClientMessage {
+	return {
+		type: "tool.approval.response",
+		id: nanoid(),
+		toolCallId,
+		approved,
+		...(sessionApprove !== undefined ? { sessionApprove } : {}),
+	};
+}
+
+/** Create a preflight.approval message for the gateway WebSocket protocol. */
+export function createPreflightApprovalResponse(
+	requestId: string,
+	approved: boolean,
+	editedSteps?: Array<{
+		description: string;
+		toolName?: string;
+		skip?: boolean;
+	}>,
+): ClientMessage {
+	return {
+		type: "preflight.approval",
+		id: nanoid(),
+		requestId,
+		approved,
+		...(editedSteps ? { editedSteps } : {}),
+	};
+}

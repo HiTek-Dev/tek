@@ -1,7 +1,30 @@
 import { useState, useCallback } from "react";
 import { nanoid } from "nanoid";
 import type { ServerMessage } from "@agentspace/gateway";
-import type { ChatMessage, TextMessage } from "../lib/gateway-client.js";
+import type { ChatMessage, TextMessage, ToolCallMessage } from "../lib/gateway-client.js";
+
+export interface PendingApproval {
+	toolCallId: string;
+	toolName: string;
+	args: unknown;
+}
+
+export interface PendingPreflight {
+	requestId: string;
+	steps: Array<{
+		description: string;
+		toolName?: string;
+		risk: "low" | "medium" | "high";
+		needsApproval: boolean;
+	}>;
+	estimatedCost: {
+		inputTokens: number;
+		outputTokens: number;
+		estimatedUSD: number;
+	};
+	requiredPermissions: string[];
+	warnings: string[];
+}
 
 export interface UseChatOptions {
 	initialModel?: string;
@@ -19,6 +42,8 @@ export interface UseChatState {
 		totalTokens: number;
 		totalCost: number;
 	};
+	pendingApproval: PendingApproval | null;
+	pendingPreflight: PendingPreflight | null;
 }
 
 const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
@@ -37,6 +62,19 @@ export function useChat(opts: UseChatOptions = {}) {
 	const [model, setModel] = useState(opts.initialModel ?? DEFAULT_MODEL);
 	const [connected, setConnected] = useState(false);
 	const [usage, setUsage] = useState({ totalTokens: 0, totalCost: 0 });
+	const [pendingApproval, setPendingApproval] =
+		useState<PendingApproval | null>(null);
+	const [pendingPreflight, setPendingPreflight] =
+		useState<PendingPreflight | null>(null);
+	const [toolCalls, setToolCalls] = useState<
+		Array<{
+			toolCallId: string;
+			toolName: string;
+			args: unknown;
+			result?: unknown;
+			status: "pending" | "complete" | "error";
+		}>
+	>([]);
 
 	const addMessage = useCallback((msg: ChatMessage) => {
 		setMessages((prev) => [...prev, msg]);
@@ -84,6 +122,77 @@ export function useChat(opts: UseChatOptions = {}) {
 					totalCost: prev.totalCost + msg.cost.totalCost,
 				}));
 				break;
+
+			case "tool.call": {
+				const toolCallId = msg.toolCallId;
+				const toolName = msg.toolName;
+				const args = msg.args;
+
+				// Track the tool call
+				setToolCalls((prev) => [
+					...prev,
+					{ toolCallId, toolName, args, status: "pending" },
+				]);
+
+				// Add a ToolCallMessage to the message list
+				const toolMsg: ToolCallMessage = {
+					id: toolCallId,
+					type: "tool_call",
+					toolName,
+					input: typeof args === "string" ? args : JSON.stringify(args, null, 2),
+					status: "pending",
+					timestamp: new Date().toISOString(),
+				};
+				setMessages((prev) => [...prev, toolMsg]);
+				break;
+			}
+
+			case "tool.result": {
+				const tcId = msg.toolCallId;
+				const resultStr =
+					typeof msg.result === "string"
+						? msg.result
+						: JSON.stringify(msg.result, null, 2);
+
+				// Update tool call tracking
+				setToolCalls((prev) =>
+					prev.map((tc) =>
+						tc.toolCallId === tcId
+							? { ...tc, result: msg.result, status: "complete" as const }
+							: tc,
+					),
+				);
+
+				// Update the ToolCallMessage in messages
+				setMessages((prev) =>
+					prev.map((m) =>
+						m.type === "tool_call" && m.id === tcId
+							? { ...m, output: resultStr, status: "complete" as const }
+							: m,
+					),
+				);
+				break;
+			}
+
+			case "tool.approval.request": {
+				setPendingApproval({
+					toolCallId: msg.toolCallId,
+					toolName: msg.toolName,
+					args: msg.args,
+				});
+				break;
+			}
+
+			case "preflight.checklist": {
+				setPendingPreflight({
+					requestId: msg.requestId,
+					steps: msg.steps,
+					estimatedCost: msg.estimatedCost,
+					requiredPermissions: msg.requiredPermissions,
+					warnings: msg.warnings,
+				});
+				break;
+			}
 
 			case "error":
 				setMessages((prev) => [
@@ -167,6 +276,30 @@ export function useChat(opts: UseChatOptions = {}) {
 		}
 	}, []);
 
+	const approveToolCall = useCallback(
+		(approved: boolean, sessionApprove?: boolean) => {
+			setPendingApproval(null);
+			return { approved, sessionApprove };
+		},
+		[],
+	);
+
+	const approvePreflight = useCallback(
+		(
+			approved: boolean,
+			editedSteps?: Array<{
+				description: string;
+				toolName?: string;
+				skip?: boolean;
+			}>,
+		) => {
+			const req = pendingPreflight;
+			setPendingPreflight(null);
+			return { approved, requestId: req?.requestId, editedSteps };
+		},
+		[pendingPreflight],
+	);
+
 	const addUserMessage = useCallback((content: string) => {
 		const msg: TextMessage = {
 			id: nanoid(),
@@ -186,6 +319,9 @@ export function useChat(opts: UseChatOptions = {}) {
 		model,
 		connected,
 		usage,
+		pendingApproval,
+		pendingPreflight,
+		toolCalls,
 		handleServerMessage,
 		addUserMessage,
 		addMessage,
@@ -193,5 +329,7 @@ export function useChat(opts: UseChatOptions = {}) {
 		setConnected,
 		setModel,
 		setSessionId,
+		approveToolCall,
+		approvePreflight,
 	};
 }

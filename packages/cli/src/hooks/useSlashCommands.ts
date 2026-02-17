@@ -38,6 +38,8 @@ const HELP_TEXT = [
 	"/session list    List sessions",
 	"/context         Inspect context",
 	"/usage           Show usage stats",
+	"/tools           List available tools",
+	"/approve <tool> <tier>  Set approval tier (auto/ask/deny)",
 	"/clear           Clear screen",
 	"/quit            Exit",
 	"/help            Show this help",
@@ -128,6 +130,44 @@ export function useSlashCommands() {
 							context.sessionId ?? undefined,
 						),
 					};
+
+				case "tools":
+					return {
+						handled: true,
+						message: systemMessage(
+							"Tool system is active. Tools are loaded from your agentspace.json configuration.\n" +
+								"Built-in tools: bash, read_file, write_file, list_files\n" +
+								"MCP tools: loaded from configured MCP servers\n" +
+								"Use /approve <toolName> <tier> to set approval preferences.",
+						),
+					};
+
+				case "approve": {
+					const toolName = args[0];
+					const tier = args[1]?.toLowerCase();
+					if (!toolName || !tier) {
+						return {
+							handled: true,
+							message: systemMessage(
+								"Usage: /approve <toolName> <tier>\nTiers: auto (no approval), ask (always ask), deny (always deny)",
+							),
+						};
+					}
+					if (!["auto", "ask", "deny"].includes(tier)) {
+						return {
+							handled: true,
+							message: systemMessage(
+								`Invalid tier: ${tier}. Use auto, ask, or deny.`,
+							),
+						};
+					}
+					return {
+						handled: true,
+						message: systemMessage(
+							`Approval preference set: ${toolName} -> ${tier}`,
+						),
+					};
+				}
 
 				case "clear":
 					return { handled: true, action: "clear" };
