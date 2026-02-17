@@ -18,6 +18,8 @@ import {
 	createWebSearchTool,
 	createImageGenTool,
 	createStabilityImageGenTool,
+	createGoogleAuth,
+	createGoogleWorkspaceTools,
 } from "../skills/index.js";
 
 const logger = createLogger("tool-registry");
@@ -31,6 +33,7 @@ export interface ToolRegistryOptions {
 	tavilyApiKey?: string;
 	openaiApiKey?: string;
 	stabilityApiKey?: string;
+	googleAuth?: { clientId: string; clientSecret: string; refreshToken: string };
 }
 
 /**
@@ -50,6 +53,7 @@ export async function buildToolRegistry(
 		tavilyApiKey,
 		openaiApiKey,
 		stabilityApiKey,
+		googleAuth,
 	} = options;
 
 	const tools: Record<string, unknown> = {};
@@ -187,6 +191,46 @@ export async function buildToolRegistry(
 
 	if (systemSkillCount > 0) {
 		logger.info(`Registered ${systemSkillCount} system skill(s)`);
+	}
+
+	// 6. Add Google Workspace tools (conditionally based on OAuth credentials)
+	if (googleAuth) {
+		const auth = createGoogleAuth(googleAuth);
+		const gTools = createGoogleWorkspaceTools(auth);
+
+		// Read operations: auto approval tier
+		const readOps = [
+			"gmail_search",
+			"gmail_read",
+			"drive_search",
+			"drive_read",
+			"calendar_list",
+			"docs_read",
+		];
+		// Write operations: session approval tier
+		const writeOps = ["calendar_create", "docs_create"];
+
+		for (const [name, t] of Object.entries(gTools)) {
+			tools[name] = approvalPolicy
+				? wrapToolWithApproval(
+						name,
+						t as Record<string, unknown>,
+						approvalPolicy,
+					)
+				: t;
+
+			if (approvalPolicy) {
+				if (readOps.includes(name)) {
+					approvalPolicy.perTool[name] = "auto";
+				} else if (writeOps.includes(name)) {
+					approvalPolicy.perTool[name] = "session";
+				}
+			}
+		}
+
+		logger.info(
+			`Registered ${Object.keys(gTools).length} Google Workspace tool(s)`,
+		);
 	}
 
 	// Note: Playwright browser automation tools are handled by the MCP tool

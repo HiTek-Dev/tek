@@ -7,3 +7,6 @@ export {
 	getPlaywrightMcpConfig,
 	PLAYWRIGHT_SERVER_NAME,
 } from "./browser.js";
+export { createGoogleAuth } from "./google-auth.js";
+export type { GoogleAuthConfig } from "./google-auth.js";
+export { createGoogleWorkspaceTools } from "./google-workspace.js";

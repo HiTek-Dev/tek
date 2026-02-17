@@ -52,6 +52,16 @@ export {
 } from "./agent/index.js";
 export type { ToolRegistryOptions, ApprovalPolicy } from "./agent/index.js";
 
+// System skills
+export {
+	createWebSearchTool,
+	createImageGenTool,
+	getPlaywrightMcpConfig,
+	createGoogleWorkspaceTools,
+	createGoogleAuth,
+} from "./skills/index.js";
+export type { GoogleAuthConfig } from "./skills/index.js";
+
 // Handler functions (for cross-channel use, e.g., Telegram)
 export { handleChatSend } from "./ws/handlers.js";
 export { initConnection, getConnectionState, removeConnection } from "./ws/connection.js";
