@@ -177,12 +177,21 @@ export function Chat({ wsUrl, initialModel, resumeSessionId, onProxyRequest }: C
 			)}
 
 			{pendingApproval ? (
-				<ToolApprovalPrompt
-					toolName={pendingApproval.toolName}
-					toolCallId={pendingApproval.toolCallId}
-					args={pendingApproval.args}
-					onResponse={handleToolApproval}
-				/>
+				pendingApproval.toolName === "skill_register" ? (
+					<SkillApprovalPrompt
+						toolName={pendingApproval.toolName}
+						toolCallId={pendingApproval.toolCallId}
+						args={pendingApproval.args}
+						onResponse={handleToolApproval}
+					/>
+				) : (
+					<ToolApprovalPrompt
+						toolName={pendingApproval.toolName}
+						toolCallId={pendingApproval.toolCallId}
+						args={pendingApproval.args}
+						onResponse={handleToolApproval}
+					/>
+				)
 			) : pendingPreflight ? (
 				<PreflightChecklist
 					checklist={pendingPreflight}
