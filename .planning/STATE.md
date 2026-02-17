@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-Phase: 8 of 10 (Workflows & Scheduling) -- IN PROGRESS
-Plan: 3 of 4 in current phase (08-03 complete)
-Status: Completed 08-03 (cron scheduler & heartbeat)
-Last activity: 2026-02-17 -- Completed 08-03 scheduler & heartbeat
+Phase: 8 of 10 (Workflows & Scheduling) -- COMPLETE
+Plan: 4 of 4 in current phase (08-04 complete)
+Status: Completed 08-04 (WebSocket protocol integration)
+Last activity: 2026-02-17 -- Completed 08-04 protocol wiring
 
-Progress: [████████████████████████████████████░░░░] 88%
+Progress: [█████████████████████████████████████░░░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 3min
-- Total execution time: 0.95 hours
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -34,7 +34,7 @@ Progress: [███████████████████████
 | 05 | 3/3 | 8min | 3min |
 | 06 | 5/5 | 20min | 4min |
 | 07 | 4/4 | 11min | 3min |
-| 08 | 3/4 | 9min | 3min |
+| 08 | 4/4 | 12min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -138,6 +138,9 @@ Recent decisions affecting current work:
 - [08-03]: Heartbeat checks run sequentially (not parallel) per research anti-pattern guidance
 - [08-03]: Croner protect=true prevents overlapping heartbeat runs
 - [08-03]: Schedule store maps ScheduleConfig to/from SQLite with JSON serialization for activeHoursDays
+- [08-04]: Dynamic imports in handlers for workflow/scheduler modules to avoid circular dependencies
+- [08-04]: Workflow approval gates use ConnectionState pendingWorkflowApprovals map keyed by executionId:stepId
+- [08-04]: Heartbeat configure creates cron schedule with WS-based alert callback pattern
 
 ### Pending Todos
 
@@ -150,5 +153,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 08-03-PLAN.md -- Cron scheduler & heartbeat
+Stopped at: Completed 08-04-PLAN.md -- WebSocket protocol integration (Phase 8 complete)
 Resume file: None
