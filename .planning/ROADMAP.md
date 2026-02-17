@@ -188,12 +188,13 @@ Plans:
   3. AgentSpace can orchestrate Claude Code as a tool within workflows and agent tasks
   4. User can invoke web search, image generation (DALL-E, Stability), and browser automation (Playwright) as agent skills
   5. Google Workspace integration skill provides access to Gmail, Drive, Calendar, and Docs
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
-- [ ] 10-03: TBD
+- [ ] 10-01-PLAN.md — Claude Code session manager, event relay, and types (CCDE-01, CCDE-04)
+- [ ] 10-02-PLAN.md — Claude Code approval proxying, WS protocol, handlers, and workflow tool (CCDE-02, CCDE-03, CCDE-05)
+- [ ] 10-03-PLAN.md — System skills: web search, image generation, browser automation (SYST-04, SYST-05, SYST-07)
+- [ ] 10-04-PLAN.md — Google Workspace integration skill (SYST-06)
 
 ## Progress
 
