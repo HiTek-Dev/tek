@@ -26,6 +26,8 @@ export interface ConnectionState {
 	tools: Record<string, unknown> | null;
 	approvalPolicy: import("../agent/approval-gate.js").ApprovalPolicy | null;
 	pendingPreflight: PendingPreflight | null;
+	lastTerminalSnapshot: string | null;
+	terminalControlGranted: boolean;
 }
 
 const connections = new WeakMap<WebSocket, ConnectionState>();
@@ -43,6 +45,8 @@ export function initConnection(ws: WebSocket): ConnectionState {
 		tools: null,
 		approvalPolicy: null,
 		pendingPreflight: null,
+		lastTerminalSnapshot: null,
+		terminalControlGranted: false,
 	};
 	connections.set(ws, state);
 	return state;

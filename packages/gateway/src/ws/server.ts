@@ -221,6 +221,24 @@ export async function registerGatewayWebSocket(
 							);
 							break;
 						}
+
+						case "terminal.snapshot": {
+							connState.lastTerminalSnapshot = msg.content;
+							logger.info(`terminal.snapshot received (${msg.content.length} chars)`);
+							break;
+						}
+
+						case "terminal.control.grant": {
+							connState.terminalControlGranted = true;
+							logger.info("terminal.control.grant — agent can now observe and send input");
+							break;
+						}
+
+						case "terminal.control.revoke": {
+							connState.terminalControlGranted = false;
+							logger.info("terminal.control.revoke — agent input disabled");
+							break;
+						}
 					}
 				});
 

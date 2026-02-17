@@ -85,6 +85,28 @@ const PromptListSchema = z.object({
 	id: z.string(),
 });
 
+// ── Terminal Client Messages ──────────────────────────────────────────
+
+const TerminalSnapshotSchema = z.object({
+	type: z.literal("terminal.snapshot"),
+	id: z.string(),
+	sessionId: z.string(),
+	content: z.string(),
+	timestamp: z.number(),
+});
+
+const TerminalControlGrantSchema = z.object({
+	type: z.literal("terminal.control.grant"),
+	id: z.string(),
+	sessionId: z.string(),
+});
+
+const TerminalControlRevokeSchema = z.object({
+	type: z.literal("terminal.control.revoke"),
+	id: z.string(),
+	sessionId: z.string(),
+});
+
 // ── Tool & Preflight Client Messages ──────────────────────────────────
 
 const ToolApprovalResponseSchema = z.object({
@@ -125,6 +147,9 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
 	PromptListSchema,
 	ToolApprovalResponseSchema,
 	PreflightApprovalSchema,
+	TerminalSnapshotSchema,
+	TerminalControlGrantSchema,
+	TerminalControlRevokeSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -141,6 +166,9 @@ export type PromptSet = z.infer<typeof PromptSetSchema>;
 export type PromptList = z.infer<typeof PromptListSchema>;
 export type ToolApprovalResponse = z.infer<typeof ToolApprovalResponseSchema>;
 export type PreflightApproval = z.infer<typeof PreflightApprovalSchema>;
+export type TerminalSnapshot = z.infer<typeof TerminalSnapshotSchema>;
+export type TerminalControlGrant = z.infer<typeof TerminalControlGrantSchema>;
+export type TerminalControlRevoke = z.infer<typeof TerminalControlRevokeSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -393,6 +421,21 @@ const FailureDetectedSchema = z.object({
 	affectedTool: z.string().optional(),
 });
 
+// ── Terminal Server Messages ──────────────────────────────────────────
+
+const TerminalInputSchema = z.object({
+	type: z.literal("terminal.input"),
+	requestId: z.string(),
+	data: z.string(),
+});
+
+const TerminalProxyStartSchema = z.object({
+	type: z.literal("terminal.proxy.start"),
+	requestId: z.string(),
+	command: z.string(),
+	args: z.array(z.string()).optional(),
+});
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ChatStreamStartSchema,
 	ChatStreamDeltaSchema,
@@ -414,6 +457,8 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ToolApprovalRequestSchema,
 	PreflightChecklistSchema,
 	FailureDetectedSchema,
+	TerminalInputSchema,
+	TerminalProxyStartSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -437,3 +482,5 @@ export type ToolResultNotify = z.infer<typeof ToolResultNotifySchema>;
 export type ToolApprovalRequest = z.infer<typeof ToolApprovalRequestSchema>;
 export type PreflightChecklist = z.infer<typeof PreflightChecklistSchema>;
 export type FailureDetected = z.infer<typeof FailureDetectedSchema>;
+export type TerminalInput = z.infer<typeof TerminalInputSchema>;
+export type TerminalProxyStart = z.infer<typeof TerminalProxyStartSchema>;
