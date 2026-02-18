@@ -73,16 +73,22 @@ This walks you through:
 
 1. Choosing a security mode (Full Control or Limited Control)
 2. Adding API keys (stored in macOS Keychain, not on disk)
-3. Creating `~/.config/tek/config.json`
-4. Generating an auth token
+3. Selecting a default model from the full provider catalog (with recommendations marked)
+4. Configuring model aliases (fast, balanced, premium)
+5. Creating `~/.config/tek/config.json`
+6. Generating an auth token
+
+Already set up? Running `tek init` again lets you skip any step that already has a value -- just select "Keep current" to move on.
 
 ### Start the gateway
 
 ```bash
-# Terminal 1:
-node ~/tek/packages/gateway/dist/index.js
-# You should see: gateway listening on 127.0.0.1:3271
+tek gateway start
 ```
+
+You should see: `gateway listening on 127.0.0.1:3271`
+
+Use `tek gateway stop` to shut it down, or `tek gateway status` to check if it's running.
 
 ### Start chatting
 
@@ -120,7 +126,7 @@ scripts/update.sh ~/tek
 After updating, restart the gateway:
 
 ```bash
-node ~/tek/packages/gateway/dist/index.js
+tek gateway start
 ```
 
 ## 3. Fresh Start (Reset)
@@ -147,16 +153,29 @@ After resetting, run onboarding again: `tek init`
 
 ## 4. Uninstalling
 
-Tek runs as a foreground process only -- no LaunchAgents, system services, or cron jobs are installed.
+The recommended way to uninstall is with the built-in command:
 
-To fully uninstall:
+```bash
+tek uninstall
+```
+
+This removes:
+
+- The install directory (`~/tek` or wherever you installed)
+- The config/data directory (`~/.config/tek/`)
+- API keys from macOS Keychain (service: `tek`)
+- The launchd plist, if present (stops daemon mode)
+
+You will be asked to type `UNINSTALL` to confirm. The command does not edit your shell profile, so remember to remove the PATH entry manually (see below).
+
+### Manual uninstall
+
+If the CLI is already deleted or broken, you can uninstall manually:
 
 1. Delete the install directory: `rm -rf ~/tek` (or wherever you installed)
 2. Delete config/data: `rm -rf ~/.config/tek`
-3. Remove from PATH (edit `~/.zshrc` or `~/.bashrc`)
-4. (Optional) Remove API keys from Keychain: `tek keys remove <provider>` before deleting, or use Keychain Access.app to find entries with service "tek"
-
-Deleting the install directory immediately stops all functionality. There are no background processes to clean up.
+3. Remove API keys from Keychain: use Keychain Access.app to find and delete entries with service "tek"
+4. Remove from PATH: edit `~/.zshrc` or `~/.bashrc` and delete the line containing `tek/bin`
 
 ## File Locations
 
@@ -197,7 +216,7 @@ The install/update scripts build packages individually with `npx tsc` to avoid a
 These are native modules compiled for your platform. The install script copies the pre-built binaries from the source repo's node_modules. If you change Node.js versions, re-run the install or update script to rebuild.
 
 **Gateway won't start after update:**
-Check that the update script ran successfully. Look for errors in the build output. Try `node ~/tek/packages/gateway/dist/index.js 2>&1` to see startup errors.
+Check that the update script ran successfully. Look for errors in the build output. Try `tek gateway start 2>&1` to see startup errors.
 
 **Memory files not found:**
 On first run after the Phase 11 update, memory files auto-migrate from the old location (inside the package tree) to `~/.config/tek/memory/`. If you see a migration notice on stderr, this is expected and only happens once.
