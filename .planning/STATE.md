@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 14 of 14 (CLI & Setup Polish)
-Plan: 1 of 2 in current phase
-Status: Plan 14-01 complete -- gateway subcommand and uninstall command
-Last activity: 2026-02-18 - Completed 14-01: Gateway subcommand & uninstall
+Plan: 2 of 2 in current phase
+Status: Phase 14 complete -- all plans executed
+Last activity: 2026-02-18 - Completed 14-02: Full model catalog & skippable setup
 
-Progress: [████████████████████████████████████████] 97%
+Progress: [████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 34
+- Total plans completed: 35
 - Average duration: 3min
 - Total execution time: 1.25 hours
 
@@ -40,7 +40,7 @@ Progress: [███████████████████████
 | 11 | 3/3 | 7min | 2min |
 | 12 | 2/2 | 6min | 3min |
 | 13 | 2/2 | 8min | 4min |
-| 14 | 1/2 | 2min | 2min |
+| 14 | 2/2 | 4min | 2min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -52,6 +52,7 @@ Progress: [███████████████████████
 | Phase 13 P01 | 2min | 2 tasks | 68 files |
 | Phase 13 P02 | 6min | 2 tasks | 23 files |
 | Phase 14 P01 | 2min | 2 tasks | 5 files |
+| Phase 14 P02 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,10 @@ Recent decisions affecting current work:
 - [Phase 14]: [14-01]: Derive install dir at runtime via realpathSync(process.argv[1]) with ~/tek fallback
 - [Phase 14]: [14-01]: Uninstall uses readline createInterface for UNINSTALL confirmation prompt
 - [Phase 14]: [14-01]: Uninstall prints PATH removal instructions rather than editing shell profile
+- [Phase 14]: [14-02]: Star prefix for recommended models in Select UI (e.g. "★ Llama 3.3 70B (low-cost)")
+- [Phase 14]: [14-02]: Provider-qualified model IDs as Select values consistent with gateway model resolution
+- [Phase 14]: [14-02]: buildAvailableModels merges newly-entered keys with existingConfig.configuredProviders
+- [Phase 14]: [14-02]: Alias "keep" command preserves all existing aliases at once
 
 ### Roadmap Evolution
 
@@ -239,5 +244,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 14-01-PLAN.md (gateway subcommand & uninstall)
+Stopped at: Completed 14-02-PLAN.md (full model catalog & skippable setup)
 Resume file: None
