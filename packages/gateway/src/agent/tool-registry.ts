@@ -20,6 +20,8 @@ import {
 	createStabilityImageGenTool,
 	createGoogleAuth,
 	createGoogleWorkspaceTools,
+	createVeniceImageTool,
+	createVeniceVideoTool,
 } from "../skills/index.js";
 
 const logger = createLogger("tool-registry");
@@ -34,6 +36,7 @@ export interface ToolRegistryOptions {
 	openaiApiKey?: string;
 	stabilityApiKey?: string;
 	googleAuth?: { clientId: string; clientSecret: string; refreshToken: string };
+	veniceApiKey?: string;
 }
 
 /**
@@ -54,6 +57,7 @@ export async function buildToolRegistry(
 		openaiApiKey,
 		stabilityApiKey,
 		googleAuth,
+		veniceApiKey,
 	} = options;
 
 	const tools: Record<string, unknown> = {};
@@ -187,6 +191,36 @@ export async function buildToolRegistry(
 			approvalPolicy.perTool[stabilityImageGenName] = "session";
 		}
 		systemSkillCount++;
+	}
+
+	if (veniceApiKey) {
+		const veniceImageGen = createVeniceImageTool(veniceApiKey);
+		const veniceImageGenName = "venice_image_generate";
+		tools[veniceImageGenName] = approvalPolicy
+			? wrapToolWithApproval(
+					veniceImageGenName,
+					veniceImageGen as unknown as Record<string, unknown>,
+					approvalPolicy,
+				)
+			: veniceImageGen;
+		if (approvalPolicy) {
+			approvalPolicy.perTool[veniceImageGenName] = "session";
+		}
+
+		const veniceVideoGen = createVeniceVideoTool(veniceApiKey);
+		const veniceVideoGenName = "venice_video_generate";
+		tools[veniceVideoGenName] = approvalPolicy
+			? wrapToolWithApproval(
+					veniceVideoGenName,
+					veniceVideoGen as unknown as Record<string, unknown>,
+					approvalPolicy,
+				)
+			: veniceVideoGen;
+		if (approvalPolicy) {
+			approvalPolicy.perTool[veniceVideoGenName] = "session";
+		}
+
+		systemSkillCount += 2;
 	}
 
 	if (systemSkillCount > 0) {

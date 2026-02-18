@@ -49,6 +49,7 @@ import {
 import type { PreflightApproval } from "./protocol.js";
 import { MCPClientManager } from "../mcp/client-manager.js";
 import { loadMCPConfigs } from "../mcp/config.js";
+import { getKey } from "@agentspace/cli/vault";
 
 const logger = createLogger("ws-handlers");
 
@@ -313,6 +314,8 @@ export async function handleChatSend(
 					securityMode: config.securityMode ?? "limited-control",
 					workspaceDir: config.workspaceDir,
 					approvalPolicy,
+					openaiApiKey: getKey("openai") ?? undefined,
+					veniceApiKey: getKey("venice") ?? undefined,
 				});
 				connState.tools = tools;
 			}
