@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, copyFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONFIG_DIR } from "@tek/core";
+import { CONFIG_DIR, CONFIG_DIR_NAME } from "@tek/core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -40,7 +40,7 @@ export function ensureMemoryFile(subpath: string, templateFilename: string | nul
 	const oldPath = resolve(TEMPLATE_DIR, templateFilename);
 	if (existsSync(oldPath)) {
 		copyFileSync(oldPath, targetPath);
-		console.error(`[agentspace] Migrated ${templateFilename} to ~/.config/agentspace/memory/`);
+		console.error(`[tek] Migrated ${templateFilename} to ~/.config/${CONFIG_DIR_NAME}/memory/`);
 		return targetPath;
 	}
 

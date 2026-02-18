@@ -141,7 +141,7 @@ export function useSlashCommands() {
 					return {
 						handled: true,
 						message: systemMessage(
-							"Tool system is active. Tools are loaded from your agentspace.json configuration.\n" +
+							"Tool system is active. Tools are loaded from your tek.json configuration.\n" +
 								"Built-in tools: bash, read_file, write_file, list_files\n" +
 								"MCP tools: loaded from configured MCP servers\n" +
 								"Use /approve <toolName> <tier> to set approval preferences.",

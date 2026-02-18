@@ -32,7 +32,7 @@ export type {
 
 export { generateAuthToken } from "./crypto/index.js";
 
-export { AgentSpaceError, ConfigError, VaultError, AuthError } from "./errors.js";
+export { TekError, AgentSpaceError, ConfigError, VaultError, AuthError } from "./errors.js";
 
 export { createLogger } from "./logger.js";
 

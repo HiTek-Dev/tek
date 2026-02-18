@@ -5,6 +5,8 @@ import {
 	saveConfig,
 	configExists,
 	type SecurityMode,
+	CLI_COMMAND,
+	DISPLAY_NAME,
 } from "@tek/core";
 import { recordAuditEvent } from "@tek/db";
 import { getOrCreateAuthToken } from "../vault/index.js";
@@ -12,7 +14,7 @@ import { keychainSet } from "../vault/keychain.js";
 import { generateAuthToken } from "@tek/core";
 
 export const configCommand = new Command("config").description(
-	"View and manage AgentSpace configuration",
+	`View and manage ${DISPLAY_NAME} configuration`,
 );
 
 configCommand
@@ -22,7 +24,7 @@ configCommand
 		if (!configExists()) {
 			console.log(
 				chalk.yellow(
-					'AgentSpace is not configured. Run "agentspace init" first.',
+					`${DISPLAY_NAME} is not configured. Run "${CLI_COMMAND} init" first.`,
 				),
 			);
 			return;
@@ -34,7 +36,7 @@ configCommand
 			return;
 		}
 
-		console.log("\n" + chalk.bold("AgentSpace Configuration") + "\n");
+		console.log("\n" + chalk.bold(`${DISPLAY_NAME} Configuration`) + "\n");
 		console.log(
 			`  Security mode:      ${chalk.cyan(config.securityMode === "full-control" ? "Full Control" : "Limited Control")}`,
 		);
@@ -66,7 +68,7 @@ configCommand
 			if (!configExists()) {
 				console.log(
 					chalk.yellow(
-						'AgentSpace is not configured. Run "agentspace init" first.',
+						`${DISPLAY_NAME} is not configured. Run "${CLI_COMMAND} init" first.`,
 					),
 				);
 				return;

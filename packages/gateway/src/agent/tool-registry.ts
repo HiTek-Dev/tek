@@ -1,4 +1,4 @@
-import { createLogger, getSkillsDirs, type SecurityMode } from "@tek/core";
+import { createLogger, getSkillsDirs, type SecurityMode, PROJECT_NAME, CONFIG_DIR_NAME } from "@tek/core";
 import type { MCPServerConfig } from "@tek/core";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
@@ -104,14 +104,14 @@ export async function buildToolRegistry(
 	// 4. Add skill authoring tools
 	const sandboxDir = join(
 		tmpdir(),
-		`agentspace-skill-sandbox-${randomUUID()}`,
+		`${PROJECT_NAME}-skill-sandbox-${randomUUID()}`,
 	);
 	const skillsDirs = getSkillsDirs({
 		workspaceDir,
 	});
 	const workspaceSkillsDir =
 		skillsDirs.workspace ??
-		join(homedir(), ".config", "agentspace", "skills");
+		join(homedir(), ".config", CONFIG_DIR_NAME, "skills");
 
 	const skillDraft = createSkillDraftTool(sandboxDir);
 	tools.skill_draft = approvalPolicy

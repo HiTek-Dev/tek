@@ -1,6 +1,6 @@
 import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { createLogger, type MCPServerConfig } from "@tek/core";
+import { createLogger, type MCPServerConfig, PROJECT_NAME } from "@tek/core";
 
 const logger = createLogger("mcp");
 
@@ -71,7 +71,7 @@ export class MCPClientManager {
 			});
 			return createMCPClient({
 				transport,
-				name: `agentspace-${serverName}`,
+				name: `${PROJECT_NAME}-${serverName}`,
 			});
 		}
 
@@ -82,7 +82,7 @@ export class MCPClientManager {
 			);
 			return createMCPClient({
 				transport: { type, url: config.url },
-				name: `agentspace-${serverName}`,
+				name: `${PROJECT_NAME}-${serverName}`,
 			});
 		}
 

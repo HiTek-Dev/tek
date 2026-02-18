@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { Select, TextInput, ConfirmInput } from "@inkjs/ui";
-import type { SecurityMode } from "@tek/core";
+import { type SecurityMode, DISPLAY_NAME, CLI_COMMAND } from "@tek/core";
 import type { Provider } from "../vault/index.js";
 import { PROVIDERS } from "../vault/index.js";
 
@@ -38,11 +38,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text bold color="cyan">
-					Welcome to AgentSpace
+					Welcome to {DISPLAY_NAME}
 				</Text>
 				<Text />
 				<Text>
-					AgentSpace is a self-hosted AI agent platform that keeps your
+					{DISPLAY_NAME} is a self-hosted AI agent platform that keeps your
 				</Text>
 				<Text>
 					credentials secure and gives you full control over agent behavior.
@@ -112,7 +112,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 			<Box flexDirection="column" padding={1}>
 				<Text bold>Would you like to add an API key now?</Text>
 				<Text dimColor>
-					You can always add keys later with: agentspace keys add
+					You can always add keys later with: {CLI_COMMAND} keys add
 				</Text>
 				<Text />
 				<ConfirmInput
@@ -256,10 +256,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 				Setup complete!
 			</Text>
 			<Text>
-				Run <Text bold>agentspace keys list</Text> to see your configured keys.
+				Run <Text bold>{CLI_COMMAND} keys list</Text> to see your configured keys.
 			</Text>
 			<Text>
-				Run <Text bold>agentspace config show</Text> to view your settings.
+				Run <Text bold>{CLI_COMMAND} config show</Text> to view your settings.
 			</Text>
 		</Box>
 	);

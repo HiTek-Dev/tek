@@ -1,6 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { getKey } from "@tek/cli/vault";
-import { createLogger } from "@tek/core";
+import { createLogger, CLI_COMMAND } from "@tek/core";
 
 const logger = createLogger("llm-provider");
 
@@ -15,7 +15,7 @@ export function getAnthropicProvider(): ReturnType<typeof createAnthropic> {
 	const apiKey = getKey("anthropic");
 	if (!apiKey) {
 		throw new Error(
-			"Anthropic API key not configured. Run: agentspace keys add anthropic",
+			`Anthropic API key not configured. Run: ${CLI_COMMAND} keys add anthropic`,
 		);
 	}
 

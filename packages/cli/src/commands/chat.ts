@@ -3,6 +3,7 @@ import React from "react";
 import { render } from "ink";
 import WebSocket from "ws";
 import { nanoid } from "nanoid";
+import { CLI_COMMAND } from "@tek/core";
 import { discoverGateway } from "../lib/discovery.js";
 import { Chat } from "../components/Chat.js";
 import { runPtyProxy } from "../lib/pty-proxy.js";
@@ -120,7 +121,7 @@ export const chatCommand = new Command("chat")
 				}
 
 				console.log(`\n${label} Process exited with code ${exitCode}`);
-				console.log("Type 'agentspace chat' to resume your session.\n");
+				console.log(`Type '${CLI_COMMAND} chat' to resume your session.\n`);
 				process.exit(exitCode);
 			} else {
 				// Standard proxy mode (no agent observation)
@@ -129,7 +130,7 @@ export const chatCommand = new Command("chat")
 					args: pendingProxy.args,
 				});
 				console.log(`\n[proxy] Process exited with code ${exitCode}`);
-				console.log("Type 'agentspace chat' to resume your session.\n");
+				console.log(`Type '${CLI_COMMAND} chat' to resume your session.\n`);
 				process.exit(exitCode);
 			}
 		}

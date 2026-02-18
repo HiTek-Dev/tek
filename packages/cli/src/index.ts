@@ -2,7 +2,10 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import { configExists } from "@tek/core";
+import { existsSync, renameSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+import { configExists, CLI_COMMAND, DISPLAY_NAME, CONFIG_DIR_NAME } from "@tek/core";
 import { keysCommand } from "./commands/keys.js";
 import { initCommand } from "./commands/init.js";
 import { configCommand } from "./commands/config.js";
@@ -10,13 +13,25 @@ import { auditCommand } from "./commands/audit.js";
 import { chatCommand } from "./commands/chat.js";
 import { discoverGateway } from "./lib/discovery.js";
 
+// Migrate config from old location if present
+const oldConfigDir = join(homedir(), ".config", "agentspace");
+const newConfigDir = join(homedir(), ".config", CONFIG_DIR_NAME);
+if (existsSync(oldConfigDir) && !existsSync(newConfigDir)) {
+	renameSync(oldConfigDir, newConfigDir);
+	const oldDb = join(newConfigDir, "agentspace.db");
+	if (existsSync(oldDb)) {
+		renameSync(oldDb, join(newConfigDir, "tek.db"));
+	}
+	console.log("Migrated config from ~/.config/agentspace to ~/.config/tek");
+}
+
 const program = new Command();
 
 program
-	.name("agentspace")
+	.name(CLI_COMMAND)
 	.version("0.1.0")
 	.description(
-		"AgentSpace - A self-hosted AI agent platform with secure credential management",
+		`${DISPLAY_NAME} - A self-hosted AI agent platform with secure credential management`,
 	);
 
 program.addCommand(keysCommand);
@@ -30,7 +45,7 @@ program.action(async () => {
 	if (!configExists()) {
 		console.log(
 			chalk.yellow(
-				'AgentSpace is not configured. Run "agentspace init" to get started.',
+				`${DISPLAY_NAME} is not configured. Run "${CLI_COMMAND} init" to get started.`,
 			),
 		);
 		return;
@@ -43,7 +58,7 @@ program.action(async () => {
 				"Gateway is not running. Start the gateway first, then use:",
 			),
 		);
-		console.log(chalk.cyan("  agentspace chat"));
+		console.log(chalk.cyan(`  ${CLI_COMMAND} chat`));
 		console.log();
 		program.help();
 		return;

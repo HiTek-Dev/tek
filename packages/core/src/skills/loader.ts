@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createLogger } from "../logger.js";
+import { CONFIG_DIR_NAME } from "../config/constants.js";
 import { SkillMetadataSchema } from "./types.js";
 import type { LoadedSkill, SkillTier } from "./types.js";
 
@@ -47,10 +48,10 @@ export function getSkillsDirs(config: {
 }): { workspace?: string; managed?: string } {
 	const managed = config.skillsDir
 		? config.skillsDir
-		: join(homedir(), ".config", "agentspace", "skills");
+		: join(homedir(), ".config", CONFIG_DIR_NAME, "skills");
 
 	const workspace = config.workspaceDir
-		? join(config.workspaceDir, ".agentspace", "skills")
+		? join(config.workspaceDir, `.${CONFIG_DIR_NAME}`, "skills")
 		: undefined;
 
 	return { workspace, managed };

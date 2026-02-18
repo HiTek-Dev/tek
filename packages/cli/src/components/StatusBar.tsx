@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { DISPLAY_NAME } from "@tek/core";
 
 interface StatusBarProps {
 	connected: boolean;
@@ -34,7 +35,7 @@ export function StatusBar({ connected, sessionId, model, usage }: StatusBarProps
 				<Text color={connected ? "green" : "red"}>
 					{"● "}
 				</Text>
-				<Text bold>AgentSpace</Text>
+				<Text bold>{DISPLAY_NAME}</Text>
 			</Box>
 			<Text dimColor>{sessionDisplay}</Text>
 			<Box>

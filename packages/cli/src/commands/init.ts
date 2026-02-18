@@ -9,6 +9,7 @@ import {
 	configExists,
 	saveConfig,
 	type AppConfig,
+	DISPLAY_NAME,
 } from "@tek/core";
 import { recordAuditEvent } from "@tek/db";
 import { Onboarding } from "../components/Onboarding.js";
@@ -41,11 +42,11 @@ function confirmPrompt(message: string): Promise<boolean> {
 }
 
 export const initCommand = new Command("init")
-	.description("Set up AgentSpace for first use")
+	.description(`Set up ${DISPLAY_NAME} for first use`)
 	.action(async () => {
 		// Check if already configured
 		if (configExists()) {
-			console.log(chalk.yellow("AgentSpace is already configured."));
+			console.log(chalk.yellow(`${DISPLAY_NAME} is already configured.`));
 			const rerun = await confirmPrompt(
 				"Re-run setup? (existing API keys will be preserved)",
 			);

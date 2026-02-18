@@ -1,4 +1,5 @@
 import type { Bot, CommandContext, Context } from "grammy";
+import { DISPLAY_NAME, CLI_COMMAND } from "@tek/core";
 import { getPairedUser, generatePairingCode } from "../auth/pairing.js";
 
 /**
@@ -18,14 +19,14 @@ async function handleStart(ctx: CommandContext<Context>): Promise<void> {
 
 	if (paired && paired.active) {
 		await ctx.reply(
-			"You're connected to AgentSpace. Send a message to chat with your agent.",
+			`You're connected to ${DISPLAY_NAME}. Send a message to chat with your agent.`,
 		);
 		return;
 	}
 
 	const code = generatePairingCode(chatId, ctx.from?.username ?? null);
 	await ctx.reply(
-		`Welcome to AgentSpace! Your pairing code is: <code>${code}</code>\n\nEnter this code in your CLI: agentspace pair telegram ${code}\n\nCode expires in 1 hour.`,
+		`Welcome to ${DISPLAY_NAME}! Your pairing code is: <code>${code}</code>\n\nEnter this code in your CLI: ${CLI_COMMAND} pair telegram ${code}\n\nCode expires in 1 hour.`,
 		{ parse_mode: "HTML" },
 	);
 }
@@ -37,7 +38,7 @@ async function handlePair(ctx: CommandContext<Context>): Promise<void> {
 	const chatId = ctx.chat.id;
 	const code = generatePairingCode(chatId, ctx.from?.username ?? null);
 	await ctx.reply(
-		`Your pairing code is: <code>${code}</code>\n\nEnter this code in your CLI: agentspace pair telegram ${code}\n\nCode expires in 1 hour.`,
+		`Your pairing code is: <code>${code}</code>\n\nEnter this code in your CLI: ${CLI_COMMAND} pair telegram ${code}\n\nCode expires in 1 hour.`,
 		{ parse_mode: "HTML" },
 	);
 }
