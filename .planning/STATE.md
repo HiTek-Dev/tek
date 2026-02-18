@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 12 in progress -- Expanded Providers
+**Current focus:** Phase 12 complete -- Expanded Providers
 
 ## Current Position
 
 Phase: 12 of 12 (Expanded Providers)
-Plan: 1 of 2 in current phase (12-01 complete)
-Status: Completed 12-01 (Extended provider registry with Venice, Google, configurable Ollama)
-Last activity: 2026-02-18 - Completed 12-01-PLAN.md
+Plan: 2 of 2 in current phase (12-02 complete)
+Status: Completed 12-02 (Venice skills and provider integration)
+Last activity: 2026-02-18 - Completed 12-02-PLAN.md
 
-Progress: [████████████████████████████████████████] ~97%
+Progress: [████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30
+- Total plans completed: 31
 - Average duration: 3min
 - Total execution time: 1.15 hours
 
@@ -38,7 +38,7 @@ Progress: [███████████████████████
 | 09 | 4/4 | 12min | 3min |
 | 10 | 4/4 | 7min | 2min |
 | 11 | 3/3 | 7min | 2min |
-| 12 | 1/2 | 3min | 3min |
+| 12 | 2/2 | 6min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -46,6 +46,7 @@ Progress: [███████████████████████
 
 *Updated after each plan completion*
 | Phase 12 P01 | 3min | 2 tasks | 7 files |
+| Phase 12 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -191,6 +192,10 @@ Recent decisions affecting current work:
 - [12-01]: Google Gemini uses dedicated @ai-sdk/google for native API support
 - [12-01]: Ollama endpoints configurable via ollamaEndpoints array; first keeps "ollama" name for backward compat
 - [12-01]: Venice wildcard pricing defaults to $0.50/MTok; PROVIDER_KEY_PREFIXES null for venice and google
+- [12-02]: Venice image tool uses raw fetch POST to /image/generate (same pattern as Stability AI)
+- [12-02]: Venice video tool uses two-step queue/poll pattern: /video/queue then /video/retrieve every 10s
+- [12-02]: Both Venice tools use session approval tier (paid API operations)
+- [12-02]: API keys wired from vault in handlers.ts for openai and venice providers
 
 ### Roadmap Evolution
 
@@ -214,5 +219,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 12-01-PLAN.md -- Extended provider registry
+Stopped at: Completed 12-02-PLAN.md -- Venice skills and provider integration (Phase 12 complete)
 Resume file: None
