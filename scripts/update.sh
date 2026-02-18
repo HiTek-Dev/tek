@@ -118,4 +118,5 @@ VEOF
 
 echo ""
 echo "Tek updated successfully."
-echo "Start with: node $INSTALL_DIR/packages/gateway/dist/index.js"
+echo "Start the gateway:"
+echo "  tek gateway start"
