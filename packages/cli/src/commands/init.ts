@@ -7,13 +7,14 @@ import React from "react";
 import { render } from "ink";
 import {
 	configExists,
+	loadConfig,
 	saveConfig,
 	type AppConfig,
 	DISPLAY_NAME,
 } from "@tek/core";
 import { recordAuditEvent } from "@tek/db";
 import { Onboarding } from "../components/Onboarding.js";
-import { addKey, getOrCreateAuthToken } from "../vault/index.js";
+import { addKey, getOrCreateAuthToken, listProviders } from "../vault/index.js";
 
 /**
  * Resolve a path that may start with ~ to an absolute path.
@@ -56,10 +57,23 @@ export const initCommand = new Command("init")
 			}
 		}
 
+		// Load existing config for skip support when re-running
+		const existing = configExists() ? loadConfig() : null;
+		const configuredProviderNames = listProviders()
+			.filter((p) => p.configured)
+			.map((p) => p.provider);
+
 		// Run onboarding wizard
 		await new Promise<void>((resolvePromise) => {
 			const { waitUntilExit } = render(
 				React.createElement(Onboarding, {
+					existingConfig: existing ? {
+						securityMode: existing.securityMode,
+						workspaceDir: existing.workspaceDir,
+						defaultModel: existing.defaultModel,
+						modelAliases: existing.modelAliases,
+						configuredProviders: configuredProviderNames,
+					} : undefined,
 					onComplete: async (result) => {
 						// Store API keys
 						for (const { provider, key } of result.keys) {

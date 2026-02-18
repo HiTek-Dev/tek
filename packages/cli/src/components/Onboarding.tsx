@@ -4,6 +4,7 @@ import { Select, TextInput, ConfirmInput } from "@inkjs/ui";
 import { type SecurityMode, DISPLAY_NAME, CLI_COMMAND } from "@tek/core";
 import type { Provider } from "../vault/index.js";
 import { PROVIDERS } from "../vault/index.js";
+import { buildModelOptions } from "../lib/models.js";
 
 type OnboardingStep =
 	| "welcome"
@@ -18,18 +19,6 @@ type OnboardingStep =
 	| "summary"
 	| "done";
 
-/** Well-known models per provider for the selection step. */
-const PROVIDER_MODELS: Record<string, string[]> = {
-	anthropic: [
-		"claude-sonnet-4-5-20250929",
-		"claude-haiku-4-5-20250929",
-		"claude-opus-4-5-20250929",
-	],
-	openai: ["gpt-4o", "gpt-4o-mini", "o3-mini"],
-	venice: ["minimax-01", "llama-3.3-70b", "dolphin-2.9.2-qwen2-72b"],
-	google: ["gemini-2.5-pro-preview-05-06", "gemini-2.0-flash"],
-};
-
 interface ModelAliasEntry {
 	alias: string;
 	modelId: string;
@@ -43,38 +32,45 @@ export interface OnboardingResult {
 	modelAliases?: ModelAliasEntry[];
 }
 
-interface OnboardingProps {
+export interface OnboardingProps {
 	onComplete: (result: OnboardingResult) => void;
+	existingConfig?: {
+		securityMode?: SecurityMode;
+		workspaceDir?: string;
+		defaultModel?: string;
+		modelAliases?: ModelAliasEntry[];
+		configuredProviders?: string[];
+	};
 }
 
-export function Onboarding({ onComplete }: OnboardingProps) {
+export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	const [step, setStep] = useState<OnboardingStep>("welcome");
-	const [mode, setMode] = useState<SecurityMode>("full-control");
-	const [workspaceDir, setWorkspaceDir] = useState("");
+	const [mode, setMode] = useState<SecurityMode>(existingConfig?.securityMode ?? "full-control");
+	const [workspaceDir, setWorkspaceDir] = useState(existingConfig?.workspaceDir ?? "");
 	const [keys, setKeys] = useState<{ provider: Provider; key: string }[]>([]);
 	const [currentProvider, setCurrentProvider] = useState<Provider>("anthropic");
 	const [currentKey, setCurrentKey] = useState("");
 
 	// Model selection state
-	const [defaultModel, setDefaultModel] = useState<string>("");
-	const [modelAliases, setModelAliases] = useState<ModelAliasEntry[]>([]);
+	const [defaultModel, setDefaultModel] = useState<string>(existingConfig?.defaultModel ?? "");
+	const [modelAliases, setModelAliases] = useState<ModelAliasEntry[]>(existingConfig?.modelAliases ?? []);
 	const [availableModels, setAvailableModels] = useState<
 		Array<{ label: string; value: string }>
 	>([]);
 	const [aliasIndex, setAliasIndex] = useState(0);
 
-	/** Build the list of available models based on configured providers. */
+	/** Build the list of available models from the full catalog for configured providers. */
 	function buildAvailableModels(): Array<{ label: string; value: string }> {
-		const configuredProviders = keys.map((k) => k.provider);
-		const models: Array<{ label: string; value: string }> = [];
-		for (const provider of configuredProviders) {
-			const providerModels = PROVIDER_MODELS[provider];
-			if (providerModels) {
-				for (const model of providerModels) {
-					const qualified = `${provider}:${model}`;
-					models.push({ label: qualified, value: qualified });
-				}
+		// Use providers from both newly-entered keys and pre-existing config
+		const providerSet = new Set<string>(keys.map((k) => k.provider));
+		if (existingConfig?.configuredProviders) {
+			for (const p of existingConfig.configuredProviders) {
+				providerSet.add(p);
 			}
+		}
+		const models: Array<{ label: string; value: string }> = [];
+		for (const provider of providerSet) {
+			models.push(...buildModelOptions(provider));
 		}
 		return models;
 	}
@@ -103,29 +99,39 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 	}
 
 	if (step === "mode") {
+		const modeOptions: Array<{ label: string; value: string }> = [];
+		if (existingConfig?.securityMode) {
+			const currentLabel = existingConfig.securityMode === "full-control" ? "Full Control" : "Limited Control";
+			modeOptions.push({ label: `Keep current: ${currentLabel}`, value: "__keep__" });
+		}
+		modeOptions.push(
+			{
+				label: "Full Control \u2014 OS-level access with explicit permission grants per capability",
+				value: "full-control",
+			},
+			{
+				label: "Limited Control \u2014 Agent restricted to a designated workspace directory",
+				value: "limited-control",
+			},
+		);
+
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text bold>Choose your security mode:</Text>
 				<Text />
 				<Select
-					options={[
-						{
-							label:
-								"Full Control \u2014 OS-level access with explicit permission grants per capability",
-							value: "full-control" as const,
-						},
-						{
-							label:
-								"Limited Control \u2014 Agent restricted to a designated workspace directory",
-							value: "limited-control" as const,
-						},
-					]}
+					options={modeOptions}
 					onChange={(value) => {
-						setMode(value as SecurityMode);
-						if (value === "limited-control") {
-							setStep("workspace");
-						} else {
+						if (value === "__keep__") {
+							// Preserve existing mode and skip workspace
 							setStep("keys-ask");
+						} else {
+							setMode(value as SecurityMode);
+							if (value === "limited-control") {
+								setStep("workspace");
+							} else {
+								setStep("keys-ask");
+							}
 						}
 					}}
 				/>
@@ -153,9 +159,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 	}
 
 	if (step === "keys-ask") {
+		const hasExistingProviders = existingConfig?.configuredProviders && existingConfig.configuredProviders.length > 0;
 		return (
 			<Box flexDirection="column" padding={1}>
-				<Text bold>Would you like to add an API key now?</Text>
+				{hasExistingProviders && (
+					<Text>Currently configured: <Text bold>{existingConfig!.configuredProviders!.join(", ")}</Text></Text>
+				)}
+				<Text bold>{hasExistingProviders ? "Would you like to change API keys?" : "Would you like to add an API key now?"}</Text>
 				<Text dimColor>
 					You can always add keys later with: {CLI_COMMAND} keys add
 				</Text>
@@ -163,8 +173,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 				<ConfirmInput
 					onConfirm={() => setStep("keys-provider")}
 					onCancel={() => {
-						// No keys configured, skip model selection
-						setStep("summary");
+						// Skip keys -- move to model selection if providers are configured
+						const models = buildAvailableModels();
+						if (models.length > 0) {
+							setAvailableModels(models);
+							setStep("model-select");
+						} else {
+							setStep("summary");
+						}
 					}}
 				/>
 			</Box>
@@ -273,13 +289,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 	}
 
 	if (step === "model-select") {
-		const options = [
+		const options: Array<{ label: string; value: string }> = [];
+		if (existingConfig?.defaultModel) {
+			options.push({ label: `Keep current: ${existingConfig.defaultModel}`, value: "__keep__" });
+		}
+		options.push(
 			...availableModels,
-			{
-				label: "Skip -- use first available",
-				value: "__skip__",
-			},
-		];
+			{ label: "Skip -- use first available", value: "__skip__" },
+		);
 
 		return (
 			<Box flexDirection="column" padding={1}>
@@ -291,7 +308,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 				<Select
 					options={options}
 					onChange={(value) => {
-						if (value !== "__skip__") {
+						if (value === "__keep__") {
+							setDefaultModel(existingConfig!.defaultModel!);
+						} else if (value !== "__skip__") {
 							setDefaultModel(value);
 						} else if (availableModels.length > 0) {
 							// Use the first available model as default
@@ -322,7 +341,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 				</Text>
 				<Text dimColor>
 					Type a short name (e.g. "sonnet") or press Enter to skip. Type "done"
-					to skip remaining.
+					to skip remaining.{existingConfig?.modelAliases && existingConfig.modelAliases.length > 0 ? ' Type "keep" to preserve existing aliases.' : ""}
 				</Text>
 				{modelAliases.length > 0 && (
 					<Box flexDirection="column" marginTop={1}>
@@ -340,6 +359,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 					onSubmit={(value) => {
 						const trimmed = value.trim();
 						if (trimmed.toLowerCase() === "done") {
+							setStep("summary");
+							return;
+						}
+						if (trimmed.toLowerCase() === "keep" && existingConfig?.modelAliases) {
+							setModelAliases(existingConfig.modelAliases);
 							setStep("summary");
 							return;
 						}
