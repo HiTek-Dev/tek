@@ -12,7 +12,7 @@
 ### Clone the source repo
 
 ```bash
-git clone https://github.com/hitekmedia/tek.git
+git clone https://github.com/HiTek-Dev/tek.git
 cd tek
 ```
 
@@ -25,6 +25,7 @@ scripts/install.sh ~/tek
 This builds from source and deploys to `~/tek`. You can specify any directory.
 
 **What the script does:**
+
 1. Checks Node.js >= 22 and pnpm are available
 2. Runs `pnpm install` in the source repo
 3. Builds all 5 packages with a two-pass strategy (gateway pass 1 -> cli -> gateway pass 2) to resolve the cli<->gateway cyclic dependency
@@ -37,12 +38,30 @@ This builds from source and deploys to `~/tek`. You can specify any directory.
 
 ### Add to your PATH
 
+Add the following line to your shell profile so the `tek` command is available in every new terminal:
+
+**For zsh (default on macOS):**
+
 ```bash
-# Add to ~/.zshrc or ~/.bashrc:
-export PATH="$HOME/tek/bin:$PATH"
+echo 'export PATH="$HOME/tek/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-Then reload your shell: `source ~/.zshrc`
+**For bash:**
+
+```bash
+echo 'export PATH="$HOME/tek/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+To verify it worked, open a **new** terminal and run:
+
+```bash
+which tek
+# Should output: /Users/<you>/tek/bin/tek
+```
+
+If you installed to a custom directory, replace `$HOME/tek` with your install path.
 
 ### Run onboarding
 
@@ -51,6 +70,7 @@ tek init
 ```
 
 This walks you through:
+
 1. Choosing a security mode (Full Control or Limited Control)
 2. Adding API keys (stored in macOS Keychain, not on disk)
 3. Creating `~/.config/tek/config.json`
@@ -82,6 +102,7 @@ scripts/update.sh ~/tek
 ```
 
 **What the script does:**
+
 1. Checks the install directory exists (errors if not -- run install.sh first)
 2. Stops the gateway if it's running (reads PID from `~/.config/tek/runtime.json`)
 3. Runs `pnpm install` and rebuilds all packages from source
@@ -90,12 +111,14 @@ scripts/update.sh ~/tek
 6. Updates `.version` file (preserves original `installedAt` date, updates `updatedAt`)
 
 **What it does NOT touch:**
+
 - `~/.config/tek/config.json` (your settings)
 - `~/.config/tek/tek.db` (your conversations, threads, memories)
 - `~/.config/tek/memory/` (SOUL.md, MEMORY.md, daily logs)
 - macOS Keychain entries (API keys)
 
 After updating, restart the gateway:
+
 ```bash
 node ~/tek/packages/gateway/dist/index.js
 ```
@@ -109,12 +132,14 @@ scripts/reset.sh
 ```
 
 **What it does:**
+
 1. Shows a warning listing everything that will be deleted
 2. Requires you to type `RESET` to confirm (any other input cancels)
 3. Stops the gateway if running
 4. Removes the entire `~/.config/tek/` directory
 
 **What it does NOT remove:**
+
 - The installed code (`~/tek/` stays intact)
 - API keys in macOS Keychain (remove manually with `tek keys remove <provider>`)
 
@@ -135,18 +160,18 @@ Deleting the install directory immediately stops all functionality. There are no
 
 ## File Locations
 
-| What | Where |
-|------|-------|
-| Installed code | `~/tek/` (or your chosen directory) |
-| Config file | `~/.config/tek/config.json` |
-| SQLite database | `~/.config/tek/tek.db` |
-| Personality | `~/.config/tek/memory/SOUL.md` |
-| Long-term memory | `~/.config/tek/memory/MEMORY.md` |
-| Daily logs | `~/.config/tek/memory/daily/` |
-| Runtime info | `~/.config/tek/runtime.json` (only while gateway runs) |
-| API keys | macOS Keychain (service: `tek`) |
-| Version info | `~/tek/.version` |
-| CLI binary | `~/tek/bin/tek` |
+| What             | Where                                                  |
+| ---------------- | ------------------------------------------------------ |
+| Installed code   | `~/tek/` (or your chosen directory)                    |
+| Config file      | `~/.config/tek/config.json`                            |
+| SQLite database  | `~/.config/tek/tek.db`                                 |
+| Personality      | `~/.config/tek/memory/SOUL.md`                         |
+| Long-term memory | `~/.config/tek/memory/MEMORY.md`                       |
+| Daily logs       | `~/.config/tek/memory/daily/`                          |
+| Runtime info     | `~/.config/tek/runtime.json` (only while gateway runs) |
+| API keys         | macOS Keychain (service: `tek`)                        |
+| Version info     | `~/tek/.version`                                       |
+| CLI binary       | `~/tek/bin/tek`                                        |
 
 ## Telegram Setup (Optional)
 
