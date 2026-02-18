@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 11 in progress -- Install & Update System
+**Current focus:** Phase 12 in progress -- Expanded Providers
 
 ## Current Position
 
-Phase: 11 of 11 (Install & Update System)
-Plan: 3 of 3 in current phase (all complete)
-Status: Completed 11-02 (Install & Update scripts) -- all phase 11 plans done
-Last activity: 2026-02-18 - Completed quick task 1: Fix install.sh build order
+Phase: 12 of 12 (Expanded Providers)
+Plan: 1 of 2 in current phase (12-01 complete)
+Status: Completed 12-01 (Extended provider registry with Venice, Google, configurable Ollama)
+Last activity: 2026-02-18 - Completed 12-01-PLAN.md
 
-Progress: [████████████████████████████████████████] ~100%
+Progress: [████████████████████████████████████████] ~97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
+- Total plans completed: 30
 - Average duration: 3min
-- Total execution time: 1.1 hours
+- Total execution time: 1.15 hours
 
 **By Phase:**
 
@@ -38,12 +38,14 @@ Progress: [███████████████████████
 | 09 | 4/4 | 12min | 3min |
 | 10 | 4/4 | 7min | 2min |
 | 11 | 3/3 | 7min | 2min |
+| 12 | 1/2 | 3min | 3min |
 
 **Recent Trend:**
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 12 P01 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -185,10 +187,15 @@ Recent decisions affecting current work:
 - [11-03]: Reset script does NOT delete keychain entries (stored in macOS Keychain, not filesystem)
 - [11-03]: Destructive scripts require explicit confirmation string (RESET), not just y/n
 - [11-03]: Reset exits 0 on cancellation (not an error condition)
+- [12-01]: Venice AI uses OpenAI-compatible adapter with bearer token auth (no dedicated SDK)
+- [12-01]: Google Gemini uses dedicated @ai-sdk/google for native API support
+- [12-01]: Ollama endpoints configurable via ollamaEndpoints array; first keeps "ollama" name for backward compat
+- [12-01]: Venice wildcard pricing defaults to $0.50/MTok; PROVIDER_KEY_PREFIXES null for venice and google
 
 ### Roadmap Evolution
 
 - Phase 11 added: Install & Update System — deploy to destination directory, update without destroying personality/config, fresh-start option
+- Phase 12 added: Expanded Providers — Venice AI (text/image/video), Google AI Studio (Gemini), Ollama remote/cloud hosts, provider hot-swap
 
 ### Pending Todos
 
@@ -206,6 +213,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: Completed 11-02-PLAN.md -- Install and update scripts
+Last session: 2026-02-18
+Stopped at: Completed 12-01-PLAN.md -- Extended provider registry
 Resume file: None
