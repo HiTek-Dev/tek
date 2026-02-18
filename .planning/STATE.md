@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 13 of 13 (Rebrand to tek)
 Plan: 2 of 2 in current phase
 Status: Phase 13 complete -- all plans executed
-Last activity: 2026-02-18 - Completed quick task 2: Update install docs with new tek naming
+Last activity: 2026-02-18 - Completed quick task 3: Model selection with aliases + /swap command
 
 Progress: [████████████████████████████████████████] 100%
 
@@ -226,6 +226,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 1 | Fix install.sh build order: cli must build before gateway | 2026-02-18 | 744d831 | [1-fix-install-sh-build-order-gateway-depen](./quick/1-fix-install-sh-build-order-gateway-depen/) |
 | 2 | Update install docs and source with new tek naming | 2026-02-18 | 504900a | [2-update-install-docs-with-new-tek-naming](./quick/2-update-install-docs-with-new-tek-naming/) |
+| 3 | Model selection with aliases + /swap command | 2026-02-18 | 0c8ba7c | [3-add-model-selection-with-aliases-to-setu](./quick/3-add-model-selection-with-aliases-to-setu/) |
 
 ## Session Continuity
 
