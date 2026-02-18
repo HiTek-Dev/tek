@@ -29,6 +29,13 @@ export const ToolApprovalConfigSchema = z.object({
 	approvalTimeout: z.number().default(60000),
 });
 
+export const OllamaEndpointSchema = z.object({
+	name: z.string(),
+	url: z.string().url(),
+});
+
+export type OllamaEndpoint = z.infer<typeof OllamaEndpointSchema>;
+
 export const AppConfigSchema = z.object({
 	securityMode: SecurityModeSchema,
 	workspaceDir: z.string().optional(),
@@ -38,6 +45,7 @@ export const AppConfigSchema = z.object({
 	mcpServers: z.record(z.string(), MCPServerConfigSchema).optional(),
 	toolApproval: ToolApprovalConfigSchema.optional(),
 	skillsDir: z.string().optional(),
+	ollamaEndpoints: z.array(OllamaEndpointSchema).optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;

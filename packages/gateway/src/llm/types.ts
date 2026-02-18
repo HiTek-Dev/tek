@@ -1,4 +1,4 @@
-export type ProviderName = "anthropic" | "openai" | "ollama";
+export type ProviderName = "anthropic" | "openai" | "ollama" | "venice" | "google";
 
 export type ModelTier = "high" | "standard" | "budget";
 

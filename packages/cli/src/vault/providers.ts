@@ -1,6 +1,6 @@
 import { VaultError } from "@agentspace/core";
 
-export const PROVIDERS = ["anthropic", "openai", "ollama"] as const;
+export const PROVIDERS = ["anthropic", "openai", "ollama", "venice", "google"] as const;
 
 export type Provider = (typeof PROVIDERS)[number];
 
@@ -12,6 +12,8 @@ export const PROVIDER_KEY_PREFIXES: Record<Provider, string | null> = {
 	anthropic: "sk-ant-",
 	openai: "sk-",
 	ollama: null,
+	venice: null,
+	google: null,
 };
 
 /**
