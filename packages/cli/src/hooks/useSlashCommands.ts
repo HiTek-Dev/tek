@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { nanoid } from "nanoid";
+import { loadConfig } from "@tek/core";
 import type { ClientMessage } from "@tek/gateway";
 import type { ChatMessage } from "../lib/gateway-client.js";
 import {
@@ -38,7 +39,8 @@ function systemMessage(content: string): ChatMessage {
 }
 
 const HELP_TEXT = [
-	"/model <name>    Switch model",
+	"/model <name>    Switch model (direct provider:model ID)",
+	"/swap <alias>    Switch model by alias",
 	"/session new     New session",
 	"/session list    List sessions",
 	"/context         Inspect context",
@@ -171,6 +173,53 @@ export function useSlashCommands() {
 						handled: true,
 						message: systemMessage(
 							`Approval preference set: ${toolName} -> ${tier}`,
+						),
+					};
+				}
+
+				case "swap": {
+					const alias = args.join(" ").trim();
+					if (!alias) {
+						const cfg = loadConfig();
+						const aliases = cfg?.modelAliases ?? [];
+						if (aliases.length === 0) {
+							return {
+								handled: true,
+								message: systemMessage(
+									"No model aliases configured. Run 'tek init' to set up aliases.",
+								),
+							};
+						}
+						const list = aliases
+							.map((a) => `  ${a.alias} -> ${a.modelId}`)
+							.join("\n");
+						return {
+							handled: true,
+							message: systemMessage(
+								`Available aliases:\n${list}\n\nUsage: /swap <alias>`,
+							),
+						};
+					}
+					const cfg = loadConfig();
+					const found = cfg?.modelAliases?.find(
+						(a) => a.alias.toLowerCase() === alias.toLowerCase(),
+					);
+					if (!found) {
+						const available =
+							cfg?.modelAliases?.map((a) => a.alias).join(", ") ?? "none";
+						return {
+							handled: true,
+							message: systemMessage(
+								`Unknown alias: "${alias}". Available: ${available}`,
+							),
+						};
+					}
+					return {
+						handled: true,
+						action: "model-switch",
+						modelName: found.modelId,
+						message: systemMessage(
+							`Switched to ${found.alias} (${found.modelId})`,
 						),
 					};
 				}
