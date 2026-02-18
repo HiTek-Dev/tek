@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import type { ClientMessage } from "@agentspace/gateway";
+import type { ClientMessage } from "@tek/gateway";
 
 // ── ChatMessage discriminated union ────────────────────────────────────
 

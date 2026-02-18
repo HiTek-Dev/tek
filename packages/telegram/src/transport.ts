@@ -1,9 +1,9 @@
 import { type Bot, InlineKeyboard } from "grammy";
-import type { Transport } from "@agentspace/gateway";
-import type { ServerMessage } from "@agentspace/gateway";
+import type { Transport } from "@tek/gateway";
+import type { ServerMessage } from "@tek/gateway";
 import { formatForTelegram, escapeHtml } from "./formatter.js";
 import { TelegramResponseAccumulator } from "./streaming/accumulator.js";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 
 const logger = createLogger("telegram-transport");
 

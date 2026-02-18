@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONFIG_DIR } from "@agentspace/core";
+import { CONFIG_DIR } from "@tek/core";
 import { ensureMemoryFile } from "./ensure-memory.js";
 
 /** Path to the long-term memory file */

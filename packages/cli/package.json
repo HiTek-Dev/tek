@@ -1,5 +1,5 @@
 {
-  "name": "@agentspace/cli",
+  "name": "@tek/cli",
   "version": "0.1.0",
   "type": "module",
   "bin": {
@@ -21,9 +21,9 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@agentspace/core": "workspace:*",
-    "@agentspace/db": "workspace:*",
-    "@agentspace/gateway": "workspace:^",
+    "@tek/core": "workspace:*",
+    "@tek/db": "workspace:*",
+    "@tek/gateway": "workspace:^",
     "@inkjs/ui": "^2.0.0",
     "@napi-rs/keyring": "^1.2.0",
     "chalk": "^5.0.0",

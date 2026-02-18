@@ -5,7 +5,7 @@ import {
 	discoverSkills,
 	getSkillsDirs,
 	formatSkillsForContext,
-} from "@agentspace/core";
+} from "@tek/core";
 import type { MessageRow } from "../session/types.js";
 import { getModelPricing } from "../usage/pricing.js";
 import type { ContextSection, AssembledContext } from "./types.js";

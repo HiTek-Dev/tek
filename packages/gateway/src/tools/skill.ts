@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { writeSkill } from "@agentspace/core";
+import { writeSkill } from "@tek/core";
 import { mkdirSync, copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 

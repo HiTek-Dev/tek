@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { nanoid } from "nanoid";
-import type { ClientMessage } from "@agentspace/gateway";
+import type { ClientMessage } from "@tek/gateway";
 import type { ChatMessage } from "../lib/gateway-client.js";
 import {
 	createUsageQueryMessage,

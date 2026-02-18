@@ -5,8 +5,8 @@ import {
 	searchMemories,
 	embedAndStore,
 	appendDailyLog,
-} from "@agentspace/db";
-import type { SearchResult } from "@agentspace/db";
+} from "@tek/db";
+import type { SearchResult } from "@tek/db";
 
 /**
  * Orchestrates all memory operations: context building, semantic search,

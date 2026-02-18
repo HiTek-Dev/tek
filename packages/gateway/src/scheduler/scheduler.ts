@@ -1,6 +1,6 @@
 import { Cron } from "croner";
 import type { LanguageModel } from "ai";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import { workflowEngine } from "../workflow/engine.js";
 import { HeartbeatRunner } from "./heartbeat.js";
 import type { HeartbeatCheckResult } from "./heartbeat.js";

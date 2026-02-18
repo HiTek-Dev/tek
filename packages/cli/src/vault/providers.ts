@@ -1,4 +1,4 @@
-import { VaultError } from "@agentspace/core";
+import { VaultError } from "@tek/core";
 
 export const PROVIDERS = ["anthropic", "openai", "ollama", "venice", "google"] as const;
 

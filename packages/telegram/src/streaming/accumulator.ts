@@ -1,6 +1,6 @@
 import type { Bot } from "grammy";
 import { markdownToTelegramHtml } from "../formatter.js";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 
 const logger = createLogger("telegram-accumulator");
 

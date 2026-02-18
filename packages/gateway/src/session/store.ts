@@ -1,5 +1,5 @@
 import { eq, desc, sql, count } from "drizzle-orm";
-import { getDb, sessions, messages } from "@agentspace/db";
+import { getDb, sessions, messages } from "@tek/db";
 import type { Session, SessionSummary, MessageRow } from "./types.js";
 
 /**

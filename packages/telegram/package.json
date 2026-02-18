@@ -1,5 +1,5 @@
 {
-  "name": "@agentspace/telegram",
+  "name": "@tek/telegram",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,9 +14,9 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@agentspace/core": "workspace:*",
-    "@agentspace/db": "workspace:*",
-    "@agentspace/gateway": "workspace:*",
+    "@tek/core": "workspace:*",
+    "@tek/db": "workspace:*",
+    "@tek/gateway": "workspace:*",
     "drizzle-orm": "^0.45.0",
     "grammy": "^1.40.0",
     "nanoid": "^5.1.6"

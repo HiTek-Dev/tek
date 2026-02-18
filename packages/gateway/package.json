@@ -1,5 +1,5 @@
 {
-  "name": "@agentspace/gateway",
+  "name": "@tek/gateway",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,9 +14,9 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@agentspace/cli": "workspace:*",
-    "@agentspace/core": "workspace:*",
-    "@agentspace/db": "workspace:*",
+    "@tek/cli": "workspace:*",
+    "@tek/core": "workspace:*",
+    "@tek/db": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.44",
     "@ai-sdk/google": "^3",
     "@ai-sdk/mcp": "^1.0.21",

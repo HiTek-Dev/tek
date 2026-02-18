@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { isPathWithinWorkspace, type SecurityMode } from "@agentspace/core";
+import { isPathWithinWorkspace, type SecurityMode } from "@tek/core";
 
 const MAX_READ_SIZE = 100 * 1024; // 100KB
 

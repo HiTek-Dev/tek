@@ -9,8 +9,8 @@ import {
 	configExists,
 	saveConfig,
 	type AppConfig,
-} from "@agentspace/core";
-import { recordAuditEvent } from "@agentspace/db";
+} from "@tek/core";
+import { recordAuditEvent } from "@tek/db";
 import { Onboarding } from "../components/Onboarding.js";
 import { addKey, getOrCreateAuthToken } from "../vault/index.js";
 

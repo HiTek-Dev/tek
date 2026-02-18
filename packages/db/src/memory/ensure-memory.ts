@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, copyFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONFIG_DIR } from "@agentspace/core";
+import { CONFIG_DIR } from "@tek/core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

@@ -1,4 +1,4 @@
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import {
 	recordUsage,
 	getUsageBySession,

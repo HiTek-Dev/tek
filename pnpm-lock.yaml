@@ -29,21 +29,21 @@ importers:
 
   packages/cli:
     dependencies:
-      '@agentspace/core':
-        specifier: workspace:*
-        version: link:../core
-      '@agentspace/db':
-        specifier: workspace:*
-        version: link:../db
-      '@agentspace/gateway':
-        specifier: workspace:^
-        version: link:../gateway
       '@inkjs/ui':
         specifier: ^2.0.0
         version: 2.0.0(ink@6.7.0)
       '@napi-rs/keyring':
         specifier: ^1.2.0
         version: 1.2.0
+      '@tek/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tek/db':
+        specifier: workspace:*
+        version: link:../db
+      '@tek/gateway':
+        specifier: workspace:^
+        version: link:../gateway
       chalk:
         specifier: ^5.0.0
         version: 5.6.2
@@ -96,12 +96,12 @@ importers:
 
   packages/db:
     dependencies:
-      '@agentspace/core':
-        specifier: workspace:*
-        version: link:../core
       '@ai-sdk/openai':
         specifier: ^3
         version: 3.0.29(zod@4.3.6)
+      '@tek/core':
+        specifier: workspace:*
+        version: link:../core
       ai:
         specifier: ^6.0.86
         version: 6.0.86(zod@4.3.6)
@@ -124,15 +124,6 @@ importers:
 
   packages/gateway:
     dependencies:
-      '@agentspace/cli':
-        specifier: workspace:*
-        version: link:../cli
-      '@agentspace/core':
-        specifier: workspace:*
-        version: link:../core
-      '@agentspace/db':
-        specifier: workspace:*
-        version: link:../db
       '@ai-sdk/anthropic':
         specifier: ^3.0.44
         version: 3.0.44(zod@4.3.6)
@@ -160,6 +151,15 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.26.0(zod@4.3.6)
+      '@tek/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@tek/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tek/db':
+        specifier: workspace:*
+        version: link:../db
       ai:
         specifier: ^6.0.86
         version: 6.0.86(zod@4.3.6)
@@ -206,13 +206,13 @@ importers:
 
   packages/telegram:
     dependencies:
-      '@agentspace/core':
+      '@tek/core':
         specifier: workspace:*
         version: link:../core
-      '@agentspace/db':
+      '@tek/db':
         specifier: workspace:*
         version: link:../db
-      '@agentspace/gateway':
+      '@tek/gateway':
         specifier: workspace:*
         version: link:../gateway
       drizzle-orm:

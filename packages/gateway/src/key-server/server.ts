@@ -1,7 +1,7 @@
 import { writeFileSync, unlinkSync } from "node:fs";
 import Fastify, { type FastifyInstance } from "fastify";
 import bearerAuth from "@fastify/bearer-auth";
-import { loadConfig, RUNTIME_PATH, createLogger } from "@agentspace/core";
+import { loadConfig, RUNTIME_PATH, createLogger } from "@tek/core";
 import { getAuthKeys } from "./auth.js";
 import { registerHealthRoute, registerKeyRoutes } from "./routes.js";
 

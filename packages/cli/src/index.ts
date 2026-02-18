@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import { configExists } from "@agentspace/core";
+import { configExists } from "@tek/core";
 import { keysCommand } from "./commands/keys.js";
 import { initCommand } from "./commands/init.js";
 import { configCommand } from "./commands/config.js";

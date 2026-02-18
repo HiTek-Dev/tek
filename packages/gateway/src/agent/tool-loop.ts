@@ -1,7 +1,7 @@
 import type { Transport } from "../transport.js";
 import type { ModelMessage, LanguageModelUsage } from "ai";
 import { streamText, stepCountIs } from "ai";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import { getRegistry } from "../llm/registry.js";
 import { checkApproval, recordSessionApproval, type ApprovalPolicy } from "./approval-gate.js";
 import { classifyFailurePattern, type StepRecord } from "./failure-detector.js";

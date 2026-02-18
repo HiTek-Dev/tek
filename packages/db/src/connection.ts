@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { eq, desc } from "drizzle-orm";
-import { CONFIG_DIR, DB_PATH } from "@agentspace/core";
+import { CONFIG_DIR, DB_PATH } from "@tek/core";
 import * as schema from "./schema/index.js";
 import { auditLog } from "./schema/index.js";
 

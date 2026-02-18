@@ -1,4 +1,4 @@
-import type { ApprovalTier, ToolApprovalConfig } from "@agentspace/core";
+import type { ApprovalTier, ToolApprovalConfig } from "@tek/core";
 
 /**
  * Policy governing which tools require approval before execution.

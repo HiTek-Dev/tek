@@ -1,4 +1,4 @@
-import type { MCPServerConfig } from "@agentspace/core";
+import type { MCPServerConfig } from "@tek/core";
 
 /**
  * Server name constant for Playwright MCP configuration keying.

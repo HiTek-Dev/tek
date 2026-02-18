@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
 import { z } from "zod";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import { getRegistry } from "../llm/registry.js";
 
 const logger = createLogger("preflight");

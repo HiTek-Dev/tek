@@ -1,5 +1,5 @@
-import { createLogger, generateAuthToken, VaultError } from "@agentspace/core";
-import { recordAuditEvent } from "@agentspace/db";
+import { createLogger, generateAuthToken, VaultError } from "@tek/core";
+import { recordAuditEvent } from "@tek/db";
 import { keychainSet, keychainGet, keychainDelete } from "./keychain.js";
 import { PROVIDERS, type Provider } from "./providers.js";
 

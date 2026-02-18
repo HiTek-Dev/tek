@@ -1,5 +1,5 @@
 import type { Transport } from "../transport.js";
-import { createLogger, loadConfig } from "@agentspace/core";
+import { createLogger, loadConfig } from "@tek/core";
 import type {
 	ChatSend,
 	ChatRouteConfirm,
@@ -49,7 +49,7 @@ import {
 import type { PreflightApproval } from "./protocol.js";
 import { MCPClientManager } from "../mcp/client-manager.js";
 import { loadMCPConfigs } from "../mcp/config.js";
-import { getKey } from "@agentspace/cli/vault";
+import { getKey } from "@tek/cli/vault";
 
 const logger = createLogger("ws-handlers");
 
@@ -848,7 +848,7 @@ export async function handleWorkflowTrigger(
 	msg: WorkflowTrigger,
 	connState: ConnectionState,
 ): Promise<void> {
-	const { getDb, workflows } = await import("@agentspace/db");
+	const { getDb, workflows } = await import("@tek/db");
 	const { eq } = await import("drizzle-orm");
 	const { workflowEngine } = await import("../workflow/engine.js");
 
@@ -985,7 +985,7 @@ export async function handleWorkflowList(
 	transport: Transport,
 	msg: WorkflowList,
 ): Promise<void> {
-	const { getDb, workflows } = await import("@agentspace/db");
+	const { getDb, workflows } = await import("@tek/db");
 
 	const db = getDb();
 	const rows = db.select().from(workflows).all();

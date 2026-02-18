@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { eq, desc } from "drizzle-orm";
-import { getDb, threads, globalPrompts } from "@agentspace/db";
+import { getDb, threads, globalPrompts } from "@tek/db";
 
 export interface ThreadRow {
 	id: string;

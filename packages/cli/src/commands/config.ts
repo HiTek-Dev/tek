@@ -5,11 +5,11 @@ import {
 	saveConfig,
 	configExists,
 	type SecurityMode,
-} from "@agentspace/core";
-import { recordAuditEvent } from "@agentspace/db";
+} from "@tek/core";
+import { recordAuditEvent } from "@tek/db";
 import { getOrCreateAuthToken } from "../vault/index.js";
 import { keychainSet } from "../vault/keychain.js";
-import { generateAuthToken } from "@agentspace/core";
+import { generateAuthToken } from "@tek/core";
 
 export const configCommand = new Command("config").description(
 	"View and manage AgentSpace configuration",

@@ -1,7 +1,7 @@
 import type { CanUseTool } from "@anthropic-ai/claude-agent-sdk";
 import type { Transport } from "../transport.js";
 import type { ConnectionState } from "../ws/connection.js";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 
 const logger = createLogger("claude-code-approval");
 

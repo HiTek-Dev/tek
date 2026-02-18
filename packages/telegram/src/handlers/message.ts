@@ -1,12 +1,12 @@
 import type { Bot, Context } from "grammy";
 import { nanoid } from "nanoid";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import {
 	handleChatSend,
 	initConnection,
 	getConnectionState,
-} from "@agentspace/gateway";
-import type { ChatSend } from "@agentspace/gateway";
+} from "@tek/gateway";
+import type { ChatSend } from "@tek/gateway";
 import { TelegramTransport } from "../transport.js";
 import { getPairedUser } from "../auth/pairing.js";
 import { registerChatTransport } from "./callback.js";

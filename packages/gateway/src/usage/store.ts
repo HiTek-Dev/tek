@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import { getDb, usageRecords } from "@agentspace/db";
+import { getDb, usageRecords } from "@tek/db";
 
 export interface UsageRecord {
 	sessionId: string;

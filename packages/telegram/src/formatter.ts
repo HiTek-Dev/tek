@@ -1,4 +1,4 @@
-import type { ServerMessage } from "@agentspace/gateway";
+import type { ServerMessage } from "@tek/gateway";
 
 /** Escape HTML special characters for Telegram HTML parse_mode */
 export function escapeHtml(text: string): string {

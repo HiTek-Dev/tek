@@ -1,4 +1,4 @@
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import type { Query, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { Transport } from "../transport.js";
 import type { ClaudeCodeSession } from "./types.js";

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import websocket from "@fastify/websocket";
 import type { WebSocket } from "ws";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import { ClientMessageSchema } from "./protocol.js";
 import { WebSocketTransport } from "../transport.js";
 import {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { Select, TextInput, ConfirmInput } from "@inkjs/ui";
-import type { SecurityMode } from "@agentspace/core";
+import type { SecurityMode } from "@tek/core";
 import type { Provider } from "../vault/index.js";
 import { PROVIDERS } from "../vault/index.js";
 

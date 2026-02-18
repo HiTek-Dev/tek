@@ -1,5 +1,5 @@
 import { query, type Query, type PermissionMode, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import type { Transport } from "../transport.js";
 import type { ClaudeCodeSession, SpawnSessionOptions } from "./types.js";
 import { consumeAndRelay } from "./event-relay.js";

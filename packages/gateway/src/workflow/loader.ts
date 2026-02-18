@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, extname, basename } from "node:path";
 import { parse } from "yaml";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import {
 	WorkflowDefinitionSchema,
 	type WorkflowDefinition,

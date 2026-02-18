@@ -1,5 +1,5 @@
 import { Bot } from "grammy";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import { registerCommands } from "./handlers/commands.js";
 import { registerCallbackHandlers } from "./handlers/callback.js";
 import { handleTelegramMessage } from "./handlers/message.js";

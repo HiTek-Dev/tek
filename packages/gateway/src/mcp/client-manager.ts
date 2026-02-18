@@ -1,6 +1,6 @@
 import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { createLogger, type MCPServerConfig } from "@agentspace/core";
+import { createLogger, type MCPServerConfig } from "@tek/core";
 
 const logger = createLogger("mcp");
 

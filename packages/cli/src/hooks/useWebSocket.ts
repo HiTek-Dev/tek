@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import WebSocket from "ws";
-import type { ServerMessage, ClientMessage } from "@agentspace/gateway";
+import type { ServerMessage, ClientMessage } from "@tek/gateway";
 
 export interface UseWebSocketOptions {
 	url: string;

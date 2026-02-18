@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { nanoid } from "nanoid";
-import type { ServerMessage } from "@agentspace/gateway";
+import type { ServerMessage } from "@tek/gateway";
 import type { ChatMessage, TextMessage, ToolCallMessage } from "../lib/gateway-client.js";
 
 export interface PendingApproval {

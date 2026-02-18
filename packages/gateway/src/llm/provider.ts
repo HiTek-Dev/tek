@@ -1,6 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { getKey } from "@agentspace/cli/vault";
-import { createLogger } from "@agentspace/core";
+import { getKey } from "@tek/cli/vault";
+import { createLogger } from "@tek/core";
 
 const logger = createLogger("llm-provider");
 

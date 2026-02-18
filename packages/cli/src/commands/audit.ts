@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { getAuditEvents } from "@agentspace/db";
+import { getAuditEvents } from "@tek/db";
 
 export const auditCommand = new Command("audit")
 	.description("View audit log")

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONFIG_DIR } from "@agentspace/core";
+import { CONFIG_DIR } from "@tek/core";
 import { ensureDailyDir } from "./ensure-memory.js";
 
 /** Directory for daily log markdown files */

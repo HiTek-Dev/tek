@@ -1,5 +1,5 @@
 import { nanoid, customAlphabet } from "nanoid";
-import { getDb, telegramUsers, pairingCodes } from "@agentspace/db";
+import { getDb, telegramUsers, pairingCodes } from "@tek/db";
 import { eq, and, lt, or } from "drizzle-orm";
 
 /**

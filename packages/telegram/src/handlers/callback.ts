@@ -1,7 +1,7 @@
 import type { Bot } from "grammy";
-import { getConnectionState } from "@agentspace/gateway";
-import { recordSessionApproval } from "@agentspace/gateway";
-import { createLogger } from "@agentspace/core";
+import { getConnectionState } from "@tek/gateway";
+import { recordSessionApproval } from "@tek/gateway";
+import { createLogger } from "@tek/core";
 
 const logger = createLogger("telegram-callback");
 

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { getKey, validateProvider } from "@agentspace/cli/vault";
-import { recordAuditEvent } from "@agentspace/db";
+import { getKey, validateProvider } from "@tek/cli/vault";
+import { recordAuditEvent } from "@tek/db";
 
 /**
  * Register the health check route (no auth required).

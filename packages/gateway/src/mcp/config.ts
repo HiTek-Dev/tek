@@ -1,4 +1,4 @@
-import type { AppConfig, MCPServerConfig } from "@agentspace/core";
+import type { AppConfig, MCPServerConfig } from "@tek/core";
 
 /**
  * Extract MCP server configurations from the loaded AppConfig.

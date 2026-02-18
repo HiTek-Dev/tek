@@ -1,4 +1,4 @@
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import type { StepDefinition, StepResult } from "./types.js";
 import { resolveTemplates, type TemplateContext } from "./templates.js";
 

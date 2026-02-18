@@ -1,4 +1,4 @@
-import { getDb, schedules } from "@agentspace/db";
+import { getDb, schedules } from "@tek/db";
 import { eq } from "drizzle-orm";
 import type { ScheduleConfig } from "./types.js";
 

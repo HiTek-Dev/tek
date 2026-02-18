@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
-import { RUNTIME_PATH } from "@agentspace/core";
+import { RUNTIME_PATH } from "@tek/core";
 
 export interface RuntimeInfo {
 	pid: number;

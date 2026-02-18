@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { execaCommand } from "execa";
-import type { SecurityMode } from "@agentspace/core";
+import type { SecurityMode } from "@tek/core";
 
 const MAX_OUTPUT_SIZE = 50 * 1024; // 50KB per stream
 

@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { createLogger } from "@agentspace/core";
+import { createLogger } from "@tek/core";
 import type {
 	WorkflowDefinition,
 	WorkflowExecutionState,
@@ -104,7 +104,7 @@ export class WorkflowEngine {
 		// Load the definition to get the steps
 		// We need to find which workflow this execution belongs to
 		// The workflowId maps to a workflow record that has the definition path
-		const { getDb, workflows } = await import("@agentspace/db");
+		const { getDb, workflows } = await import("@tek/db");
 		const { eq } = await import("drizzle-orm");
 		const db = getDb();
 		const workflow = db

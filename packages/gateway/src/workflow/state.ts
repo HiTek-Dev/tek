@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm";
-import { getDb, workflows, workflowExecutions } from "@agentspace/db";
+import { getDb, workflows, workflowExecutions } from "@tek/db";
 import type { WorkflowExecutionState } from "./types.js";
 
 /**

@@ -1,5 +1,5 @@
-import { createLogger, getSkillsDirs, type SecurityMode } from "@agentspace/core";
-import type { MCPServerConfig } from "@agentspace/core";
+import { createLogger, getSkillsDirs, type SecurityMode } from "@tek/core";
+import type { MCPServerConfig } from "@tek/core";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { homedir, tmpdir } from "node:os";

@@ -1,5 +1,5 @@
 {
-  "name": "@agentspace/db",
+  "name": "@tek/db",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,7 +16,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@agentspace/core": "workspace:*",
+    "@tek/core": "workspace:*",
     "@ai-sdk/openai": "^3",
     "ai": "^6.0.86",
     "better-sqlite3": "^11.0.0",
