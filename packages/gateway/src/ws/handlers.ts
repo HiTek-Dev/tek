@@ -1,5 +1,5 @@
 import type { Transport } from "../transport.js";
-import { createLogger, loadConfig } from "@tek/core";
+import { createLogger, loadConfig, getDefaultModel } from "@tek/core";
 import type {
 	ChatSend,
 	ChatRouteConfirm,
@@ -26,7 +26,6 @@ import type {
 } from "./protocol.js";
 import type { ConnectionState } from "./connection.js";
 import { sessionManager } from "../session/index.js";
-import { DEFAULT_MODEL } from "../session/types.js";
 import {
 	streamChatResponse,
 	resolveModelId,
@@ -258,7 +257,7 @@ export async function handleChatSend(
 	} else {
 		const requestedModel = msg.model
 			? resolveModelId(msg.model)
-			: DEFAULT_MODEL;
+			: getDefaultModel();
 		const session = sessionManager.create("default", requestedModel);
 		sessionId = session.id;
 		model = session.model;

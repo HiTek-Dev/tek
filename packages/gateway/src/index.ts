@@ -15,7 +15,7 @@ export type {
 	SessionCreated,
 	SessionListResponse,
 } from "./ws/index.js";
-export { sessionManager, DEFAULT_MODEL } from "./session/index.js";
+export { sessionManager, FALLBACK_MODEL } from "./session/index.js";
 export type { Session, SessionSummary, MessageRow } from "./session/index.js";
 
 // LLM module

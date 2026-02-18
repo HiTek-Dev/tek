@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { nanoid } from "nanoid";
+import { getDefaultModel } from "@tek/core";
 import type { ServerMessage } from "@tek/gateway";
 import type { ChatMessage, TextMessage, ToolCallMessage } from "../lib/gateway-client.js";
 
@@ -46,7 +47,7 @@ export interface UseChatState {
 	pendingPreflight: PendingPreflight | null;
 }
 
-const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
+const DEFAULT_MODEL = getDefaultModel();
 
 /**
  * React hook for managing chat state, including message history,

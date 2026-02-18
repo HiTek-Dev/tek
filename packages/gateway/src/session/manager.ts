@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { Session, MessageRow, SessionSummary } from "./types.js";
-import { DEFAULT_MODEL } from "./types.js";
+import { FALLBACK_MODEL } from "./types.js";
+import { getDefaultModel } from "@tek/core";
 import {
 	saveSession,
 	getSession,
@@ -26,7 +27,7 @@ export class SessionManager {
 			id,
 			sessionKey: `agent:${agentId}:${id}`,
 			agentId,
-			model: model ?? DEFAULT_MODEL,
+			model: model ?? getDefaultModel(),
 			createdAt: now,
 			lastActiveAt: now,
 		};

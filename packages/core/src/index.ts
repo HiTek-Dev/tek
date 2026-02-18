@@ -6,9 +6,12 @@ export {
 	MCPTransportSchema,
 	ApprovalTierSchema,
 	ToolApprovalConfigSchema,
+	ModelAliasSchema,
 	loadConfig,
 	saveConfig,
 	configExists,
+	resolveAlias,
+	getDefaultModel,
 	CONFIG_DIR,
 	CONFIG_PATH,
 	DB_PATH,
@@ -24,6 +27,7 @@ export {
 } from "./config/index.js";
 export type {
 	AppConfig,
+	ModelAlias,
 	SecurityMode,
 	MCPServerConfig,
 	ToolApprovalConfig,

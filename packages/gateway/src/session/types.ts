@@ -24,4 +24,5 @@ export interface MessageRow {
 	tokenCount: number | null;
 }
 
-export const DEFAULT_MODEL = "anthropic:claude-sonnet-4-5-20250929";
+/** Absolute fallback — prefer getDefaultModel() from @tek/core */
+export const FALLBACK_MODEL = "anthropic:claude-sonnet-4-5-20250929";

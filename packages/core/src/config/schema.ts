@@ -36,6 +36,11 @@ export const OllamaEndpointSchema = z.object({
 
 export type OllamaEndpoint = z.infer<typeof OllamaEndpointSchema>;
 
+export const ModelAliasSchema = z.object({
+	alias: z.string(),
+	modelId: z.string(),
+});
+
 export const AppConfigSchema = z.object({
 	securityMode: SecurityModeSchema,
 	workspaceDir: z.string().optional(),
@@ -46,9 +51,12 @@ export const AppConfigSchema = z.object({
 	toolApproval: ToolApprovalConfigSchema.optional(),
 	skillsDir: z.string().optional(),
 	ollamaEndpoints: z.array(OllamaEndpointSchema).optional(),
+	defaultModel: z.string().optional(),
+	modelAliases: z.array(ModelAliasSchema).optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
+export type ModelAlias = z.infer<typeof ModelAliasSchema>;
 export type MCPServerConfig = z.infer<typeof MCPServerConfigSchema>;
 export type ToolApprovalConfig = z.infer<typeof ToolApprovalConfigSchema>;
 export type ApprovalTier = z.infer<typeof ApprovalTierSchema>;
