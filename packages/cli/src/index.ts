@@ -11,6 +11,8 @@ import { initCommand } from "./commands/init.js";
 import { configCommand } from "./commands/config.js";
 import { auditCommand } from "./commands/audit.js";
 import { chatCommand } from "./commands/chat.js";
+import { gatewayCommand } from "./commands/gateway.js";
+import { uninstallCommand } from "./commands/uninstall.js";
 import { discoverGateway } from "./lib/discovery.js";
 
 // Migrate config from old location if present
@@ -39,6 +41,8 @@ program.addCommand(initCommand);
 program.addCommand(configCommand);
 program.addCommand(auditCommand);
 program.addCommand(chatCommand);
+program.addCommand(gatewayCommand);
+program.addCommand(uninstallCommand);
 
 // Default action: auto-launch chat when configured and gateway is running
 program.action(async () => {
@@ -55,10 +59,10 @@ program.action(async () => {
 	if (!gateway) {
 		console.log(
 			chalk.yellow(
-				"Gateway is not running. Start the gateway first, then use:",
+				"Gateway is not running. Start it with:",
 			),
 		);
-		console.log(chalk.cyan(`  ${CLI_COMMAND} chat`));
+		console.log(chalk.cyan(`  ${CLI_COMMAND} gateway start`));
 		console.log();
 		program.help();
 		return;
