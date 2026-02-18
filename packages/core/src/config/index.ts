@@ -18,7 +18,7 @@ export type {
 	OllamaEndpoint,
 } from "./schema.js";
 export { loadConfig, saveConfig, configExists, resolveAlias, getDefaultModel } from "./loader.js";
-export { CONFIG_DIR, CONFIG_PATH, DB_PATH, RUNTIME_PATH } from "./types.js";
+export { CONFIG_DIR, CONFIG_PATH, DB_PATH, RUNTIME_PATH, LOG_PATH } from "./types.js";
 export type { SecurityMode } from "./types.js";
 export { isPathWithinWorkspace } from "./security.js";
 export {

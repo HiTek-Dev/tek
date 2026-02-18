@@ -16,6 +16,7 @@ export {
 	CONFIG_PATH,
 	DB_PATH,
 	RUNTIME_PATH,
+	LOG_PATH,
 	isPathWithinWorkspace,
 	PROJECT_NAME,
 	DISPLAY_NAME,

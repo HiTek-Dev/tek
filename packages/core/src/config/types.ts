@@ -10,3 +10,4 @@ export const CONFIG_DIR = join(homedir(), ".config", CONFIG_DIR_NAME);
 export const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 export const DB_PATH = join(CONFIG_DIR, DB_NAME);
 export const RUNTIME_PATH = join(CONFIG_DIR, "runtime.json");
+export const LOG_PATH = join(CONFIG_DIR, "gateway.log");
