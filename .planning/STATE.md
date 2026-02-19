@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 16 of 18 (Agent Personality System)
-Plan: 2 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: Executing phase 16
-Last activity: 2026-02-19 - Completed 16-01: Identity templates + loader functions
+Last activity: 2026-02-19 - Completed 16-03: Migration + context assembly
 
-Progress: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░] 40%
+Progress: [████████████████████████░░░░░░░░░░░░░░░░] 60%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [████████████████░░░░░░░
 | Phase 15 P03 | 3min | 2 tasks | 4 files |
 | Phase 16 P01 | 2min | 2 tasks | 7 files |
 | Phase 16 P02 | 1min | 2 tasks | 4 files |
+| Phase 16 P03 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -231,6 +232,8 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-01]: identity-manager.ts follows exact loadSoul() pattern for consistency
 - [Phase 16]: [16-02]: Cascade resolution order: agent-specific > shared > global memory > empty string for identity files
 - [Phase 16]: [16-02]: Default agent (undefined or 'default') uses global memory directory for backward compatibility
+- [Phase 16]: [16-03]: Migration conservative: only extracts Communication Style to STYLE.md, does not rewrite SOUL.md
+- [Phase 16]: [16-03]: Token budget threshold at 3000 tokens for combined soul+identity+style with warn-only logging
 
 ### Roadmap Evolution
 
@@ -272,5 +275,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 16-01-PLAN.md
+Stopped at: Completed 16-03-PLAN.md
 Resume file: None
