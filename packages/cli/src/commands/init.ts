@@ -3,6 +3,7 @@ import chalk from "chalk";
 import { createInterface } from "node:readline";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
+import { writeFileSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import React from "react";
 import { render } from "ink";
 import {
@@ -94,6 +95,36 @@ export const initCommand = new Command("init")
 							ensureMemoryFile("BOOTSTRAP.md", "BOOTSTRAP.md");
 						}
 						// "skip" preset: do nothing, keep default SOUL.md
+
+						// Write identity data to memory files for the memory system to read
+						const memoryDir = resolve(homedir(), ".config", "tek", "memory");
+						if (!existsSync(memoryDir)) {
+							mkdirSync(memoryDir, { recursive: true });
+						}
+
+						// Inject userDisplayName into USER.md
+						if (result.userDisplayName) {
+							const userPath = resolve(memoryDir, "USER.md");
+							const existingUser = existsSync(userPath) ? readFileSync(userPath, "utf-8") : "";
+							if (!existingUser.includes(result.userDisplayName)) {
+								const content = `# About the User\n\nName: ${result.userDisplayName}\n`;
+								writeFileSync(userPath, content, "utf-8");
+							}
+						}
+
+						// Inject agentName into SOUL.md header if not already present
+						if (result.agentName) {
+							const soulPath = resolve(memoryDir, "SOUL.md");
+							if (existsSync(soulPath)) {
+								const existingSoul = readFileSync(soulPath, "utf-8");
+								if (!existingSoul.includes(`name is ${result.agentName}`) && !existingSoul.includes(`Name: ${result.agentName}`)) {
+									// Prepend agent name context to SOUL.md
+									const nameSection = `<!-- Agent Name: ${result.agentName} -->\n# ${result.agentName}\n\n`;
+									const updated = existingSoul.startsWith("#") ? nameSection + existingSoul.replace(/^#[^\n]*\n/, "") : nameSection + existingSoul;
+									writeFileSync(soulPath, updated, "utf-8");
+								}
+							}
+						}
 
 						// Save config
 						const config: AppConfig = {
