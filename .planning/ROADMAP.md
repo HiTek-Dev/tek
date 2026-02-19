@@ -226,7 +226,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 16. Agent Personality System | 5/5 | Complete    | 2026-02-19 |
 | 17. Desktop Frontend (Tauri) | 5/6 | In Progress|  |
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
-| 19. Desktop & Integration Polish | 1/6 | In Progress|  |
+| 19. Desktop & Integration Polish | 2/6 | In Progress|  |
 
 ### Phase 11: Install & Update System
 
@@ -372,7 +372,7 @@ Plans:
   6. Desktop app has consistent spacing, improved layout, and polished visual design
   7. Telegram bot starts without errors and processes incoming messages
   8. Full install → init → agent setup → chat → uninstall cycle works end-to-end
-**Plans:** 1/6 plans executed
+**Plans:** 2/6 plans executed
 
 Plans:
 - [ ] 19-01-PLAN.md — Fix gateway stop (graceful Fastify shutdown) and stale gateway detection (health check)
