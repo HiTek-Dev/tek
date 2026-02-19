@@ -1,6 +1,19 @@
 import { readTextFile, writeTextFile, exists, mkdir } from '@tauri-apps/plugin-fs';
 import { homeDir, join } from '@tauri-apps/api/path';
 
+export interface AgentDefinition {
+  id: string;
+  name?: string;
+  model?: string;
+  description?: string;
+  accessMode?: 'full' | 'limited';
+}
+
+export interface AgentsConfig {
+  list: AgentDefinition[];
+  defaultAgentId: string;
+}
+
 export interface AppConfig {
   securityMode?: 'full' | 'limited';
   workspaceDir?: string;
@@ -8,6 +21,9 @@ export interface AppConfig {
   modelAliases?: Record<string, string>;
   configuredProviders?: string[];
   mcpServers?: Record<string, { command: string; args?: string[] }>;
+  agentName?: string;
+  userDisplayName?: string;
+  agents?: AgentsConfig;
   [key: string]: unknown;
 }
 

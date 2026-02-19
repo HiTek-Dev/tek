@@ -46,6 +46,7 @@ export const AgentDefinitionSchema = z.object({
 	name: z.string().optional(),
 	model: z.string().optional(),
 	description: z.string().optional(),
+	accessMode: z.enum(["full", "limited"]).default("full"),
 });
 
 export const AgentsConfigSchema = z.object({
