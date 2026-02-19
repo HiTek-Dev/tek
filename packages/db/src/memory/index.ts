@@ -30,3 +30,12 @@ export { searchMemories } from "./vector-search.js";
 export type { SearchResult } from "./vector-search.js";
 
 export { ensureMemoryFile, applyPersonalityPreset } from "./ensure-memory.js";
+
+export {
+	loadIdentity,
+	loadStyle,
+	loadUser,
+	loadAgentsConfig,
+} from "./identity-manager.js";
+
+export { resolveIdentityFile, resolveAgentDir, AGENTS_DIR } from "./agent-resolver.js";
