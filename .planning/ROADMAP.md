@@ -222,7 +222,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 12. Expanded Providers | 2/2 | Complete    | 2026-02-18 |
 | 13. Rebrand to tek | 2/2 | Complete    | 2026-02-18 |
 | 14. CLI & Setup Polish | 2/2 | Complete    | 2026-02-18 |
-| 15. Init & Onboarding Polish | 0/0 | Not started | - |
+| 15. Init & Onboarding Polish | 0/3 | Not started | - |
 | 16. Agent Personality System | 0/0 | Not started | - |
 | 17. Desktop Frontend (Tauri) | 0/0 | Not started | - |
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
@@ -297,12 +297,15 @@ Plans:
 
 ### Phase 15: Init & Onboarding Polish
 
-**Goal:** [To be planned]
+**Goal:** Fix model alias flow (checkbox multi-select, clear input), integrate Telegram setup into init, add personality "Hatch" step, streamline onboarding sequence
 **Depends on:** Phase 14
-**Plans:** 0 plans
+**Requirements**: ONBOARD-ALIAS, ONBOARD-TELEGRAM, ONBOARD-HATCH, ONBOARD-STREAM
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 15 to break down)
+- [ ] 15-01-PLAN.md — Config schema extension (agentName, userDisplayName), Telegram provider, BOOTSTRAP.md, personality presets
+- [ ] 15-02-PLAN.md — MultiSelect model alias flow with TextInput clearing fix
+- [ ] 15-03-PLAN.md — Telegram and Hatch wizard steps, init.ts persistence wiring
 
 ### Phase 16: Agent Personality System
 
