@@ -226,6 +226,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 16. Agent Personality System | 5/5 | Complete    | 2026-02-19 |
 | 17. Desktop Frontend (Tauri) | 5/6 | In Progress|  |
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
+| 19. Desktop & Integration Polish | 0/6 | Not started | - |
 
 ### Phase 11: Install & Update System
 
@@ -348,3 +349,35 @@ Plans:
 
 Plans:
 - [ ] 18-01-PLAN.md — Synthesize research into recommendations and finalize roadmap
+
+### Phase 19: Desktop & Integration Polish
+
+**Goal:** Fix critical bugs (gateway stop, chat not loading agent defaults, settings crash), wire agent identity/workspace isolation into desktop app, add agent onboarding flow, improve desktop UI/UX spacing and polish, fix Telegram bot startup, and verify end-to-end flows (install → init → agent setup → chat → uninstall)
+**Depends on:** Phase 17
+**Requirements**:
+  - Gateway stop command works reliably
+  - Chat loads agent defaults (SOUL.md, USER.md, STYLE.md, IDENTITY.md) set during init
+  - Settings page renders without crashing
+  - Agents page provides add-agent + onboarding flow
+  - Agent workspace isolation (per-agent config/memory directory, access modes)
+  - Desktop UI/UX improvements (spacing, layout, visual polish)
+  - Telegram bot starts and processes real messages
+  - End-to-end verification of install → init → chat → uninstall flows
+**Success Criteria** (what must be TRUE):
+  1. `tek gateway stop` reliably stops the gateway process
+  2. Starting a chat session (CLI or desktop) loads the agent's identity files and responds with personality context
+  3. Desktop settings page renders and saves configuration without crashes
+  4. Desktop agents page shows configured agents with ability to add new agents through onboarding wizard
+  5. Each agent has isolated workspace directory with own identity/memory files and configurable access mode (full/limited)
+  6. Desktop app has consistent spacing, improved layout, and polished visual design
+  7. Telegram bot starts without errors and processes incoming messages
+  8. Full install → init → agent setup → chat → uninstall cycle works end-to-end
+**Plans:** 6 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Fix gateway stop (graceful Fastify shutdown) and stale gateway detection (health check)
+- [ ] 19-02-PLAN.md — Fix chat identity loading from init (write to USER.md/SOUL.md) and settings crash (config normalization)
+- [ ] 19-03-PLAN.md — Redesign Agents page (agent list + create flow + per-agent identity editing + workspace isolation)
+- [ ] 19-04-PLAN.md — Desktop UI polish (SVG icons, consistent spacing, chat message styling)
+- [ ] 19-05-PLAN.md — Fix Telegram bot punycode crash and wire auto-start into gateway
+- [ ] 19-06-PLAN.md — End-to-end verification of all phase 19 fixes
