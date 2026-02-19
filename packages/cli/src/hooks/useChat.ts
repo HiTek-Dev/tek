@@ -47,7 +47,7 @@ export interface UseChatState {
 	pendingPreflight: PendingPreflight | null;
 }
 
-const DEFAULT_MODEL = getDefaultModel();
+const DEFAULT_MODEL = getDefaultModel() ?? "ollama:llama3";
 
 /**
  * React hook for managing chat state, including message history,

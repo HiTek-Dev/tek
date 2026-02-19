@@ -283,9 +283,10 @@ export async function handleChatSend(
 			}
 		}
 	} else {
+		const defaultModel = getDefaultModel();
 		const requestedModel = msg.model
 			? resolveModelId(msg.model)
-			: getDefaultModel();
+			: defaultModel ?? undefined;
 		const session = sessionManager.create("default", requestedModel);
 		sessionId = session.id;
 		model = session.model;
@@ -1351,7 +1352,8 @@ export async function handleHeartbeatConfigure(
 	// Obtain a model from the registry for AI-powered heartbeat checks
 	const { getRegistry } = await import("../llm/registry.js");
 	const registry = getRegistry();
-	const model = registry.languageModel("anthropic:claude-sonnet-4-5-20250514" as never);
+	const heartbeatModel = getDefaultModel() ?? "ollama:llama3";
+	const model = registry.languageModel(heartbeatModel as never);
 
 	const tools = connState.tools ?? {};
 

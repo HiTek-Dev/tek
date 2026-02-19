@@ -96,14 +96,16 @@ export function getRegistry(): ProviderRegistry {
  * Resolve a model ID to a provider-qualified format.
  *
  * If the model already contains ":" (e.g. "openai:gpt-4o"), return as-is.
- * Otherwise, prefix with "anthropic:" for backward compatibility with
- * bare model names like "claude-sonnet-4-5-20250929".
+ * Otherwise, prefix with the first available provider.
  */
 export function resolveModelId(model: string): string {
 	if (model.includes(":")) {
 		return model;
 	}
-	return `anthropic:${model}`;
+	// Use first available provider instead of assuming anthropic
+	const available = getAvailableProviders();
+	const provider = available[0] ?? "ollama";
+	return `${provider}:${model}`;
 }
 
 /**

@@ -27,7 +27,7 @@ export class SessionManager {
 			id,
 			sessionKey: `agent:${agentId}:${id}`,
 			agentId,
-			model: model ?? getDefaultModel(),
+			model: model ?? getDefaultModel() ?? FALLBACK_MODEL,
 			createdAt: now,
 			lastActiveAt: now,
 		};

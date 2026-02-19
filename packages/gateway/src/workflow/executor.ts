@@ -192,10 +192,10 @@ async function executeAction(
 			const { getRegistry } = await import("../llm/registry.js");
 
 			const registry = getRegistry();
-			// Use a default model for workflow steps
-			const model = registry.languageModel(
-				"anthropic:claude-sonnet-4-5-20250514" as never,
-			);
+			// Use the configured default model for workflow steps
+			const { getDefaultModel } = await import("@tek/core");
+			const workflowModel = getDefaultModel() ?? "ollama:llama3";
+			const model = registry.languageModel(workflowModel as never);
 
 			const result = await generateText({
 				model,

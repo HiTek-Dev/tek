@@ -47,14 +47,12 @@ export function resolveAlias(alias: string): string | null {
 	return found?.modelId ?? null;
 }
 
-/** Absolute fallback when no config or providers are available */
-const FALLBACK_MODEL = "anthropic:claude-sonnet-4-5-20250929";
-
 /**
  * Get the user's configured default model from config.json.
- * Falls back to "anthropic:claude-sonnet-4-5-20250929" if not set.
+ * Returns null if no default model is configured — callers should
+ * use the first available provider rather than assuming anthropic.
  */
-export function getDefaultModel(): string {
+export function getDefaultModel(): string | null {
 	const config = loadConfig();
-	return config?.defaultModel ?? FALLBACK_MODEL;
+	return config?.defaultModel ?? null;
 }

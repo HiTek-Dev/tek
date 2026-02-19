@@ -115,6 +115,10 @@ export const initCommand = new Command("init")
 						// Inject agentName into SOUL.md header if not already present
 						if (result.agentName) {
 							const soulPath = resolve(memoryDir, "SOUL.md");
+							// Ensure SOUL.md exists (seed from template if needed)
+							if (!existsSync(soulPath)) {
+								ensureMemoryFile("SOUL.md", "SOUL.md");
+							}
 							if (existsSync(soulPath)) {
 								const existingSoul = readFileSync(soulPath, "utf-8");
 								if (!existingSoul.includes(`name is ${result.agentName}`) && !existingSoul.includes(`Name: ${result.agentName}`)) {
