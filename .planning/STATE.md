@@ -66,6 +66,7 @@ Progress: [███████████████████████
 | Phase 17 P04 | 2min | 2 tasks | 5 files |
 | Phase 17 P02 | 2min | 2 tasks | 7 files |
 | Phase 17 P05 | 2min | 2 tasks | 4 files |
+| Phase 17 P03 | 2min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -255,6 +256,9 @@ Recent decisions affecting current work:
 - [Phase 17]: [17-04]: Plain textarea editor for identity files (no rich markdown preview for MVP)
 - [Phase 17]: [17-05]: Config save uses merge pattern to preserve unknown fields the UI doesn't manage
 - [Phase 17]: [17-05]: Security mode and MCP servers displayed read-only (complex config via CLI for safety)
+- [Phase 17]: crypto.randomUUID() instead of nanoid for message IDs (avoids extra dependency in browser context)
+- [Phase 17]: Local ClientMessage type instead of importing from @tek/gateway (lighter, no Zod in browser bundle)
+- [Phase 17]: Handler registration pattern (add/removeMessageHandler) for flexible WebSocket message dispatch
 
 ### Roadmap Evolution
 
