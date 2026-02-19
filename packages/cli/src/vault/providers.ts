@@ -1,6 +1,6 @@
 import { VaultError } from "@tek/core";
 
-export const PROVIDERS = ["anthropic", "openai", "ollama", "venice", "google"] as const;
+export const PROVIDERS = ["anthropic", "openai", "ollama", "venice", "google", "telegram"] as const;
 
 export type Provider = (typeof PROVIDERS)[number];
 
@@ -14,6 +14,7 @@ export const PROVIDER_KEY_PREFIXES: Record<Provider, string | null> = {
 	ollama: null,
 	venice: null,
 	google: null,
+	telegram: null,
 };
 
 /**

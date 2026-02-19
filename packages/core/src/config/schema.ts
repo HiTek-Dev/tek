@@ -53,6 +53,8 @@ export const AppConfigSchema = z.object({
 	ollamaEndpoints: z.array(OllamaEndpointSchema).optional(),
 	defaultModel: z.string().optional(),
 	modelAliases: z.array(ModelAliasSchema).optional(),
+	agentName: z.string().optional(),
+	userDisplayName: z.string().optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
