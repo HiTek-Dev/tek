@@ -230,6 +230,14 @@ const PreflightApprovalSchema = z.object({
 		.optional(),
 });
 
+const SoulEvolutionResponseSchema = z.object({
+	type: z.literal("soul.evolution.response"),
+	id: z.string(),
+	requestId: z.string(),
+	approved: z.boolean(),
+	editedContent: z.string().optional(),
+});
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ChatSendSchema,
 	ContextInspectSchema,
@@ -258,6 +266,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ScheduleDeleteSchema,
 	ScheduleListSchema,
 	HeartbeatConfigureSchema,
+	SoulEvolutionResponseSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -288,6 +297,7 @@ export type ScheduleUpdate = z.infer<typeof ScheduleUpdateSchema>;
 export type ScheduleDelete = z.infer<typeof ScheduleDeleteSchema>;
 export type ScheduleList = z.infer<typeof ScheduleListSchema>;
 export type HeartbeatConfigure = z.infer<typeof HeartbeatConfigureSchema>;
+export type SoulEvolutionResponse = z.infer<typeof SoulEvolutionResponseSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -506,6 +516,16 @@ const ToolApprovalRequestSchema = z.object({
 	risk: z.enum(["low", "medium", "high"]).optional(),
 });
 
+const SoulEvolutionProposeSchema = z.object({
+	type: z.literal("soul.evolution.propose"),
+	requestId: z.string(),
+	file: z.string(),
+	section: z.string(),
+	currentContent: z.string(),
+	proposedContent: z.string(),
+	reason: z.string(),
+});
+
 const PreflightChecklistSchema = z.object({
 	type: z.literal("preflight.checklist"),
 	requestId: z.string(),
@@ -685,6 +705,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ScheduleUpdatedSchema,
 	HeartbeatAlertSchema,
 	HeartbeatConfiguredSchema,
+	SoulEvolutionProposeSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -719,3 +740,4 @@ export type ScheduleCreated = z.infer<typeof ScheduleCreatedSchema>;
 export type ScheduleUpdated = z.infer<typeof ScheduleUpdatedSchema>;
 export type HeartbeatAlert = z.infer<typeof HeartbeatAlertSchema>;
 export type HeartbeatConfigured = z.infer<typeof HeartbeatConfiguredSchema>;
+export type SoulEvolutionPropose = z.infer<typeof SoulEvolutionProposeSchema>;
