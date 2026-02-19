@@ -223,7 +223,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 13. Rebrand to tek | 2/2 | Complete    | 2026-02-18 |
 | 14. CLI & Setup Polish | 2/2 | Complete    | 2026-02-18 |
 | 15. Init & Onboarding Polish | 3/3 | Complete    | 2026-02-19 |
-| 16. Agent Personality System | 1/5 | In Progress|  |
+| 16. Agent Personality System | 2/5 | In Progress|  |
 | 17. Desktop Frontend (Tauri) | 0/0 | Not started | - |
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
 
@@ -311,7 +311,7 @@ Plans:
 
 **Goal:** Expand tek's single-file SOUL.md personality into a structured multi-file identity architecture (SOUL.md, IDENTITY.md, USER.md, STYLE.md, AGENTS.md), add personality evolution with user-approved diff-style proposals, migrate existing users safely, and implement per-agent identity isolation with cascade resolution
 **Depends on:** Phase 15
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 
 Plans:
 - [ ] 16-01-PLAN.md — Identity template files (expanded SOUL.md, new IDENTITY/USER/STYLE/AGENTS) and loader functions
