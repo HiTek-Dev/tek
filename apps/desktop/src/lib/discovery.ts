@@ -27,6 +27,17 @@ export async function discoverGateway(): Promise<RuntimeInfo | null> {
       return null;
     }
 
+    // Verify gateway is actually reachable (handles stale runtime.json from crashed gateway)
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`http://127.0.0.1:${data.port}/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+    } catch {
+      return null; // Gateway not reachable, stale runtime.json
+    }
+
     return data;
   } catch {
     return null;
