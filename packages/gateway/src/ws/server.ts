@@ -33,6 +33,8 @@ import {
 	handleHeartbeatConfigure,
 	handleClaudeCodeStart,
 	handleClaudeCodeAbort,
+	handleSoulEvolutionResponse,
+	clearEvolutionRateLimit,
 } from "./handlers.js";
 
 const logger = createLogger("gateway-ws");
@@ -353,16 +355,24 @@ export async function registerGatewayWebSocket(
 							);
 							break;
 						}
+
+						case "soul.evolution.response": {
+							logger.info(`soul.evolution.response for requestId: ${msg.requestId}`);
+							handleSoulEvolutionResponse(transport, msg, connState);
+							break;
+						}
 					}
 				});
 
 				socket.on("close", () => {
 					logger.info("WebSocket client disconnected");
+					clearEvolutionRateLimit(transport.transportId);
 					removeConnection(transport.transportId);
 				});
 
 				socket.on("error", (err: Error) => {
 					logger.error(`WebSocket error: ${err.message}`);
+					clearEvolutionRateLimit(transport.transportId);
 					removeConnection(transport.transportId);
 				});
 			},

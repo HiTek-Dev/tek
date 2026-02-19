@@ -16,6 +16,7 @@ export {
 	loadSoul,
 	evolveSoul,
 	getSoulPath,
+	updateIdentityFileSection,
 } from "./soul-manager.js";
 
 export {

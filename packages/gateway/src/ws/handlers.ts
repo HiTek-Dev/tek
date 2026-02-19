@@ -23,6 +23,7 @@ import type {
 	ScheduleDelete,
 	ScheduleList,
 	HeartbeatConfigure,
+	SoulEvolutionResponse,
 } from "./protocol.js";
 import type { ConnectionState } from "./connection.js";
 import { sessionManager } from "../session/index.js";
@@ -49,8 +50,29 @@ import type { PreflightApproval } from "./protocol.js";
 import { MCPClientManager } from "../mcp/client-manager.js";
 import { loadMCPConfigs } from "../mcp/config.js";
 import { getKey } from "@tek/cli/vault";
+import { updateIdentityFileSection, migrateToMultiFile } from "@tek/db";
 
 const logger = createLogger("ws-handlers");
+
+/** Module-level migration flag — ensures migration runs only once per process */
+let migrationRan = false;
+
+/**
+ * Run identity file migration on first chat.send after upgrade.
+ * Non-fatal: logs and continues if migration fails.
+ */
+function ensureMigration(): void {
+	if (migrationRan) return;
+	migrationRan = true;
+	try {
+		const result = migrateToMultiFile();
+		if (result.migrated) {
+			logger.info(`Identity files migrated to v2 (backup: ${result.backup})`);
+		}
+	} catch (err) {
+		logger.warn(`Migration failed (non-fatal): ${err}`);
+	}
+}
 
 /** Lazy-init singletons */
 let memoryManagerInstance: MemoryManager | null = null;
@@ -216,6 +238,12 @@ export async function handleChatSend(
 	msg: ChatSend,
 	connState: ConnectionState,
 ): Promise<void> {
+	// Run identity file migration on first chat.send (once, non-blocking)
+	ensureMigration();
+
+	// Extract agentId from config for agent-aware identity loading
+	const agentId = loadConfig()?.agents?.defaultAgentId ?? "default";
+
 	// Guard against concurrent streams
 	if (connState.streaming) {
 		transport.send({
@@ -278,7 +306,7 @@ export async function handleChatSend(
 
 	// Assemble context
 	const sessionMessages = sessionManager.getMessages(sessionId);
-	const context = assembleContext(sessionMessages, msg.content, model);
+	const context = assembleContext(sessionMessages, msg.content, model, undefined, undefined, agentId);
 
 	// Check memory pressure and flush if needed (best-effort)
 	await checkAndFlushPressure(context);
@@ -1230,6 +1258,66 @@ let claudeCodeManagerInstance: InstanceType<typeof import("../claude-code/sessio
  */
 export function getClaudeCodeManager(): typeof claudeCodeManagerInstance {
 	return claudeCodeManagerInstance;
+}
+
+// ── Soul Evolution Handlers ────────────────────────────────────────────
+
+/** Pending soul evolution proposals keyed by requestId */
+const pendingSoulEvolutions = new Map<string, { file: string; section: string; proposedContent: string }>();
+
+/** Per-connection evolution proposal counter for rate limiting (max 1 per session) */
+const evolutionCountByConnection = new Map<string, number>();
+
+/**
+ * Register a soul evolution proposal for later resolution.
+ * Rate limited to max 1 evolution proposal per connection/session.
+ */
+export function registerSoulEvolution(
+	requestId: string,
+	file: string,
+	section: string,
+	proposedContent: string,
+	connectionId: string,
+): void {
+	const count = evolutionCountByConnection.get(connectionId) ?? 0;
+	if (count >= 1) {
+		logger.warn(`Soul evolution rate limit reached for connection ${connectionId} (max 1 per session)`);
+		throw new Error("Rate limit: max 1 soul evolution proposal per session");
+	}
+	evolutionCountByConnection.set(connectionId, count + 1);
+	pendingSoulEvolutions.set(requestId, { file, section, proposedContent });
+}
+
+/**
+ * Clean up rate limit counter when connection closes.
+ */
+export function clearEvolutionRateLimit(connectionId: string): void {
+	evolutionCountByConnection.delete(connectionId);
+}
+
+/**
+ * Handle soul.evolution.response: apply or reject a soul evolution proposal.
+ */
+export function handleSoulEvolutionResponse(
+	_transport: Transport,
+	msg: SoulEvolutionResponse,
+	_state: ConnectionState,
+): void {
+	const pending = pendingSoulEvolutions.get(msg.requestId);
+	if (!pending) {
+		logger.warn(`No pending soul evolution for requestId ${msg.requestId}`);
+		return;
+	}
+	pendingSoulEvolutions.delete(msg.requestId);
+
+	if (!msg.approved) {
+		logger.info(`Soul evolution rejected for ${pending.file}#${pending.section}`);
+		return;
+	}
+
+	const content = msg.editedContent ?? pending.proposedContent;
+	updateIdentityFileSection(pending.file, pending.section, content);
+	logger.info(`Soul evolution applied to ${pending.file}#${pending.section}`);
 }
 
 // ── Heartbeat Handler ──────────────────────────────────────────────────

@@ -37,6 +37,46 @@ export function loadSoul(agentId?: string): string {
 }
 
 /**
+ * Update a specific section in an identity file.
+ * Finds the section by ## header, replaces content between this header and the next.
+ * If section not found, appends at end.
+ */
+export function updateIdentityFileSection(
+	filename: string,
+	section: string,
+	newContent: string,
+): void {
+	const filePath = join(CONFIG_DIR, "memory", filename);
+	if (!existsSync(filePath)) return;
+
+	let content = readFileSync(filePath, "utf-8");
+	const sectionHeader = `## ${section}`;
+	const headerIndex = content.indexOf(sectionHeader);
+
+	if (headerIndex === -1) {
+		// Section not found, append
+		content = content.trimEnd() + `\n\n${sectionHeader}\n${newContent}\n`;
+	} else {
+		// Find end of header line
+		const afterHeader = content.indexOf("\n", headerIndex);
+		if (afterHeader === -1) return;
+
+		// Find next section
+		const remaining = content.slice(afterHeader + 1);
+		const nextSectionMatch = remaining.search(/^## /m);
+
+		if (nextSectionMatch !== -1) {
+			const insertEnd = afterHeader + 1 + nextSectionMatch;
+			content = content.slice(0, afterHeader + 1) + newContent + "\n\n" + content.slice(insertEnd);
+		} else {
+			content = content.slice(0, afterHeader + 1) + newContent + "\n";
+		}
+	}
+
+	writeFileSync(filePath, content, "utf-8");
+}
+
+/**
  * Append a learned preference to the `## Learned Preferences` section of SOUL.md.
  * This is called after user approval (not auto-evolved).
  */
