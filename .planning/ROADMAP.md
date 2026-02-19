@@ -224,7 +224,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 14. CLI & Setup Polish | 2/2 | Complete    | 2026-02-18 |
 | 15. Init & Onboarding Polish | 3/3 | Complete    | 2026-02-19 |
 | 16. Agent Personality System | 5/5 | Complete    | 2026-02-19 |
-| 17. Desktop Frontend (Tauri) | 1/6 | In Progress|  |
+| 17. Desktop Frontend (Tauri) | 4/6 | In Progress|  |
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
 
 ### Phase 11: Install & Update System
@@ -325,7 +325,7 @@ Plans:
 **Goal:** Users have a native macOS desktop GUI that manages gateway lifecycle (start/stop/status), provides a chat interface connected via WebSocket, allows editing agent identity files, and displays/edits configuration -- all in a Tauri v2 + React app
 **Depends on:** Phase 16
 **Requirements**: DESK-01, DESK-02, DESK-03, DESK-04, DESK-05
-**Plans:** 1/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 - [ ] 17-01-PLAN.md — Scaffold Tauri v2 app with React + Vite frontend, Rust plugins, navigation shell
