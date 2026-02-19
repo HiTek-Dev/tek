@@ -98,6 +98,35 @@ AgentSpace draws architectural inspiration from OpenClaw (github.com/openclaw/op
 - **Security**: API keys must never be stored in plain text config files
 - **Context management**: Every piece of context sent to models must be visible and controllable by the user
 
+## Build & Deploy Workflow
+
+**All builds happen on the dev machine, distribute to CDN, install on sandbox/target machines via curl.**
+
+### Procedure (after code changes):
+
+1. **Build dist locally** (dev machine):
+   ```bash
+   bash scripts/dist.sh
+   ```
+   This builds all backend packages (core, db, cli, gateway, telegram), builds the Tauri desktop app, creates `dist/tek-backend-arm64.tar.gz` + DMG + `version.json`.
+
+2. **Upload to CDN**:
+   ```bash
+   bash scripts/upload-cdn.sh
+   ```
+   Pushes artifacts to `tekpartner.b-cdn.net/tek/dist/`.
+
+3. **Install on sandbox/target machine**:
+   ```bash
+   curl -fsSL https://tekpartner.b-cdn.net/tek/dist/install.sh | bash
+   ```
+
+### Important Notes:
+- `scripts/update.sh` only rebuilds backend packages — it does NOT rebuild the Tauri desktop app
+- The desktop app (Tek.app) is bundled by Tauri during `dist.sh` — source changes to `apps/desktop/src/` require a full `dist.sh` build to take effect
+- After every phase execution that touches code, run `dist.sh` → `upload-cdn.sh` before testing on sandbox
+- Config/data at `~/.config/tek/` is preserved across installs — never overwritten
+
 ## Key Decisions
 
 | Decision | Rationale | Outcome |

@@ -34,6 +34,7 @@ echo "  Building gateway (pass 1)..."
 echo "  Building cli..."
 (cd "$SOURCE_DIR/packages/cli" && npx tsc -p tsconfig.json)
 echo "  Building gateway (pass 2)..."
+rm -rf "$SOURCE_DIR/packages/gateway/dist"
 (cd "$SOURCE_DIR/packages/gateway" && npx tsc -p tsconfig.json)
 echo "  Building telegram..."
 (cd "$SOURCE_DIR/packages/telegram" && npx tsc -p tsconfig.json)
