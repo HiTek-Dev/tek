@@ -7,11 +7,14 @@ export interface FileState {
   loading: boolean;
 }
 
-export function useIdentityFiles() {
+export function useIdentityFiles(agentId?: string) {
   const [files, setFiles] = useState<Map<string, FileState>>(new Map());
   const [activeFile, setActiveFile] = useState<string>('SOUL.md');
 
-  // Load all identity files on mount
+  // Compute a stable key from agentId to trigger reload when agent changes
+  const agentKey = agentId ?? 'default';
+
+  // Load all identity files on mount or when agentId changes
   useEffect(() => {
     const initialMap = new Map<string, FileState>();
     for (const file of IDENTITY_FILES) {
@@ -21,7 +24,7 @@ export function useIdentityFiles() {
 
     Promise.all(
       IDENTITY_FILES.map(async (file) => {
-        const content = await loadIdentityFile(file.filename);
+        const content = await loadIdentityFile(file.filename, agentId);
         return { filename: file.filename, content };
       })
     ).then((results) => {
@@ -33,7 +36,7 @@ export function useIdentityFiles() {
         return next;
       });
     });
-  }, []);
+  }, [agentKey]);
 
   const setContent = useCallback((filename: string, content: string) => {
     setFiles((prev) => {
@@ -50,7 +53,7 @@ export function useIdentityFiles() {
     const state = files.get(filename);
     if (!state || state.content === null) return;
 
-    await saveIdentityFile(filename, state.content);
+    await saveIdentityFile(filename, state.content, agentId);
     setFiles((prev) => {
       const next = new Map(prev);
       const current = next.get(filename);
@@ -59,14 +62,14 @@ export function useIdentityFiles() {
       }
       return next;
     });
-  }, [files]);
+  }, [files, agentId]);
 
   const saveAll = useCallback(async () => {
     const promises: Promise<void>[] = [];
     for (const [filename, state] of files) {
       if (state.modified && state.content !== null) {
         promises.push(
-          saveIdentityFile(filename, state.content).then(() => {
+          saveIdentityFile(filename, state.content, agentId).then(() => {
             setFiles((prev) => {
               const next = new Map(prev);
               const current = next.get(filename);
@@ -80,7 +83,7 @@ export function useIdentityFiles() {
       }
     }
     await Promise.all(promises);
-  }, [files]);
+  }, [files, agentId]);
 
   const reload = useCallback(async (filename?: string) => {
     const filesToReload = filename
@@ -101,7 +104,7 @@ export function useIdentityFiles() {
 
     const results = await Promise.all(
       filesToReload.map(async (file) => {
-        const content = await loadIdentityFile(file.filename);
+        const content = await loadIdentityFile(file.filename, agentId);
         return { filename: file.filename, content };
       })
     );
@@ -113,7 +116,7 @@ export function useIdentityFiles() {
       }
       return next;
     });
-  }, []);
+  }, [agentId]);
 
   return {
     files,

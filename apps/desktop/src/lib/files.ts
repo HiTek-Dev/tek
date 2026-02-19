@@ -19,9 +19,22 @@ export async function getConfigDir(): Promise<string> {
   return await join(home, '.config', 'tek');
 }
 
-export async function loadIdentityFile(filename: string): Promise<string | null> {
-  const configDir = await getConfigDir();
-  const filePath = await join(configDir, filename);
+async function getIdentityDir(agentId?: string): Promise<string> {
+  const home = await homeDir();
+  if (agentId && agentId !== 'default') {
+    return await join(home, '.config', 'tek', 'agents', agentId);
+  }
+  return await join(home, '.config', 'tek', 'memory');
+}
+
+export async function getAgentDir(agentId: string): Promise<string> {
+  const home = await homeDir();
+  return await join(home, '.config', 'tek', 'agents', agentId);
+}
+
+export async function loadIdentityFile(filename: string, agentId?: string): Promise<string | null> {
+  const dir = await getIdentityDir(agentId);
+  const filePath = await join(dir, filename);
 
   const fileExists = await exists(filePath);
   if (!fileExists) {
@@ -31,14 +44,22 @@ export async function loadIdentityFile(filename: string): Promise<string | null>
   return await readTextFile(filePath);
 }
 
-export async function saveIdentityFile(filename: string, content: string): Promise<void> {
-  const configDir = await getConfigDir();
+export async function saveIdentityFile(filename: string, content: string, agentId?: string): Promise<void> {
+  const dir = await getIdentityDir(agentId);
 
-  const dirExists = await exists(configDir);
+  const dirExists = await exists(dir);
   if (!dirExists) {
-    await mkdir(configDir, { recursive: true });
+    await mkdir(dir, { recursive: true });
   }
 
-  const filePath = await join(configDir, filename);
+  const filePath = await join(dir, filename);
   await writeTextFile(filePath, content);
+}
+
+export async function ensureAgentDir(agentId: string): Promise<void> {
+  const dir = await getAgentDir(agentId);
+  const dirExists = await exists(dir);
+  if (!dirExists) {
+    await mkdir(dir, { recursive: true });
+  }
 }
