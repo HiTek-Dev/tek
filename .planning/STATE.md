@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 19 of 19 (Desktop & Integration Polish)
-Plan: 3 of 6 in current phase
+Plan: 6 of 6 in current phase
 Status: Executing phase 19
-Last activity: 2026-02-19 - Completed 19-02: Fix chat identity loading and settings crash
+Last activity: 2026-02-19 - Completed 19-05: Fix Telegram bot punycode crash and gateway auto-start
 
-Progress: [█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 33%
+Progress: [██████████████████████████████████░░░░░░░░] 83%
 
 ## Performance Metrics
 
@@ -69,6 +69,8 @@ Progress: [█████████████░░░░░░░░░░
 | Phase 17 P03 | 2min | 2 tasks | 8 files |
 | Phase 19 P01 | 1min | 2 tasks | 2 files |
 | Phase 19 P02 | 1min | 2 tasks | 3 files |
+| Phase 19 P05 | 2min | 1 tasks | 4 files |
+| Phase 19 P03 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -265,6 +267,9 @@ Recent decisions affecting current work:
 - [Phase 19]: 2-second AbortController timeout for desktop health check to avoid hanging on unresponsive gateways
 - [Phase 19]: Identity files written after personality preset to avoid overwriting preset content
 - [Phase 19]: Bidirectional modelAliases normalization: array-to-record on load, record-to-array on save for core compat
+- [Phase 19]: [19-05]: process.emit override to suppress punycode DeprecationWarning for Node.js v24 grammY compatibility
+- [Phase 19]: [19-05]: Dynamic import of @tek/telegram in gateway for conditional auto-start when token configured
+- [Phase 19]: [19-03]: Default agent maps to ~/.config/tek/memory/ for backward compat; three-view state machine for AgentsPage; agent IDs from lowercase hyphenated names
 
 ### Roadmap Evolution
 
@@ -308,5 +313,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 19-02-PLAN.md
+Stopped at: Completed 19-05-PLAN.md
 Resume file: None
