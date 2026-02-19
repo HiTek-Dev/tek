@@ -14,9 +14,13 @@ type OnboardingStep =
 	| "keys-provider"
 	| "keys-input"
 	| "keys-more"
+	| "telegram-ask"
+	| "telegram-input"
 	| "model-select"
 	| "model-alias-select"
 	| "model-alias-name"
+	| "hatch-ask"
+	| "hatch-name"
 	| "summary"
 	| "done";
 
@@ -31,6 +35,10 @@ export interface OnboardingResult {
 	keys: { provider: Provider; key: string }[];
 	defaultModel?: string;
 	modelAliases?: ModelAliasEntry[];
+	telegramToken?: string;
+	personalityPreset?: string;
+	agentName?: string;
+	userDisplayName?: string;
 }
 
 export interface OnboardingProps {
@@ -41,6 +49,8 @@ export interface OnboardingProps {
 		defaultModel?: string;
 		modelAliases?: ModelAliasEntry[];
 		configuredProviders?: string[];
+		agentName?: string;
+		userDisplayName?: string;
 	};
 }
 
@@ -62,6 +72,15 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	const [modelsToAlias, setModelsToAlias] = useState<string[]>([]);
 	const [aliasKeepDecided, setAliasKeepDecided] = useState(false);
 
+	// Telegram state
+	const [telegramToken, setTelegramToken] = useState("");
+
+	// Hatch (personality) state
+	const [personalityPreset, setPersonalityPreset] = useState<string>("");
+	const [agentName, setAgentName] = useState(existingConfig?.agentName ?? "");
+	const [userDisplayName, setUserDisplayName] = useState(existingConfig?.userDisplayName ?? "");
+	const [hatchSubStep, setHatchSubStep] = useState(0);
+
 	/** Build the list of available models from the full catalog for configured providers. */
 	function buildAvailableModels(): Array<{ label: string; value: string }> {
 		// Use providers from both newly-entered keys and pre-existing config
@@ -76,6 +95,22 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 			models.push(...buildModelOptions(provider));
 		}
 		return models;
+	}
+
+	/** Transition to telegram-ask step (from keys flow). */
+	function goToTelegramAsk() {
+		setStep("telegram-ask");
+	}
+
+	/** Transition to model-select, or skip to hatch-ask if no models available. */
+	function goToModelSelect() {
+		const models = buildAvailableModels();
+		if (models.length > 0) {
+			setAvailableModels(models);
+			setStep("model-select");
+		} else {
+			setStep("hatch-ask");
+		}
 	}
 
 	if (step === "welcome") {
@@ -176,14 +211,8 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 				<ConfirmInput
 					onConfirm={() => setStep("keys-provider")}
 					onCancel={() => {
-						// Skip keys -- move to model selection if providers are configured
-						const models = buildAvailableModels();
-						if (models.length > 0) {
-							setAvailableModels(models);
-							setStep("model-select");
-						} else {
-							setStep("summary");
-						}
+						// Skip keys -- move to telegram
+						goToTelegramAsk();
 					}}
 				/>
 			</Box>
@@ -193,18 +222,12 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	if (step === "keys-provider") {
 		const configuredProviders = keys.map((k) => k.provider);
 		const availableProviders = PROVIDERS.filter(
-			(p) => !configuredProviders.includes(p),
+			(p) => !configuredProviders.includes(p) && p !== "telegram",
 		);
 
 		if (availableProviders.length === 0) {
-			// All providers configured, move to model selection
-			const models = buildAvailableModels();
-			if (models.length > 0) {
-				setAvailableModels(models);
-				setStep("model-select");
-			} else {
-				setStep("summary");
-			}
+			// All providers configured, move to telegram
+			goToTelegramAsk();
 			return null;
 		}
 
@@ -255,18 +278,12 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	if (step === "keys-more") {
 		const configuredProviders = keys.map((k) => k.provider);
 		const remaining = PROVIDERS.filter(
-			(p) => !configuredProviders.includes(p),
+			(p) => !configuredProviders.includes(p) && p !== "telegram",
 		);
 
 		if (remaining.length === 0) {
-			// All providers configured, move to model selection
-			const models = buildAvailableModels();
-			if (models.length > 0) {
-				setAvailableModels(models);
-				setStep("model-select");
-			} else {
-				setStep("summary");
-			}
+			// All providers configured, move to telegram
+			goToTelegramAsk();
 			return null;
 		}
 
@@ -277,14 +294,47 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 				<ConfirmInput
 					onConfirm={() => setStep("keys-provider")}
 					onCancel={() => {
-						// Done adding keys, move to model selection
-						const models = buildAvailableModels();
-						if (models.length > 0) {
-							setAvailableModels(models);
-							setStep("model-select");
-						} else {
-							setStep("summary");
+						// Done adding keys, move to telegram
+						goToTelegramAsk();
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "telegram-ask") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Set up Telegram integration?</Text>
+				<Text dimColor>
+					You'll need a bot token from @BotFather on Telegram.
+				</Text>
+				<Text />
+				<ConfirmInput
+					onConfirm={() => setStep("telegram-input")}
+					onCancel={() => {
+						goToModelSelect();
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "telegram-input") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Enter your Telegram bot token:</Text>
+				<Text dimColor>
+					Get one from @BotFather: /newbot command, then copy the token.
+				</Text>
+				<Text />
+				<TextInput
+					placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+					onSubmit={(value) => {
+						if (value.trim()) {
+							setTelegramToken(value.trim());
 						}
+						goToModelSelect();
 					}}
 				/>
 			</Box>
@@ -350,10 +400,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 						onChange={(value) => {
 							if (value === "keep") {
 								setModelAliases(existingConfig!.modelAliases!);
-								setStep("summary");
+								setStep("hatch-ask");
 							} else if (value === "skip") {
 								setModelAliases([]);
-								setStep("summary");
+								setStep("hatch-ask");
 							} else {
 								// "choose" — fall through to MultiSelect
 								setAliasKeepDecided(true);
@@ -378,7 +428,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					visibleOptionCount={8}
 					onSubmit={(selected) => {
 						if (selected.length === 0) {
-							setStep("summary");
+							setStep("hatch-ask");
 						} else {
 							setModelsToAlias(selected);
 							setAliasIndex(0);
@@ -392,7 +442,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 
 	if (step === "model-alias-name") {
 		if (aliasIndex >= modelsToAlias.length) {
-			setStep("summary");
+			setStep("hatch-ask");
 			return null;
 		}
 
@@ -437,7 +487,92 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 		);
 	}
 
+	if (step === "hatch-ask") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Personalize your agent?</Text>
+				<Text dimColor>
+					Choose a personality preset or set up later via conversation.
+				</Text>
+				<Text />
+				<Select
+					options={[
+						{ label: "Professional \u2014 Concise, formal, business-appropriate", value: "professional" },
+						{ label: "Friendly \u2014 Conversational, warm, asks follow-ups", value: "friendly" },
+						{ label: "Technical \u2014 Detailed, code-heavy, precise", value: "technical" },
+						{ label: "Opinionated \u2014 Direct, has preferences, personality-forward", value: "opinionated" },
+						{ label: "Custom \u2014 Set up later via conversation", value: "custom" },
+						{ label: "Skip \u2014 Use default personality", value: "skip" },
+					]}
+					onChange={(value) => {
+						if (value === "skip") {
+							setStep("summary");
+						} else if (value === "custom") {
+							setPersonalityPreset("custom");
+							setStep("summary");
+						} else {
+							setPersonalityPreset(value);
+							setHatchSubStep(0);
+							setStep("hatch-name");
+						}
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "hatch-name") {
+		if (hatchSubStep === 0) {
+			return (
+				<Box flexDirection="column" padding={1}>
+					<Text bold>What should your agent be called?</Text>
+					<Text dimColor>
+						Give your agent a name that fits its personality.
+					</Text>
+					<Text />
+					<TextInput
+						key={`hatch-${hatchSubStep}`}
+						placeholder="e.g. Atlas, Sage, Tek"
+						onSubmit={(value) => {
+							if (value.trim()) {
+								setAgentName(value.trim());
+							}
+							setHatchSubStep(1);
+						}}
+					/>
+				</Box>
+			);
+		}
+
+		// hatchSubStep === 1
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>What should the agent call you?</Text>
+				<Text dimColor>
+					Your name or a nickname the agent will use.
+				</Text>
+				<Text />
+				<TextInput
+					key={`hatch-${hatchSubStep}`}
+					placeholder="e.g. your name or a nickname"
+					onSubmit={(value) => {
+						if (value.trim()) {
+							setUserDisplayName(value.trim());
+						}
+						setStep("summary");
+					}}
+				/>
+			</Box>
+		);
+	}
+
 	if (step === "summary") {
+		const personalityLabel = personalityPreset === "custom"
+			? "Custom (will set up on first chat)"
+			: personalityPreset === "skip" || !personalityPreset
+				? "Default"
+				: personalityPreset.charAt(0).toUpperCase() + personalityPreset.slice(1);
+
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text bold color="cyan">
@@ -463,6 +598,12 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 							: "none configured"}
 					</Text>
 				</Text>
+				<Text>
+					Telegram:{" "}
+					<Text bold>
+						{telegramToken ? "configured" : "not configured"}
+					</Text>
+				</Text>
 				{defaultModel && (
 					<Text>
 						Default model: <Text bold>{defaultModel}</Text>
@@ -478,6 +619,15 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 							</Text>
 						))}
 					</Box>
+				)}
+				<Text>
+					Personality:{" "}
+					<Text bold>{personalityLabel}</Text>
+				</Text>
+				{agentName && (
+					<Text>
+						Agent name: <Text bold>{agentName}</Text>
+					</Text>
 				)}
 				<Text>
 					API endpoint:{" "}
@@ -497,6 +647,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 							defaultModel: defaultModel || undefined,
 							modelAliases:
 								modelAliases.length > 0 ? modelAliases : undefined,
+							telegramToken: telegramToken || undefined,
+							personalityPreset: personalityPreset || undefined,
+							agentName: agentName || undefined,
+							userDisplayName: userDisplayName || undefined,
 						});
 					}}
 				/>
