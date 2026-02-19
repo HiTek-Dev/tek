@@ -236,6 +236,9 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-02]: Default agent (undefined or 'default') uses global memory directory for backward compatibility
 - [Phase 16]: [16-03]: Migration conservative: only extracts Communication Style to STYLE.md, does not rewrite SOUL.md
 - [Phase 16]: [16-03]: Token budget threshold at 3000 tokens for combined soul+identity+style with warn-only logging
+- [Phase 16]: [16-04]: Pending soul evolution proposals stored in module-level Map keyed by requestId, matching tool approval pattern
+- [Phase 16]: [16-04]: Rate limit: max 1 evolution proposal per connection/session to prevent personality drift
+- [Phase 16]: [16-04]: updateIdentityFileSection uses ## header matching with next-section detection for surgical updates
 - [Phase 16]: [16-05]: loadUser/loadAgentsConfig remain global-only; AGENTS.md conditional on agents.list > 1; migration runs once per process via module flag
 
 ### Roadmap Evolution
