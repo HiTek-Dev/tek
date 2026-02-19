@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 18 — Onboarding Research
+**Current focus:** Phase 15 — Init & Onboarding Polish
 
 ## Current Position
 
-Phase: 18 of 18 (Onboarding Research)
-Plan: 1 of 1 in current phase
-Status: Phase 18 complete -- all plans executed
-Last activity: 2026-02-18 - Completed 18-01: Synthesize research into recommendations
+Phase: 15 of 18 (Init & Onboarding Polish)
+Plan: 2 of 3 in current phase
+Status: Executing phase 15
+Last activity: 2026-02-18 - Completed 15-01: Config schema and onboarding foundation
 
 Progress: [████████████████████████████████████████] 100%
 
@@ -54,6 +54,7 @@ Progress: [███████████████████████
 | Phase 14 P01 | 2min | 2 tasks | 5 files |
 | Phase 14 P02 | 2min | 2 tasks | 3 files |
 | Phase 18 P01 | 2min | 2 tasks | 2 files |
+| Phase 15 P01 | 1min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -216,6 +217,7 @@ Recent decisions affecting current work:
 - [Phase 14]: [14-02]: Provider-qualified model IDs as Select values consistent with gateway model resolution
 - [Phase 14]: [14-02]: buildAvailableModels merges newly-entered keys with existingConfig.configuredProviders
 - [Phase 14]: [14-02]: Alias "keep" command preserves all existing aliases at once
+- [Phase 15]: [15-01]: Custom personality preset mirrors existing SOUL.md; telegram vault provider uses null key prefix
 
 ### Roadmap Evolution
 
@@ -257,5 +259,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 18-01-PLAN.md (synthesize research into recommendations)
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
