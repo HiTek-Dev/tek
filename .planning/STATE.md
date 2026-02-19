@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 14 — CLI & Setup Polish
+**Current focus:** Phase 18 — Onboarding Research
 
 ## Current Position
 
-Phase: 14 of 14 (CLI & Setup Polish)
-Plan: 2 of 2 in current phase
-Status: Phase 14 complete -- all plans executed
-Last activity: 2026-02-18 - Completed 14-02: Full model catalog & skippable setup
+Phase: 18 of 18 (Onboarding Research)
+Plan: 1 of 1 in current phase
+Status: Phase 18 complete -- all plans executed
+Last activity: 2026-02-18 - Completed 18-01: Synthesize research into recommendations
 
 Progress: [████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 35
+- Total plans completed: 36
 - Average duration: 3min
 - Total execution time: 1.25 hours
 
@@ -53,6 +53,7 @@ Progress: [███████████████████████
 | Phase 13 P02 | 6min | 2 tasks | 23 files |
 | Phase 14 P01 | 2min | 2 tasks | 5 files |
 | Phase 14 P02 | 2min | 2 tasks | 3 files |
+| Phase 18 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -222,6 +223,15 @@ Recent decisions affecting current work:
 - Phase 12 added: Expanded Providers — Venice AI (text/image/video), Google AI Studio (Gemini), Ollama remote/cloud hosts, provider hot-swap
 - Phase 13 added: Rebrand to tek — rename CLI/packages/paths from agentspace to tek with centralized project name constant
 - Phase 14 added: CLI & Setup Polish — gateway subcommand, skippable setup steps, full model catalog with recommendations, tek uninstall
+- Phase 15 added: Init & Onboarding Polish — fix model alias flow (checkbox multi-select, clear input), integrate Telegram setup into init, streamline onboarding sequence
+- Phase 16 added: Agent Personality System — multi-agent support with individual soul/memory/personality, personality onboarding wizard, humor/tone settings, OpenClaw-inspired patterns
+- Phase 17 added: Desktop Frontend (Tauri) — Tauri-based desktop app for install/update/reset, gateway management, agent management, chat interface
+- Phase 18 added: Onboarding Research — deep research on OpenClaw (Peter Steinberger's soul files/agents) and other systems to improve personality and onboarding flows
+- [Phase 18]: [18-01]: Two-phase onboarding: infrastructure wizard then conversational Hatch step for personality
+- [Phase 18]: [18-01]: 5 personality presets (Professional/Friendly/Technical/Opinionated/Custom) as markdown templates
+- [Phase 18]: [18-01]: Multi-file identity architecture: SOUL.md + IDENTITY.md + USER.md + STYLE.md + AGENTS.md
+- [Phase 18]: [18-01]: Conservative personality evolution with diff-style proposals requiring user approval
+- [Phase 18]: [18-01]: Anti-patterns: no database-backed personality, no custom NLP, no form-based setup
 
 ### Pending Todos
 
@@ -247,5 +257,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed quick task 6 (complete Venice model catalog)
+Stopped at: Completed 18-01-PLAN.md (synthesize research into recommendations)
 Resume file: None
