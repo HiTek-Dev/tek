@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 16 — Agent Personality System
+**Current focus:** Phase 17 — Desktop Frontend (Tauri)
 
 ## Current Position
 
-Phase: 16 of 18 (Agent Personality System)
-Plan: 5 of 5 in current phase
-Status: Phase 16 complete
-Last activity: 2026-02-19 - Completed 16-05: Agent-aware identity wiring
+Phase: 17 of 18 (Desktop Frontend - Tauri)
+Plan: 1 of 6 in current phase
+Status: Executing phase 17
+Last activity: 2026-02-19 - Completed 17-01: Tauri desktop app scaffold
 
 Progress: [████████████████████████████████████████] 100%
 
@@ -62,6 +62,7 @@ Progress: [███████████████████████
 | Phase 16 P03 | 2min | 2 tasks | 5 files |
 | Phase 16 P04 | 3min | 2 tasks | 5 files |
 | Phase 16 P05 | 3min | 2 tasks | 4 files |
+| Phase 17 P01 | 3min | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -240,6 +241,10 @@ Recent decisions affecting current work:
 - [Phase 16]: [16-04]: Rate limit: max 1 evolution proposal per connection/session to prevent personality drift
 - [Phase 16]: [16-04]: updateIdentityFileSection uses ## header matching with next-section detection for surgical updates
 - [Phase 16]: [16-05]: loadUser/loadAgentsConfig remain global-only; AGENTS.md conditional on agents.list > 1; migration runs once per process via module flag
+- [Phase 17]: Removed shell plugin 'open' feature (does not exist in tauri-plugin-shell v2)
+- [Phase 17]: Generated RGBA placeholder icons for Tauri build (required by generate_context macro)
+- [Phase 17]: Used hash-based routing with useState instead of react-router for 4-page navigation
+- [Phase 17]: Tailwind v4 via @import 'tailwindcss' (no config file needed)
 
 ### Roadmap Evolution
 
@@ -281,5 +286,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 16-05-PLAN.md (Phase 16 complete)
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
