@@ -1,557 +1,818 @@
-# Architecture Research: AgentSpace Gateway
+# Architecture Research
 
-**Domain:** AI Agent Gateway Platform
-**Researched:** 2026-02-15
-**Confidence:** MEDIUM-HIGH
+**Domain:** CLI Visual Overhaul + Desktop UI Overhaul + Testing Foundation (Milestone: Visual Polish & Testing)
+**Researched:** 2026-02-20
+**Confidence:** HIGH — based on direct codebase reading, not speculation
 
-## Design Philosophy: Modular Monolith
+---
 
-AgentSpace should use a **modular monolith** architecture -- a single process with strict internal module boundaries. This gives us OpenClaw's capabilities without OpenClaw's sprawl (153 files in gateway, 353 in agents).
+> **Note:** This file replaces the original Feb-15 project research. That research described the initial platform design. This research describes integration architecture for the current milestone: visual polish (CLI + Desktop) and test infrastructure, layered on the existing Tek codebase.
 
-**Why not microservices:** Single-user/small-team product running on macOS. Network overhead between services is waste. Service discovery, container orchestration, and distributed tracing are enterprise problems we do not have.
+---
 
-**Why not a flat monolith:** OpenClaw's 500+ files across gateway and agents directories demonstrate what happens when a monolith grows without internal boundaries. Modules become coupled, changes cascade unpredictably.
+## Existing Architecture (Ground Truth)
 
-**Modular monolith means:** One process, one deployment, but strict module boundaries enforced through TypeScript barrel exports. Each module has a public API surface; internals are private. Modules communicate through a typed event bus, not direct imports of each other's internals.
+This is a subsequent milestone. The architecture is not hypothetical — it is the live codebase. Every component and boundary below was read directly from source.
 
-**Confidence:** MEDIUM-HIGH. This pattern is well-established in the Node.js/TypeScript ecosystem. The modular-vs-monolithic tradeoff analysis from GoCodeo confirms modular design is essential for systems requiring "multiple external tools, long-context reasoning, and evolution over time" -- which describes AgentSpace exactly.
-
-## System Overview
+### Package Dependency Graph (Current State)
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                      INTERFACE LAYER                             │
-│  ┌──────────┐  ┌──────────────┐  ┌──────────┐                   │
-│  │   CLI    │  │ Web Dashboard│  │ Telegram │                   │
-│  │  (TUI)   │  │  (HTTP+WS)   │  │   Bot    │                   │
-│  └────┬─────┘  └──────┬───────┘  └────┬─────┘                   │
-│       │               │               │                          │
-│       └───────────────┼───────────────┘                          │
-│                       │  Channel Adapter Protocol                │
-├───────────────────────┼──────────────────────────────────────────┤
-│                 GATEWAY CORE                                     │
-│                       │                                          │
-│  ┌────────────────────▼────────────────────┐                     │
-│  │           Message Router                │                     │
-│  │   (normalize, route, dispatch)          │                     │
-│  └──┬──────────┬──────────┬───────────┬────┘                     │
-│     │          │          │           │                           │
-│  ┌──▼───┐  ┌──▼───┐  ┌──▼────┐  ┌───▼────┐                     │
-│  │Session│  │Event │  │Approval│  │Workflow│                     │
-│  │Manager│  │ Bus  │  │ Gate  │  │Engine  │                     │
-│  └──┬────┘  └──┬───┘  └──┬────┘  └───┬────┘                     │
-│     │          │          │           │                           │
-├─────┼──────────┼──────────┼───────────┼──────────────────────────┤
-│                    AGENT LAYER                                   │
-│  ┌─────────────────────────────────────────┐                     │
-│  │           Agent Runtime                 │                     │
-│  │  ┌────────────┐  ┌──────────────────┐   │                     │
-│  │  │  LLM Router│  │  Skill Registry  │   │                     │
-│  │  │ (providers)│  │  (plugin system) │   │                     │
-│  │  └──────┬─────┘  └────────┬─────────┘   │                     │
-│  │         │                 │              │                     │
-│  │  ┌──────▼─────────────────▼──────────┐  │                     │
-│  │  │      Context Assembler            │  │                     │
-│  │  │  (build prompt from memory+state) │  │                     │
-│  │  └──────────────┬────────────────────┘  │                     │
-│  └─────────────────┼───────────────────────┘                     │
-│                    │                                              │
-├────────────────────┼─────────────────────────────────────────────┤
-│                 DATA LAYER                                       │
-│  ┌─────────┐  ┌───▼─────┐  ┌──────────┐  ┌──────────────┐      │
-│  │ Memory  │  │ Session │  │Credential│  │  Scheduler   │      │
-│  │  Store  │  │  Store  │  │  Vault   │  │   (Cron)     │      │
-│  │(SQLite+ │  │(SQLite) │  │(encrypted│  │              │      │
-│  │ vec)    │  │         │  │ SQLite)  │  │              │      │
-│  └─────────┘  └─────────┘  └──────────┘  └──────────────┘      │
-└──────────────────────────────────────────────────────────────────┘
+@tek/core (no deps on other @tek packages)
+    ^
+    |──────────────────┐
+@tek/db              @tek/cli ─── vault/ subpath export
+    ^                    ^  \
+    |                    |   \
+@tek/gateway ────────────┘    \
+(imports @tek/cli/vault)       \
+    ^                           \
+@tek/telegram               @tek/desktop (Tauri app)
+                             (imports @tek/core, @tek/gateway)
 ```
+
+**The circular dependency (confirmed in source):**
+
+`packages/gateway/src/ws/handlers.ts` line 54:
+```typescript
+import { getKey } from "@tek/cli/vault";
+```
+
+`packages/cli/package.json` declares:
+```json
+"dependencies": { "@tek/gateway": "workspace:^" }
+```
+
+This creates: `@tek/cli -> @tek/gateway -> @tek/cli/vault` — a true circular dependency that breaks Turbo's build pipeline, requiring a 2-pass build workaround.
+
+---
+
+## Component Map (New vs Modified for This Milestone)
+
+| Feature Area | Scope | Priority |
+|---|---|---|
+| Vault extraction | Move `packages/cli/src/vault/` to `@tek/core` to fix circular dep | BLOCKER — do first |
+| CLI visual overhaul | Collapsible tool panels, improved streaming state, session picker | Phase A |
+| Desktop markdown rendering | `react-markdown` + syntax highlighting in `ChatMessage.tsx` | Phase A |
+| Desktop tool approval UI | WS handler + `ToolApprovalModal.tsx` component | Phase A |
+| Desktop session history | New WS messages (`session.load`/`session.messages`) + `SessionHistoryPanel.tsx` | Phase B |
+| Test infrastructure | Vitest workspace config + WS protocol harness | Parallel |
+
+---
+
+## Vault Extraction — Integration Points
+
+### Current State
+
+The vault lives in `packages/cli/src/vault/`:
+- `index.ts` — `addKey`, `getKey`, `updateKey`, `removeKey`, `listProviders`, `getOrCreateAuthToken`
+- `keychain.ts` — `@napi-rs/keyring` wrapper (OS keychain via `KEYCHAIN_SERVICE` constant)
+- `providers.ts` — Provider enum (`anthropic`, `openai`, `ollama`, `venice`, `google`, `telegram`, `brave`, `tavily`) + validation
+
+The vault's only external dependencies are `@tek/core` (for `VaultError`, `KEYCHAIN_SERVICE`, `generateAuthToken`) and `@tek/db` (for `recordAuditEvent`). Neither creates a circular import — the circular problem is caused by `@tek/gateway` importing the vault FROM `@tek/cli`, while `@tek/cli` already depends on `@tek/gateway`.
+
+### Extraction Target: `@tek/core`
+
+Move vault into `packages/core/src/vault/` and export from `@tek/core` main barrel. Rationale:
+
+- Vault already only imports `@tek/core` and `@tek/db` — no `@tek/cli`-specific code
+- `@tek/core` is already a dependency of both `@tek/gateway` and `@tek/cli`
+- Gateway import changes from `import { getKey } from "@tek/cli/vault"` → `import { getKey } from "@tek/core"`
+- After extraction, `@tek/cli` can drop its `@tek/gateway` dependency entirely if no other imports remain
+
+**Alternative rejected:** New `@tek/vault` package. Vault is ~4 files, ~200 lines. A new package adds `package.json`, `tsconfig.json`, a turbo graph node — unnecessary overhead for code that logically belongs in core infrastructure.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `packages/core/src/vault/index.ts` | NEW — copy of `packages/cli/src/vault/index.ts` |
+| `packages/core/src/vault/keychain.ts` | NEW — copy of `packages/cli/src/vault/keychain.ts` |
+| `packages/core/src/vault/providers.ts` | NEW — copy of `packages/cli/src/vault/providers.ts` |
+| `packages/core/src/index.ts` | MODIFY — add vault exports |
+| `packages/gateway/src/ws/handlers.ts` | MODIFY — line 54: `from "@tek/cli/vault"` -> `from "@tek/core"` |
+| `packages/cli/src/vault/` | DELETE or stub re-export from `@tek/core` for backward compat |
+| `packages/cli/package.json` | MODIFY — remove `@tek/gateway` dependency if no other imports remain |
+
+**Impact on Turbo:** After extraction, `@tek/cli` no longer depends on `@tek/gateway`. Build graph becomes a clean DAG. Turbo can parallelize `@tek/cli` and `@tek/gateway` builds since they both only depend on `@tek/core` and `@tek/db`.
+
+---
+
+## CLI Visual Overhaul — Component Boundaries
+
+### Current Component Tree
+
+```
+Chat.tsx (orchestrator)
+├── StatusBar.tsx          — 1-line status: connected, session, model, usage
+├── MessageList.tsx        — renders array of ChatMessage via MessageBubble
+│   └── MessageBubble.tsx  — switch on message.type: text/tool_call/bash_command/reasoning
+│       └── MarkdownRenderer.tsx — wraps renderMarkdown() (marked + marked-terminal)
+├── StreamingResponse.tsx  — live streaming display (no markdown during stream)
+├── InputBar.tsx           — @inkjs/ui TextInput with cyan prompt
+├── ToolApprovalPrompt.tsx — Y/N/S keyboard input modal
+├── SkillApprovalPrompt.tsx — skill registration variant
+└── PreflightChecklist.tsx — preflight checklist review
+```
+
+### Ink Box Model Constraints (Confirmed From Source)
+
+- All layout is `flexDirection: "column"` or `"row"` — no CSS grid
+- `borderStyle="single"` is the heaviest border option (no gradients, no color fills)
+- `dimColor` + `bold` + 8 named colors are the full styling palette
+- No scroll API — content renders sequentially; terminal scroll handles overflow
+- Width is `process.stdout.columns` (fixed at module init in `lib/markdown.ts`)
+- No focus management system — all `useInput` handlers receive all keypresses simultaneously
+
+### Collapsible Tool Panels
+
+Tool calls currently render inline in `MessageBubble.tsx` — flat display, no expand/collapse. Ink has no built-in accordion. Collapsible panels require `useInput` + local `useState` per panel, with `[+]`/`[-]` toggle indicators.
+
+**New component needed:** `CollapsiblePanel.tsx`
+
+```typescript
+// packages/cli/src/components/CollapsiblePanel.tsx
+function CollapsiblePanel({ title, children, defaultExpanded = false }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  useInput((input) => {
+    // Coordinate key bindings carefully — all panels receive all keypresses
+    if (input === "t") setExpanded((e) => !e);
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>{expanded ? "[-]" : "[+]"} {title}</Text>
+      {expanded && children}
+    </Box>
+  );
+}
+```
+
+**Coordination constraint:** Multiple `CollapsiblePanel` instances with identical key bindings toggle simultaneously. Design around this: use per-panel numeric keys (e.g., `1`-`9` to toggle panel by index) managed from `MessageList.tsx`, or single "expand all / collapse all" toggle.
+
+### MessageBubble Modifications
+
+- `tool_call` branch: Wrap in `CollapsiblePanel` (title = tool name + status badge, content = args + output)
+- `bash_command` branch: Wrap in `CollapsiblePanel` (title = command, content = output)
+- `reasoning` branch: Already dimmed/italic — optionally add toggle for thinking traces
+
+### StreamingResponse Modifications
+
+- Currently uses `@inkjs/ui Spinner` when waiting for first token — keep this
+- Plain text during streaming (no markdown) — keep this; partial markdown renders garbage
+- Enhancement: show character count or elapsed time indicator (cosmetic only)
+
+### New CLI Components Needed
+
+| Component | Purpose | Location |
+|---|---|---|
+| `CollapsiblePanel.tsx` | Toggle expand/collapse for tool/bash blocks | `packages/cli/src/components/` |
+| `SessionPicker.tsx` | List and select sessions from `/session list` slash command | `packages/cli/src/components/` |
+
+### Modified CLI Components
+
+| Component | What Changes |
+|---|---|
+| `MessageBubble.tsx` | Wrap `tool_call` and `bash_command` in `CollapsiblePanel` |
+| `StreamingResponse.tsx` | Minor cosmetic improvements (elapsed time, char count) |
+| `StatusBar.tsx` | Optional: add slash command hint or model tier badge |
+| `Chat.tsx` | Wire `SessionPicker` when `/session list` slash command fires |
+
+---
+
+## Desktop UI Overhaul — Component Boundaries
+
+### Current Component Tree (Desktop)
+
+```
+App.tsx (router)
+├── Layout.tsx (sidebar + content area)
+│   ├── Sidebar.tsx
+│   └── [page content]
+├── ChatPage.tsx (main chat)
+│   ├── ChatMessage.tsx     — renders message.type (text/tool_call/bash_command/reasoning)
+│   ├── StreamingText.tsx   — live streaming display
+│   └── ChatInput.tsx       — textarea + send button
+├── DashboardPage.tsx
+├── AgentsPage.tsx
+└── SettingsPage.tsx
+```
+
+### Markdown Rendering Pipeline
+
+**Current state:** `ChatMessage.tsx` uses `whitespace-pre-wrap` CSS for assistant messages. No markdown parsing — plain text displayed verbatim.
+
+**Target state:** `react-markdown` + `remark-gfm` + `react-syntax-highlighter` for code blocks.
+
+**Integration point:** `ChatMessage.tsx` assistant branch only. User messages stay as plain text — no markdown interpretation of user input, matching current behavior.
+
+```typescript
+// After (ChatMessage.tsx, assistant message branch):
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+
+<ReactMarkdown
+  remarkPlugins={[remarkGfm]}
+  components={{
+    code({ inline, className, children }) {
+      const match = /language-(\w+)/.exec(className || "");
+      return !inline && match ? (
+        <SyntaxHighlighter language={match[1]} style={oneDark} PreTag="div">
+          {String(children).replace(/\n$/, "")}
+        </SyntaxHighlighter>
+      ) : (
+        <code className="bg-gray-800 px-1 rounded text-sm font-mono">
+          {children}
+        </code>
+      );
+    },
+  }}
+>
+  {message.content}
+</ReactMarkdown>
+```
+
+**Anti-pattern warning:** Do NOT apply `react-markdown` to `StreamingText.tsx` — streaming text is partial markdown. Partial backtick fences, unclosed bold delimiters, and incomplete code blocks produce garbled output. Apply markdown only to completed messages (existing `ChatMessage.tsx`, not `StreamingText.tsx`). The codebase already separates streaming vs. complete message rendering — preserve this.
+
+**Library choice:** `react-markdown` v9 is the dominant React markdown library (13M+ weekly npm downloads), has explicit React 19 support, and uses a plugin architecture (remark/rehype) that works well with `remark-gfm`. Alternatives (`marked`, `markdown-it`) lack React-native rendering and require manual DOM integration.
+
+### Tool Approval UI (Desktop)
+
+**Current state:** Desktop `useChat.ts` handles `tool.call`, `tool.result`, `tool.error` WS messages but has NO approval flow. The approval flow exists only in CLI.
+
+**Gateway side (confirmed in protocol.ts):**
+- `tool.approval.request` ServerMessage — gateway sends this to clients when approval is needed
+- `tool.approval.response` ClientMessage — client sends this back with `approved: boolean` + optional `sessionApprove: boolean`
+
+**What the Desktop currently lacks:**
+1. No handler for `tool.approval.request` in `apps/desktop/src/hooks/useChat.ts`
+2. No `ToolApprovalModal.tsx` component
+3. No `pendingApproval` state in `app-store.ts`
+
+**Integration in `useChat.ts`:**
+```typescript
+case "tool.approval.request": {
+  setPendingApproval({
+    toolCallId: m.toolCallId as string,
+    toolName: m.toolName as string,
+    args: m.args,
+    risk: m.risk as "low" | "medium" | "high" | undefined,
+  });
+  break;
+}
+```
+
+**New component:** `ToolApprovalModal.tsx` — shows tool name, args (collapsed JSON with expand option), risk badge (low/medium/high color coding), Approve / Deny / Approve for Session buttons. Blocks chat input while visible.
+
+**WS response shape:**
+```typescript
+ws.send({
+  type: "tool.approval.response",
+  id: nanoid(),
+  toolCallId: pendingApproval.toolCallId,
+  approved: boolean,
+  sessionApprove: boolean | undefined,
+});
+```
+
+**State placement:** `pendingApproval` must go in `app-store.ts` (Zustand), not local `ChatPage` state. Approval state must survive page navigation and be accessible from both the modal and the chat input disable logic.
+
+### Session History UI (Desktop)
+
+**Current state:** `ChatPage.tsx` displays `chat.sessionId` (first 8 chars) in the header. No way to browse or load past sessions.
+
+**Gateway side (confirmed):**
+- `session.list` ClientMessage exists in protocol
+- `session.list` ServerMessage (response) exists with `sessions[]` array: `sessionId`, `sessionKey`, `model`, `createdAt`, `messageCount`
+- `SessionManager.getMessages()` exists in `packages/gateway/src/session/manager.ts` — queries SQLite correctly
+
+**What is MISSING:** `session.load` — no WS message to load messages from a specific past session. The session store has the data; no protocol message exposes it.
+
+**New WS messages needed (additions to `packages/gateway/src/ws/protocol.ts`):**
+
+```typescript
+// Client -> Gateway
+const SessionLoadSchema = z.object({
+  type: z.literal("session.load"),
+  id: z.string(),
+  sessionId: z.string(),
+});
+
+// Gateway -> Client
+const SessionMessagesSchema = z.object({
+  type: z.literal("session.messages"),
+  requestId: z.string(),
+  sessionId: z.string(),
+  messages: z.array(z.object({
+    role: z.string(),
+    content: z.string(),
+    createdAt: z.string(),
+  })),
+});
+```
+
+**Handler addition in `packages/gateway/src/ws/handlers.ts`:**
+```typescript
+async function handleSessionLoad(
+  transport: Transport,
+  _connState: ConnectionState,
+  msg: SessionLoad,
+): Promise<void> {
+  const session = sessionManager.get(msg.sessionId);
+  if (!session) {
+    transport.send({ type: "error", requestId: msg.id, code: "not_found", message: "Session not found" });
+    return;
+  }
+  const messages = sessionManager.getMessages(msg.sessionId);
+  transport.send({
+    type: "session.messages",
+    requestId: msg.id,
+    sessionId: msg.sessionId,
+    messages: messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAt,
+    })),
+  });
+}
+```
+
+**New Desktop component:** `SessionHistoryPanel.tsx` — slide-in panel or collapsible section, lists sessions with date + message count, click to load.
+
+**`app-store.ts` additions:** `sessions: SessionSummary[]`, `loadSession(id: string)` action.
+
+---
+
+## Test Infrastructure — Integration Points
+
+### Current State
+
+- Root `package.json`: `vitest: ^4.0.18` is already a dev dependency
+- `turbo.json`: `test` task configured (`"dependsOn": ["build"]`)
+- No test files exist anywhere in the codebase
+- No `vitest.config.ts` files in any package
+- No `vitest.workspace.ts` at root
+
+### Vitest Workspace Setup
+
+**Root config:**
+```typescript
+// vitest.workspace.ts (new file at repo root)
+export default [
+  "packages/core/vitest.config.ts",
+  "packages/gateway/vitest.config.ts",
+  "packages/cli/vitest.config.ts",
+];
+```
+
+**Per-package config example:**
+```typescript
+// packages/gateway/vitest.config.ts
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    include: ["src/**/*.test.ts"],
+    environment: "node",
+  },
+});
+```
+
+### WebSocket Protocol Test Harness
+
+Gateway handlers in `packages/gateway/src/ws/handlers.ts` take `Transport` and `ConnectionState` parameters. This is the correct test seam — handlers are pure functions of these inputs, no actual WebSocket server required.
+
+**Mock Transport pattern:**
+```typescript
+// packages/gateway/src/ws/__tests__/harness.ts
+import type { Transport } from "../../transport.js";
+import type { ServerMessage } from "../protocol.js";
+
+export class MockTransport implements Transport {
+  sent: ServerMessage[] = [];
+  send(msg: ServerMessage): void {
+    this.sent.push(msg);
+  }
+  sentOfType<T extends ServerMessage["type"]>(type: T) {
+    return this.sent.filter((m) => m.type === type) as Extract<ServerMessage, { type: T }>[];
+  }
+}
+
+export function createConnectionState() {
+  return { streaming: false, streamRequestId: null };
+}
+```
+
+**LLM mocking strategy:** `streamChatResponse` in `packages/gateway/src/llm/stream.ts` must be mocked for handler tests. Use `vi.mock("../llm/index.js")` to stub the module — return a controlled async generator that emits a predictable sequence of delta chunks followed by a done event.
+
+**Vault mocking:** After vault extraction to `@tek/core`, handler tests mock `@tek/core` vault functions with `vi.mock("@tek/core", ...)`. Before extraction, mock `@tek/cli/vault`.
+
+**SQLite in tests:** Do NOT use the production SQLite file at `~/.tek/tek.db`. Set `DB_PATH=:memory:` in test environment. Drizzle ORM + `better-sqlite3` supports `:memory:` databases. Add to each package's `vitest.config.ts`:
+```typescript
+test: {
+  env: { DB_PATH: ":memory:" },
+}
+```
+
+### Test Priorities by Phase
+
+| Test Target | Test Type | Priority | Notes |
+|---|---|---|---|
+| Protocol Zod schemas | Unit | High | Fast, no mocks, catches regressions immediately |
+| `handleSessionList` | Integration | High | Simple handler, good harness validation |
+| `handleChatSend` — session creation path | Integration | High | Core path; LLM mock required |
+| `handleToolApprovalResponse` | Integration | High | Approval gate correctness is critical |
+| `handleSessionLoad` (NEW) | Unit | High | Test as built; simple DB query |
+| Vault functions (post-extraction) | Unit | Medium | `keychainGet`/`keychainSet` with mock keyring |
+| Desktop `useChat` hook | Unit | Medium | React Testing Library; test approval handler |
+| CLI `MessageBubble` rendering | Unit | Low | Ink render testing is complex; focus on logic |
+
+---
+
+## System Overview — Post-Milestone
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Interface Layer                              │
+├──────────────────────────────┬──────────────────────────────────────┤
+│          CLI (Ink)           │       Desktop (Tauri + React)         │
+│  ┌────────────────────────┐  │  ┌──────────────────────────────┐    │
+│  │ StatusBar              │  │  │ ChatPage                     │    │
+│  │ MessageList            │  │  │  ├─ ChatMessage (react-md)   │    │
+│  │  └─ MessageBubble      │  │  │  ├─ ToolApprovalModal (NEW)  │    │
+│  │      └─CollapsiblePanel│  │  │  ├─ SessionHistoryPanel (NEW)│    │
+│  │         (NEW)          │  │  │  └─ StreamingText (unchanged)│    │
+│  │ StreamingResponse      │  │  │ useChat (+ approval handler) │    │
+│  │ InputBar               │  │  │ app-store (+ approval state) │    │
+│  │ ToolApprovalPrompt     │  │  │ useWebSocket (Tauri plugin)   │    │
+│  │ SessionPicker (NEW)    │  │  └──────────────────────────────┘    │
+│  └────────────────────────┘  └──────────────────────────────────────┘
+│           │ ws://                          │ ws://                    │
+├───────────┴────────────────────────────────┴────────────────────────┤
+│                       Gateway (Fastify + WS)                         │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │ ws/handlers.ts — dispatches ClientMessage by type           │    │
+│  │  ├─ handleChatSend → LLM stream → chat.stream.*            │    │
+│  │  ├─ handleToolApprovalResponse → approval gate             │    │
+│  │  ├─ handleSessionList → session.list response              │    │
+│  │  └─ handleSessionLoad (NEW) → session.messages response    │    │
+│  │ ws/protocol.ts — Zod schemas (+ session.load/messages NEW) │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │ session/ — SessionManager, SessionStore (SQLite)            │    │
+│  │ agent/ — approval-gate, tool-loop, preflight               │    │
+│  │ key-server/ — local API for vault key serving              │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────────────────────────┤
+│                        Package Layer                                 │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │ @tek/core — config, errors, logger, crypto, skills, vault(NEW)│  │
+│  │ @tek/db   — SQLite schema, migrations, query functions        │  │
+│  │ @tek/telegram — Telegram bot channel adapter                  │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## Component Responsibilities
 
-### Interface Layer
+| Component | Responsibility | Status |
+|---|---|---|
+| `@tek/core/vault/` | OS keychain operations, provider key CRUD, auth token | NEW (moved from @tek/cli) |
+| `packages/cli/.../CollapsiblePanel.tsx` | Toggle expand/collapse for tool/bash blocks in Ink | NEW |
+| `packages/cli/.../SessionPicker.tsx` | Browse and select past sessions in CLI | NEW |
+| `packages/cli/.../MessageBubble.tsx` | Wrap tool_call and bash_command in CollapsiblePanel | MODIFIED |
+| `packages/cli/.../StreamingResponse.tsx` | Minor cosmetic improvements | MODIFIED |
+| `apps/desktop/.../ChatMessage.tsx` | react-markdown rendering for assistant messages | MODIFIED |
+| `apps/desktop/.../ToolApprovalModal.tsx` | Inline modal for tool approval with risk badge | NEW |
+| `apps/desktop/.../SessionHistoryPanel.tsx` | Session list picker and load trigger | NEW |
+| `apps/desktop/src/hooks/useChat.ts` | Add tool.approval.request handler + approval state | MODIFIED |
+| `apps/desktop/src/stores/app-store.ts` | Add sessions[] + pendingApproval state | MODIFIED |
+| `packages/gateway/src/ws/protocol.ts` | Add SessionLoad client msg + SessionMessages server msg | MODIFIED |
+| `packages/gateway/src/ws/handlers.ts` | Add handleSessionLoad, fix vault import | MODIFIED |
+| `packages/*/vitest.config.ts` | Per-package test configuration | NEW |
+| `vitest.workspace.ts` (root) | Workspace-level test coordination | NEW |
+| `packages/gateway/src/ws/__tests__/` | MockTransport harness + handler tests | NEW |
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| CLI (TUI) | Primary operator interface. Send commands, view agent output, manage config | Message Router via Channel Adapter |
-| Web Dashboard | Browser-based monitoring and interaction. Real-time via WebSocket | Message Router via Channel Adapter |
-| Telegram Bot | External messaging channel for remote interaction | Message Router via Channel Adapter |
-| Channel Adapter | Normalize all interface inputs into a unified `GatewayMessage` format | Each interface on one side, Message Router on the other |
-
-**Key design decision:** Every interface is a "channel" that implements the same adapter protocol. The gateway does not know or care whether a message came from CLI, web, or Telegram. This is how OpenClaw handles WhatsApp/Telegram/Discord/Slack -- a pattern worth copying directly.
-
-### Gateway Core
-
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| Message Router | Receives normalized messages, determines session context, dispatches to agent runtime or workflow engine | Channel Adapters (in), Session Manager, Agent Runtime, Workflow Engine |
-| Session Manager | Creates/restores sessions, tracks conversation state, manages context windows | Message Router, Agent Runtime, Session Store |
-| Event Bus | Typed publish/subscribe for intra-module communication. The nervous system of the modular monolith | All modules (loosely coupled) |
-| Approval Gate | Intercepts actions that require human confirmation before execution. Sends notifications, waits for response | Workflow Engine, Event Bus, Channel Adapters (for notifications) |
-| Workflow Engine | Executes multi-step workflows with decision branching. Persists workflow state for resumption | Message Router, Agent Runtime, Approval Gate, Scheduler |
-
-### Agent Layer
-
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| Agent Runtime | Orchestrates a single agent turn: assemble context, call LLM, parse response, execute tools, loop | Session Manager, LLM Router, Skill Registry, Context Assembler |
-| LLM Router | Unified interface to multiple LLM providers (Anthropic, OpenAI, Ollama). Handles failover, retries, model selection | External LLM APIs |
-| Skill Registry | Manages available tools/plugins. Agents can register new skills at runtime | Agent Runtime, Data Layer |
-| Context Assembler | Builds the prompt by combining session history, relevant memories (via vector search), system instructions, and available skills | Memory Store, Session Manager, Skill Registry |
-
-### Data Layer
-
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| Memory Store | Long-term memory with SQLite + sqlite-vec for vector embeddings. Semantic search over past interactions | Context Assembler, Agent Runtime |
-| Session Store | Persists session state, conversation history, context windows. SQLite | Session Manager |
-| Credential Vault | Encrypted storage for API keys, tokens, secrets. AES-256 encryption at rest | LLM Router, Skill Registry, Channel Adapters |
-| Scheduler | Cron-like task scheduler for heartbeat checks, periodic workflows, maintenance | Workflow Engine, Event Bus |
-
-## Recommended Project Structure
-
-```
-src/
-├── core/                    # Gateway core - the central nervous system
-│   ├── router/              # Message routing and dispatch
-│   │   ├── index.ts         # Public API (barrel export)
-│   │   ├── router.ts        # Message Router implementation
-│   │   └── types.ts         # GatewayMessage, RouteTarget types
-│   ├── session/             # Session lifecycle management
-│   │   ├── index.ts
-│   │   ├── manager.ts       # Session create/restore/expire
-│   │   └── context.ts       # Context window tracking
-│   ├── events/              # Typed event bus
-│   │   ├── index.ts
-│   │   ├── bus.ts           # EventEmitter-based pub/sub
-│   │   └── types.ts         # All event type definitions
-│   ├── approval/            # Human-in-the-loop approval gates
-│   │   ├── index.ts
-│   │   ├── gate.ts          # Approval request/response lifecycle
-│   │   └── policies.ts      # What requires approval
-│   └── workflow/            # Multi-step workflow engine
-│       ├── index.ts
-│       ├── engine.ts        # Workflow execution and branching
-│       ├── steps.ts         # Step definitions
-│       └── state.ts         # Workflow state persistence
-│
-├── agent/                   # Agent runtime and intelligence
-│   ├── runtime/             # Agent execution loop
-│   │   ├── index.ts
-│   │   ├── runtime.ts       # The core agent loop
-│   │   └── turn.ts          # Single turn execution
-│   ├── llm/                 # LLM provider abstraction
-│   │   ├── index.ts
-│   │   ├── router.ts        # Provider selection and failover
-│   │   ├── providers/       # Provider implementations
-│   │   │   ├── anthropic.ts
-│   │   │   ├── openai.ts
-│   │   │   └── ollama.ts
-│   │   └── types.ts         # Unified LLM request/response types
-│   ├── skills/              # Plugin/tool system
-│   │   ├── index.ts
-│   │   ├── registry.ts      # Skill registration and discovery
-│   │   ├── loader.ts        # Dynamic skill loading
-│   │   └── builtin/         # Built-in skills
-│   │       ├── web-search.ts
-│   │       ├── file-ops.ts
-│   │       └── browser.ts
-│   └── context/             # Context assembly
-│       ├── index.ts
-│       ├── assembler.ts     # Build prompts from multiple sources
-│       └── strategies.ts    # Context window management strategies
-│
-├── channels/                # Interface adapters
-│   ├── index.ts             # Channel adapter protocol definition
-│   ├── protocol.ts          # Shared types for all channels
-│   ├── cli/                 # TUI interface
-│   │   ├── index.ts
-│   │   └── tui.ts
-│   ├── web/                 # HTTP + WebSocket server
-│   │   ├── index.ts
-│   │   ├── server.ts
-│   │   └── ws.ts
-│   └── telegram/            # Telegram bot adapter
-│       ├── index.ts
-│       └── bot.ts
-│
-├── data/                    # Data layer
-│   ├── db/                  # Database management
-│   │   ├── index.ts
-│   │   ├── connection.ts    # SQLite connection management
-│   │   └── migrations/      # Schema migrations
-│   ├── memory/              # Long-term memory with vector search
-│   │   ├── index.ts
-│   │   ├── store.ts         # Memory CRUD + vector search
-│   │   └── embeddings.ts    # Embedding generation
-│   ├── credentials/         # Encrypted credential storage
-│   │   ├── index.ts
-│   │   └── vault.ts         # Encrypt/decrypt/store
-│   └── scheduler/           # Cron/heartbeat system
-│       ├── index.ts
-│       └── scheduler.ts
-│
-├── shared/                  # Cross-cutting concerns
-│   ├── config.ts            # Configuration loading
-│   ├── logger.ts            # Structured logging
-│   ├── errors.ts            # Error types and handling
-│   └── types.ts             # Shared type definitions
-│
-└── main.ts                  # Entry point - wires everything together
-```
-
-**Target: ~60-80 files total.** OpenClaw has 500+. This structure covers the same capabilities with ~6x less file count by keeping modules focused and avoiding premature abstraction.
-
-### Structure Rationale
-
-- **`core/`:** Gateway-specific logic that would not exist in a simple CLI tool. This is the "gateway" part of "agent gateway."
-- **`agent/`:** Intelligence and LLM interaction. Could theoretically run without the gateway (useful for testing).
-- **`channels/`:** All interface adapters in one place. Adding a new channel means adding one folder here.
-- **`data/`:** Everything that touches persistent storage. Single SQLite file strategy keeps deployment simple.
-- **`shared/`:** Truly shared utilities. Keep this minimal -- if it grows past 10 files, something is wrong.
-
-## Architectural Patterns
-
-### Pattern 1: Channel Adapter Protocol
-
-**What:** Every interface (CLI, web, Telegram) implements the same adapter interface. Messages are normalized into `GatewayMessage` before entering the router.
-**When to use:** Always. This is the fundamental abstraction that keeps the gateway interface-agnostic.
-**Trade-offs:** Slight overhead normalizing messages. Worth it for the decoupling.
-
-```typescript
-interface ChannelAdapter {
-  readonly channelId: string;
-
-  // Lifecycle
-  start(): Promise<void>;
-  stop(): Promise<void>;
-
-  // Inbound: channel-specific format -> GatewayMessage
-  onMessage(handler: (msg: GatewayMessage) => void): void;
-
-  // Outbound: GatewayMessage -> channel-specific format
-  send(sessionId: string, msg: GatewayMessage): Promise<void>;
-
-  // Approval notifications
-  requestApproval(req: ApprovalRequest): Promise<void>;
-}
-
-interface GatewayMessage {
-  id: string;
-  sessionId: string;
-  channelId: string;
-  timestamp: number;
-  sender: { type: 'user' | 'agent' | 'system'; id: string };
-  content: MessageContent;  // text, file, action, etc.
-  metadata: Record<string, unknown>;
-}
-```
-
-### Pattern 2: Typed Event Bus (Module Communication)
-
-**What:** Modules communicate through a typed event bus instead of direct imports. This is the enforcement mechanism for module boundaries.
-**When to use:** For all cross-module communication. Direct function calls only within a module.
-**Trade-offs:** Slightly more indirection than direct calls. Prevents the coupling that killed OpenClaw's maintainability.
-
-```typescript
-type EventMap = {
-  'session:created': { sessionId: string; channelId: string };
-  'session:message': { sessionId: string; message: GatewayMessage };
-  'agent:response': { sessionId: string; content: MessageContent };
-  'agent:tool-call': { sessionId: string; tool: string; args: unknown };
-  'approval:requested': { id: string; action: string; context: unknown };
-  'approval:resolved': { id: string; approved: boolean };
-  'workflow:step-complete': { workflowId: string; stepId: string };
-  'scheduler:tick': { taskId: string };
-};
-
-class TypedEventBus {
-  on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void;
-  emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void;
-  off<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void;
-}
-```
-
-### Pattern 3: LLM Provider Abstraction (Unified Interface)
-
-**What:** All LLM providers implement the same interface. The router handles model selection, failover, and retries. Inspired by LiteLLM's architecture but implemented natively in TypeScript without the Python dependency.
-**When to use:** Every LLM call goes through the router. Never call a provider directly.
-**Trade-offs:** Must maintain provider implementations as APIs evolve. Keep provider adapters thin -- just translate request/response formats.
-
-```typescript
-interface LLMProvider {
-  readonly providerId: string;
-  readonly models: string[];
-
-  chat(request: LLMRequest): Promise<LLMResponse>;
-  chatStream(request: LLMRequest): AsyncIterable<LLMStreamChunk>;
-
-  // Health check for failover decisions
-  healthCheck(): Promise<boolean>;
-}
-
-interface LLMRouter {
-  // Route to best available provider for the requested model
-  chat(request: LLMRequest): Promise<LLMResponse>;
-  chatStream(request: LLMRequest): AsyncIterable<LLMStreamChunk>;
-
-  // Provider management
-  registerProvider(provider: LLMProvider): void;
-  setFallbackChain(models: string[]): void;
-}
-```
-
-### Pattern 4: Skill as Typed Tool Definition
-
-**What:** Skills (plugins) are defined as typed tool definitions that agents can discover and invoke. Agents can also register new skills at runtime.
-**When to use:** Every capability the agent can use beyond raw LLM inference.
-**Trade-offs:** Runtime skill registration adds complexity. Mitigate with a validation step before registration.
-
-```typescript
-interface Skill {
-  readonly name: string;
-  readonly description: string;
-  readonly parameters: JSONSchema;  // For LLM tool-use format
-
-  // Execution
-  execute(args: unknown, context: SkillContext): Promise<SkillResult>;
-
-  // Optional: does this skill require approval?
-  requiresApproval?: boolean | ((args: unknown) => boolean);
-}
-
-interface SkillRegistry {
-  register(skill: Skill): void;
-  unregister(name: string): void;
-  list(): Skill[];
-  get(name: string): Skill | undefined;
-
-  // For LLM tool-use: generate tool definitions
-  toToolDefinitions(): ToolDefinition[];
-}
-```
+---
 
 ## Data Flow
 
-### Primary Message Flow (User -> Agent -> User)
+### Tool Approval Flow (Desktop — NEW)
 
 ```
-User types in CLI/Web/Telegram
-    │
-    ▼
-Channel Adapter normalizes to GatewayMessage
-    │
-    ▼
-Message Router receives message
-    │
-    ├── Looks up or creates Session (Session Manager)
-    │
-    ▼
-Event Bus: emit 'session:message'
-    │
-    ▼
-Agent Runtime picks up message
-    │
-    ├── Context Assembler builds prompt:
-    │   ├── Session history (Session Store)
-    │   ├── Relevant memories (Memory Store + vector search)
-    │   ├── System instructions
-    │   └── Available skills (Skill Registry -> tool definitions)
-    │
-    ▼
-LLM Router sends to provider (Anthropic/OpenAI/Ollama)
-    │
-    ├── If tool call in response:
-    │   ├── Check if skill requires approval
-    │   │   ├── YES: Approval Gate -> notify user -> wait
-    │   │   └── NO: Execute skill directly
-    │   ├── Append tool result to context
-    │   └── Loop back to LLM Router (agent loop)
-    │
-    ▼
-Final response
-    │
-    ├── Store in Session (Session Store)
-    ├── Extract and store memories (Memory Store)
-    │
-    ▼
-Event Bus: emit 'agent:response'
-    │
-    ▼
-Message Router -> Channel Adapter -> User sees response
+Gateway approvalGate blocks execution
+  → sends tool.approval.request { toolCallId, toolName, args, risk }
+      ↓
+useChat.ts handler: setPendingApproval({ toolCallId, toolName, args, risk })
+      ↓
+ChatPage renders <ToolApprovalModal> (blocks ChatInput)
+      ↓
+User clicks Approve / Deny / Approve-All-Session
+      ↓
+ChatPage: ws.send({ type: "tool.approval.response", toolCallId, approved, sessionApprove })
+  + setPendingApproval(null) → modal closes
+      ↓
+Gateway approvalGate resolves → tool executes → tool.result sent
+      ↓
+useChat.ts: updates tool_call message status to "complete" (existing logic)
 ```
 
-### Workflow Execution Flow
+### Session Load Flow (Desktop — NEW)
 
 ```
-Trigger (user command, scheduled task, or agent decision)
-    │
-    ▼
-Workflow Engine loads workflow definition
-    │
-    ├── Execute Step 1 -> may invoke Agent Runtime
-    │   ├── Decision branch? Evaluate condition -> pick branch
-    │   ├── Approval needed? -> Approval Gate -> pause workflow
-    │   └── Step complete -> persist state
-    │
-    ├── Execute Step 2 -> ...
-    │
-    ▼
-Workflow complete -> emit 'workflow:complete'
-    │
-    ▼
-Notify via appropriate channel
+User clicks past session in SessionHistoryPanel
+      ↓
+send({ type: "session.load", id: nanoid(), sessionId })
+      ↓
+Gateway ws/handlers.ts handleSessionLoad:
+  sessionManager.get(sessionId) → verify session exists
+  sessionManager.getMessages(sessionId) → MessageRow[]
+  transport.send({ type: "session.messages", requestId, sessionId, messages })
+      ↓
+useChat.ts handler: convert MessageRow[] -> ChatMessage[], setMessages()
+  setSessionId(loadedSessionId)
+      ↓
+ChatPage re-renders with loaded history
+New messages from this point append to the loaded session
 ```
 
-### Memory Write/Read Flow
+### Vault Key Flow (Post-Extraction)
 
 ```
-WRITE (after each agent response):
-Agent Runtime -> Memory Store
-    ├── Store raw conversation turn (SQLite)
-    ├── Generate embedding for content (local model or API)
-    └── Store embedding vector (sqlite-vec)
-
-READ (during context assembly):
-Context Assembler -> Memory Store
-    ├── Query: "find memories relevant to current message"
-    ├── sqlite-vec: cosine similarity search on embeddings
-    ├── Return top-K relevant memories
-    └── Inject into prompt as "relevant context"
+Before: @tek/gateway/ws/handlers.ts -> @tek/cli/vault -> @napi-rs/keyring
+After:  @tek/gateway/ws/handlers.ts -> @tek/core/vault -> @napi-rs/keyring
+        @tek/cli/commands/keys.ts   -> @tek/core/vault -> @napi-rs/keyring
 ```
 
-## Integration Points
+Both gateway and CLI import vault from `@tek/core`. `@tek/cli` no longer depends on `@tek/gateway`. Circular dependency eliminated. Turbo build graph is a clean DAG.
 
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Anthropic API | HTTP REST via provider adapter | Primary LLM. Messages API with tool use |
-| OpenAI API | HTTP REST via provider adapter | Secondary LLM. Chat completions with function calling |
-| Ollama | HTTP REST (localhost) via provider adapter | Local models. OpenAI-compatible API |
-| Telegram Bot API | grammY library, long polling or webhooks | Channel adapter wraps grammY |
-| Embedding models | HTTP REST or local (Ollama) | For memory vectorization. Can use same Ollama instance |
-
-### Internal Boundaries (Module Communication Rules)
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Channel <-> Core | Channel Adapter Protocol (typed interface) | Channels never access Core internals |
-| Core <-> Agent | Event Bus events + direct runtime invocation | Router invokes Agent Runtime; responses come back via events |
-| Agent <-> Data | Direct function calls within data module's public API | Agent Runtime calls Memory Store and Session Store APIs |
-| Core <-> Data | Direct function calls within data module's public API | Session Manager calls Session Store APIs |
-| Any module <-> Credentials | Vault public API only | No module accesses raw encrypted storage |
-
-**Rule:** If two modules need to communicate and there is no defined boundary above, they must go through the Event Bus. This prevents ad-hoc coupling.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: God Router
-
-**What people do:** Put business logic in the message router -- validation, transformation, agent invocation, response formatting all in one place.
-**Why it is wrong:** The router becomes the bottleneck for every change. OpenClaw's gateway grew to 153 files partly because routing logic accumulated business rules.
-**Do this instead:** Router does exactly three things: identify session, determine destination, dispatch. Everything else belongs in the destination module.
-
-### Anti-Pattern 2: Provider Lock-in via Direct API Calls
-
-**What people do:** Import `@anthropic-ai/sdk` directly in agent code and call it without abstraction.
-**Why it is wrong:** Every agent module becomes coupled to one provider. Switching models or adding fallback requires touching every call site.
-**Do this instead:** All LLM calls go through the LLM Router. Agent code never imports a provider SDK directly.
-
-### Anti-Pattern 3: Shared Mutable Session State
-
-**What people do:** Pass session objects by reference between modules, letting any module mutate session state.
-**Why it is wrong:** Race conditions when multiple event handlers modify the same session. Impossible to track what changed the state.
-**Do this instead:** Session Manager owns all session mutations. Other modules request state changes through the Session Manager API or events. Session snapshots (read-only copies) are passed to consumers.
-
-### Anti-Pattern 4: Synchronous Approval Blocking
-
-**What people do:** Block the entire agent loop waiting for human approval.
-**Why it is wrong:** Other sessions and workflows freeze while waiting for one approval. User may not respond for hours.
-**Do this instead:** Approval Gate persists the pending action, pauses the specific workflow/turn, and resumes asynchronously when approval arrives. Other work continues.
-
-### Anti-Pattern 5: Flat File Skill Definitions
-
-**What people do:** Store skill/plugin definitions as loose JSON files that must be manually kept in sync with implementation.
-**Why it is wrong:** Definitions drift from implementation. Skills break silently.
-**Do this instead:** Skills are code-first. The TypeScript `Skill` interface IS the definition. JSON schemas for LLM tool-use are generated from the typed interface, not maintained separately.
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1 user (personal assistant) | Single process, single SQLite file, in-memory event bus. This is the primary target. |
-| 5-10 users (small team) | Same architecture. SQLite handles concurrent reads well. WAL mode for write concurrency. May need session isolation per user. |
-| 100+ users | Move session store to PostgreSQL. Event bus becomes Redis pub/sub. LLM Router adds request queuing. This is NOT the initial target -- do not design for it prematurely. |
-
-### Scaling Priorities
-
-1. **First bottleneck:** LLM API rate limits. Mitigate with provider failover and request queuing in the LLM Router. This is a provider-side constraint, not an architecture problem.
-2. **Second bottleneck:** SQLite write contention under concurrent sessions. Mitigate with WAL mode (handles most cases) or eventual migration to PostgreSQL for the session store only.
-3. **Third bottleneck:** Memory (vector) search latency as memories grow. Mitigate with sqlite-vec indexing and periodic memory consolidation/summarization.
-
-## Build Order (Dependency Chain)
-
-The architecture implies this build order, because each layer depends on the one below it:
+### Streaming Chat Flow (Unchanged — For Reference)
 
 ```
-Phase 1: Foundation
-  shared/ (config, logger, errors, types)
-  data/db/ (SQLite connection, migrations)
-  core/events/ (Event Bus)
-
-Phase 2: Data Layer
-  data/credentials/ (Vault - needed before any API calls)
-  data/memory/ (Memory Store with sqlite-vec)
-  core/session/ (Session Manager + Session Store)
-
-Phase 3: Agent Core
-  agent/llm/ (Provider abstraction + at least Anthropic provider)
-  agent/skills/ (Skill Registry + 2-3 built-in skills)
-  agent/context/ (Context Assembler)
-  agent/runtime/ (Agent loop - ties it all together)
-
-Phase 4: Gateway Routing
-  core/router/ (Message Router)
-  channels/cli/ (First channel - fastest to test with)
-
-Phase 5: Advanced Features
-  core/approval/ (Approval Gate)
-  core/workflow/ (Workflow Engine)
-  data/scheduler/ (Cron/heartbeat)
-
-Phase 6: Additional Channels
-  channels/web/ (HTTP + WebSocket dashboard)
-  channels/telegram/ (Telegram bot)
+User submits message → ws.send chat.send
+      ↓
+Gateway handleChatSend → assembleContext → streamChatResponse
+      ↓
+chat.stream.start → chat.stream.delta (×N) → chat.stream.end
+      ↓
+useChat: accumulate delta in streamingText
+  → on stream.end: push final text as TextMessage (role: "assistant")
+      ↓
+ChatPage: StreamingText shows live plain text
+  → ChatMessage shows completed assistant message with react-markdown
 ```
 
-**Rationale:** You cannot test the gateway without an agent. You cannot run an agent without LLM providers. You cannot store credentials without the vault. You cannot assemble context without memory. Start from the bottom, build up.
+---
 
-## Key Architectural Decisions Summary
+## Recommended Project Structure (After Milestone)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Process model | Single process, modular monolith | macOS-first personal tool. Microservices are overkill |
-| Module communication | Typed event bus | Prevents coupling between modules. OpenClaw's main pain point |
-| Database | Single SQLite file | Zero-config, embedded, portable. sqlite-vec for vectors |
-| LLM integration | Custom provider abstraction | Avoids LiteLLM Python dependency. Keeps entire stack TypeScript |
-| Channel system | Adapter protocol pattern | Proven by OpenClaw. Interface-agnostic gateway |
-| Plugin system | Code-first typed skills | No JSON drift. TypeScript compiler catches skill definition errors |
-| Approval model | Async with persisted state | Never block the main loop waiting for humans |
-| Workflow state | SQLite-persisted, resumable | Workflows survive process restarts |
+```
+packages/
+├── core/
+│   └── src/
+│       ├── config/         (unchanged)
+│       ├── crypto/         (unchanged)
+│       ├── skills/         (unchanged)
+│       ├── vault/          (NEW — moved from cli/src/vault/)
+│       │   ├── index.ts
+│       │   ├── keychain.ts
+│       │   └── providers.ts
+│       ├── errors.ts       (unchanged — VaultError already here)
+│       ├── logger.ts       (unchanged)
+│       └── index.ts        (MODIFIED — add vault exports)
+├── cli/
+│   └── src/
+│       ├── components/
+│       │   ├── CollapsiblePanel.tsx    (NEW)
+│       │   ├── SessionPicker.tsx       (NEW)
+│       │   ├── MessageBubble.tsx       (MODIFIED)
+│       │   ├── StreamingResponse.tsx   (MODIFIED — minor)
+│       │   └── ... (rest unchanged)
+│       ├── vault/          (DELETE after extraction, or stub re-export)
+│       └── ...
+├── gateway/
+│   └── src/
+│       ├── ws/
+│       │   ├── handlers.ts  (MODIFIED — vault import, session.load handler)
+│       │   ├── protocol.ts  (MODIFIED — session.load + session.messages schemas)
+│       │   └── __tests__/   (NEW)
+│       │       ├── harness.ts           (MockTransport + test utilities)
+│       │       ├── protocol.test.ts     (Zod schema unit tests)
+│       │       └── handlers.test.ts     (handler integration tests)
+│       └── ...
+└── db/ (unchanged)
+
+apps/
+└── desktop/
+    └── src/
+        ├── components/
+        │   ├── ChatMessage.tsx          (MODIFIED — react-markdown)
+        │   ├── ToolApprovalModal.tsx    (NEW)
+        │   ├── SessionHistoryPanel.tsx  (NEW)
+        │   └── ... (rest unchanged)
+        ├── hooks/
+        │   └── useChat.ts              (MODIFIED — approval handler)
+        └── stores/
+            └── app-store.ts            (MODIFIED — sessions, pendingApproval)
+
+vitest.workspace.ts                     (NEW — root workspace config)
+packages/gateway/vitest.config.ts      (NEW)
+packages/cli/vitest.config.ts          (NEW)
+packages/core/vitest.config.ts         (NEW)
+```
+
+---
+
+## Architectural Patterns
+
+### Pattern 1: Ink Collapsible Panel via useInput
+
+**What:** Local state toggle in Ink components, listening for keyboard events on focused elements.
+
+**When to use:** Any CLI content block that benefits from show/hide without restructuring parent layout.
+
+**Trade-offs:** Ink has no focus management — all `useInput` calls in the component tree receive all keypresses simultaneously. Must coordinate via explicit key scoping or managing "focused index" in a parent component.
+
+**Example:**
+```typescript
+// CollapsiblePanel.tsx
+function CollapsiblePanel({ title, children, defaultExpanded = false }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  useInput((input) => {
+    if (input === "t") setExpanded((e) => !e);
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>{expanded ? "[-]" : "[+]"} {title}</Text>
+      {expanded && children}
+    </Box>
+  );
+}
+```
+
+### Pattern 2: Gateway Handler Test via Mock Transport
+
+**What:** Test gateway WS handlers in isolation by providing a `MockTransport` that collects sent messages. No actual WebSocket server needed.
+
+**When to use:** All gateway handlers with deterministic responses. LLM streaming handlers require additional mocking.
+
+**Example:**
+```typescript
+it("session.list returns sessions array", async () => {
+  const transport = new MockTransport();
+  const connState = createConnectionState();
+
+  await handleSessionList(transport, connState, {
+    type: "session.list",
+    id: "test-req-1",
+  });
+
+  const [response] = transport.sentOfType("session.list");
+  expect(response).toMatchObject({
+    type: "session.list",
+    requestId: "test-req-1",
+    sessions: expect.any(Array),
+  });
+});
+```
+
+### Pattern 3: Protocol Schema Unit Tests
+
+**What:** Test Zod schemas in `ws/protocol.ts` directly. Parse known-good and known-bad inputs, assert success/failure.
+
+**When to use:** First test suite to write — fast, no mocks, catches regressions before handler tests.
+
+**Example:**
+```typescript
+it("parses valid chat.send", () => {
+  const result = ClientMessageSchema.safeParse({
+    type: "chat.send",
+    id: "req-1",
+    content: "Hello",
+  });
+  expect(result.success).toBe(true);
+});
+
+it("rejects chat.send without id", () => {
+  const result = ClientMessageSchema.safeParse({
+    type: "chat.send",
+    content: "Hello",
+  });
+  expect(result.success).toBe(false);
+});
+```
+
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Creating @tek/vault as a New Package
+
+**What people do:** Create `packages/vault/` with its own `package.json`, `tsconfig.json`, build step.
+
+**Why it's wrong:** Vault is 4 files (~200 lines). A new package adds a turbo graph node, a build artifact, and a versioning concern for code that logically belongs in core infrastructure. Vault's dependencies (`@tek/core`, `@tek/db`) already rule out it being a leaf package.
+
+**Do this instead:** Move vault into `packages/core/src/vault/`. Same isolation, zero overhead.
+
+### Anti-Pattern 2: Rendering Markdown During Streaming
+
+**What people do:** Apply `react-markdown` or `renderMarkdown()` to live streaming text.
+
+**Why it's wrong:** Streaming text is partial markdown. A `**bold` without a closing `**`, a code fence with no closing backticks, or a half-rendered heading produce garbled output. The parser either throws or renders garbage until the closing delimiter arrives.
+
+**Do this instead:** The codebase already handles this correctly — `StreamingText.tsx` and `StreamingResponse.tsx` show plain text during streaming; markdown only runs in `ChatMessage.tsx` on completed message content (after `chat.stream.end`). Preserve this pattern in all future work.
+
+### Anti-Pattern 3: Approval State in Local Component State
+
+**What people do:** Track `pendingApproval` in `ChatPage.tsx` local `useState`.
+
+**Why it's wrong:** If the user navigates to another page and back while an approval is pending, the local state is lost. Input disable logic and modal rendering would need to be in the same component. Re-renders on unrelated state changes could cause the modal to flicker.
+
+**Do this instead:** Put `pendingApproval` in `app-store.ts` (Zustand). Modal reads from store, approval dispatch clears store, input disables via store selector.
+
+### Anti-Pattern 4: Testing Gateway Handlers Against the Production SQLite File
+
+**What people do:** Run gateway handler tests against `~/.tek/tek.db`.
+
+**Why it's wrong:** Tests mutate production session and message data, are not isolated between test runs, fail in CI (no home directory), and may leave corrupted data after test failures.
+
+**Do this instead:** Set `DB_PATH=:memory:` in test environment. `better-sqlite3` supports `:memory:` as the database path, creating an in-memory SQLite database per test run. Drizzle ORM works identically. Add `env: { DB_PATH: ":memory:" }` to each package's `vitest.config.ts`.
+
+---
+
+## Build Order (Dependency Constraints for This Milestone)
+
+```
+Step 1: Vault Extraction (@tek/core/vault)
+  MUST be first — gateway import fix unblocks clean Turbo builds.
+  All other work can begin after this, as parallel branches.
+
+Step 2a (parallel): CLI Component Refactoring
+  CollapsiblePanel.tsx, SessionPicker.tsx, MessageBubble.tsx updates
+  No external dependencies — pure Ink component work.
+
+Step 2b (parallel): Desktop Component Refactoring
+  react-markdown in ChatMessage.tsx, ToolApprovalModal.tsx
+  Approval handler in useChat.ts
+  app-store.ts updates for approval state
+
+Step 2c (parallel): WS Protocol Extensions
+  session.load ClientMessage + session.messages ServerMessage
+  in protocol.ts + handlers.ts
+  Can write tests immediately after this step.
+
+Step 3: Desktop Session History Integration
+  DEPENDS ON Step 2c — needs WS message shapes defined first.
+  SessionHistoryPanel.tsx, useChat.ts session.messages handler,
+  app-store.ts sessions state.
+
+Step 4: Test Infrastructure
+  Protocol tests (protocol.test.ts): can start after Step 2c
+  Handler tests: can start after Step 1 (clean import graph)
+  useChat tests: can start after Step 2b
+  Run tests continuously — add to CI alongside each feature.
+```
+
+---
+
+## Integration Points Summary
+
+| Integration Point | Packages Involved | Protocol | Status After Milestone |
+|---|---|---|---|
+| Vault → Gateway | `@tek/core` → `@tek/gateway` | Direct import | Clean (was circular) |
+| Vault → CLI | `@tek/core` → `@tek/cli` | Direct import | Clean (no gateway dep) |
+| Chat stream | CLI/Desktop → Gateway | WS: `chat.send`, `chat.stream.*` | Unchanged |
+| Tool approval (CLI) | CLI → Gateway | WS: `tool.approval.request/.response` | Already works |
+| Tool approval (Desktop) | Desktop → Gateway | WS: `tool.approval.request/.response` | NEW |
+| Session list | Desktop → Gateway | WS: `session.list` | Protocol exists; Desktop UI NEW |
+| Session load | Desktop → Gateway | WS: `session.load` / `session.messages` | NEW both sides |
+| Markdown render | Desktop internal | Component prop | react-markdown in ChatMessage |
+| Test harness | Gateway internal | MockTransport | NEW, no external deps |
+
+---
 
 ## Sources
 
-- [OpenClaw Gateway Architecture](https://docs.openclaw.ai/concepts/architecture) -- PRIMARY reference for channel adapter pattern and WebSocket protocol design (HIGH confidence)
-- [GoCodeo: Modular vs Monolithic AI Agent Frameworks](https://www.gocodeo.com/post/decoding-architecture-patterns-in-ai-agent-frameworks-modular-vs-monolithic) -- Architecture pattern trade-offs (MEDIUM confidence)
-- [LiteLLM AI Gateway](https://docs.litellm.ai/docs/simple_proxy) -- Multi-provider routing patterns and failover strategies (HIGH confidence)
-- [Azure AI Agent Orchestration Patterns](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) -- Workflow and approval gate patterns (HIGH confidence)
-- [Google Cloud Agentic AI Architecture](https://docs.google.com/architecture/choose-agentic-ai-architecture-components) -- Component selection and design pattern guidance (HIGH confidence)
-- [Composio MCP Gateways Guide](https://composio.dev/blog/mcp-gateways-guide) -- Gateway-as-reverse-proxy pattern for AI agents (MEDIUM confidence)
-- [Medium: AI Gateway as Enterprise Pattern](https://medium.com/vedcraft/agentic-ai-gateway-the-proven-architecture-pattern-for-enterprise-genai-security-and-governance-3abe0ca8af6a) -- Enterprise gateway patterns applicable at smaller scale (LOW confidence)
-- [WebSocket Gateway Reference Architecture](https://www.dasmeta.com/docs/solutions/websocket-gateway-reference-architecture/index) -- WebSocket session management best practices (MEDIUM confidence)
-- [sqlite-vec for Vector Embeddings](https://medium.com/@stephenc211/how-sqlite-vec-works-for-storing-and-querying-vector-embeddings-165adeeeceea) -- SQLite vector storage implementation details (MEDIUM confidence)
+- Direct source: `packages/gateway/src/ws/handlers.ts` line 54 — confirmed circular dep origin
+- Direct source: `packages/gateway/src/ws/protocol.ts` — full ClientMessage/ServerMessage schema inventory
+- Direct source: `packages/cli/src/components/*.tsx` — all Ink component boundaries confirmed
+- Direct source: `apps/desktop/src/components/ChatMessage.tsx` — confirmed markdown gap (plain text only)
+- Direct source: `apps/desktop/src/hooks/useChat.ts` — confirmed missing approval handler
+- Direct source: `packages/gateway/src/session/manager.ts` + `store.ts` — confirmed session.load feasibility
+- Direct source: `packages/cli/package.json` + `packages/gateway/package.json` — circular dep confirmed via dependency declarations
+- [react-markdown npm](https://www.npmjs.com/package/react-markdown) — 13M+ weekly downloads, React 19 compatible, v9
+- [remark-gfm GitHub](https://github.com/remarkjs/remark-gfm) — GFM tables, strikethrough, autolinks plugin
+- [react-syntax-highlighter GitHub](https://github.com/react-syntax-highlighter/react-syntax-highlighter) — code block highlighting, Prism backend
+- [Vitest workspace config docs](https://vitest.dev/guide/workspace) — multi-package test coordination
 
 ---
-*Architecture research for: AgentSpace AI Agent Gateway Platform*
-*Researched: 2026-02-15*
+
+*Architecture research for: Tek — CLI/Desktop visual overhaul and testing foundation milestone*
+*Researched: 2026-02-20*
+*Confidence: HIGH — all findings from direct codebase source reading*

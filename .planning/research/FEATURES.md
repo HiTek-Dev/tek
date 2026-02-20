@@ -1,241 +1,291 @@
 # Feature Research
 
-**Domain:** Self-hosted AI agent gateway platform
-**Researched:** 2026-02-15
-**Confidence:** MEDIUM (competitive landscape well-documented; some user-requested features are novel with limited prior art)
+**Domain:** CLI visual overhaul + Desktop UI overhaul + Testing foundation for Tek AI agent platform
+**Researched:** 2026-02-20
+**Confidence:** HIGH (codebase directly inspected; reference apps Claude Code, opencode, Claudia verified via web research)
+
+> **Milestone scope note:** This research focuses ONLY on the new milestone: visual polish for CLI (make it feel like Claude Code) + visual polish for Desktop (markdown, tool approval, history) + testing foundation (WebSocket protocol, agent loop, LLM routing). The existing gateway backend, MCP integration, memory system, and multi-provider routing are already built and are NOT in scope.
+
+---
+
+## Existing Baseline (Already Built — Do Not Rebuild)
+
+The following exist and inform what is new vs what is enhanced:
+
+**CLI (`packages/cli/src/components/`):**
+- `Chat.tsx` — main container wiring all components
+- `StatusBar.tsx` — connection dot, session ID, model, token count
+- `InputBar.tsx` — `@inkjs/ui` `TextInput` with `>` prompt; single-line only
+- `MessageBubble.tsx` — type-switched renderer: user (cyan), assistant (magenta + MarkdownRenderer), tool_call (blue + input/output), bash_command (green), reasoning (dimmed italic)
+- `MessageList.tsx` — list of MessageBubble components
+- `StreamingResponse.tsx` — plain streaming text with spinner
+- `ToolApprovalPrompt.tsx` — Y/N/S keyboard approval
+- `SkillApprovalPrompt.tsx`, `PreflightChecklist.tsx`
+- `MarkdownRenderer.tsx` — `marked` + `marked-terminal` rendering
+
+**Desktop (`apps/desktop/src/`):**
+- `pages/ChatPage.tsx` — agent selector, WS connect indicator, message list, streaming text, input bar
+- `components/ChatMessage.tsx` — type-switched renderer: user (blue border-left), assistant (gray border-left, `whitespace-pre-wrap` plain text), tool_call (purple badge + raw pre), bash_command (green $), reasoning (italic)
+- `components/StreamingText.tsx`, `ChatInput.tsx`, `Layout.tsx`, `Sidebar.tsx`, `GatewayStatus.tsx`
+- `hooks/useChat.ts`, `useWebSocket.ts`, `useConfig.ts`
+- `pages/DashboardPage.tsx`, `AgentsPage.tsx`, `SettingsPage.tsx`
+
+**Gateway protocol (`packages/gateway/src/ws/`):**
+- `protocol.ts` — `ToolApprovalResponse` message type exists (desktop receives `tool_approval_request` events but ignores them in UI)
+- `handlers.ts` — full tool approval round-trip implemented server-side
+
+---
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete or unusable.
+Features that users of Claude Code or any polished desktop chat app assume exist. Missing these makes the product feel like a prototype.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Multi-provider LLM support | Every gateway (LiteLLM, Portkey, Bifrost) supports 100+ providers via unified API. Users will not adopt a platform locked to one provider. | MEDIUM | Use OpenAI-compatible API format as the lingua franca. Support Anthropic, OpenAI, Google, Ollama, and local models at minimum. |
-| Conversation persistence | OpenClaw, Claude Code, and every chat product stores history. Losing context between sessions is a dealbreaker. | MEDIUM | SQLite for local, with optional Postgres for multi-user. Include hybrid search (vector + BM25) like OpenClaw for retrieval. |
-| Tool/function calling | Every major agent platform supports tool use. Agents without tools are just chatbots. | HIGH | Must support MCP (100M+ monthly downloads, 3000+ servers as of Jan 2026). MCP is the standard, not optional. |
-| Self-hosted deployment | Core value proposition. n8n, OpenClaw, LiteLLM all offer self-hosting. Users choosing this category demand it. | MEDIUM | Docker-first deployment. Single command to start. No cloud dependency for core functionality. |
-| Streaming responses | All modern LLM interfaces stream. Users will not wait for complete responses. | LOW | SSE or WebSocket streaming from the gateway to the UI. |
-| Basic cost tracking | LiteLLM, Portkey, and every gateway tracks token usage and costs. Users managing API spend expect visibility. | LOW | Track tokens in/out, cost per request, running totals per model/key. |
-| Multiple conversation threads | Every chat interface supports this. Single-thread is a toy. | LOW | Thread management with titles, search, archival. |
-| API key configuration | Users must be able to add their own API keys for each provider. This is day-one functionality. | LOW | Secure storage (encrypted at rest), per-provider configuration, validation on entry. |
-| Markdown/code rendering | Claude Code, Cursor, ChatGPT all render markdown and code blocks with syntax highlighting. | LOW | Standard markdown renderer with code block support, copy buttons, language detection. |
-| System prompt management | Every agent platform allows customizing the system prompt. Users expect to control agent personality and constraints. | LOW | Per-thread or global system prompts, templates library. |
+#### CLI Table Stakes
+
+| Feature | Why Expected | Complexity | Dependency on Existing |
+|---------|--------------|------------|----------------------|
+| Syntax highlighting in code blocks | Claude Code, every modern terminal AI tool does this. `marked-terminal` alone does not produce reliable highlight results across terminals. | LOW | Enhances `MarkdownRenderer.tsx`. `cli-highlight` already in `package.json`. Wire into fenced block rendering. |
+| Collapsible tool call panels | Claude Code and opencode both render tools as toggleable sections. Raw blue-header + full JSON floods the screen on tool-heavy sessions. | MEDIUM | Enhances `MessageBubble.tsx` tool_call case. Add `useInput` toggle per-panel or global. |
+| Input command history (up/down arrow) | Every shell since 1981. Users press up-arrow expecting previous message. Currently nothing happens. | MEDIUM | Replaces or wraps `InputBar.tsx`. `@inkjs/ui` `TextInput` does not support history natively. Needs custom hook with circular buffer. |
+| Truncated tool output with "N more lines" | Tool outputs (especially shell commands) flood the screen making conversation unreadable. | LOW | Enhances `MessageBubble.tsx` tool_call and bash_command cases. Cap at ~20 lines, show `... (N more lines)`. |
+| Empty state welcome screen | Blank `>` prompt is disorienting. Every reference tool shows available commands and shortcuts on open. | LOW | Add to `Chat.tsx`. Show agent name, available slash commands, keyboard shortcuts. |
+| Timestamps on messages | Users need temporal context, especially during multi-step tool operations that take time. | LOW | Enhances `MessageBubble.tsx`. Timestamp already in `ChatMessage` type. Dimmed HH:MM on right side. |
+
+#### Desktop Table Stakes
+
+| Feature | Why Expected | Complexity | Dependency on Existing |
+|---------|--------------|------------|----------------------|
+| Markdown rendering in chat messages | Every LLM chat UI (ChatGPT, Claude, Claudia) renders markdown. Raw `whitespace-pre-wrap` assistant text looks broken — no headers, no code blocks, no lists. | MEDIUM | Replaces plain text in `ChatMessage.tsx` assistant case. Add `react-markdown` + `rehype-highlight` or `react-shiki`. |
+| Code block copy button | Users copy code from chat constantly. Missing copy button is the most common friction point in chat UIs. | LOW | Overlay inside markdown renderer's code block component. Standard pattern in shadcn/ui. |
+| Tool approval UI in desktop | CLI has full Y/N/S approval; desktop currently shows tool call status but provides no way to approve/deny. Security and feature parity gap. | HIGH | New `ToolApprovalModal` component. Protocol already exists: gateway emits `tool_approval_request`, accepts `tool_approval_response`. Desktop `useChat` hook receives but discards approval events. No gateway changes required. |
+| Error boundary per page | A render crash in any component kills the entire desktop app. Users experience a blank screen with no recovery path. | LOW | Wrap each page in `Layout.tsx` with a `React.ErrorBoundary` class component. Applies to all 4 pages. |
+| Loading states on async actions | App appears frozen during gateway startup, WS connect, and LLM requests. Users refresh or kill the app. | LOW | Many places already check `gateway.status`; add skeleton loaders, spinners, disabled states consistently. |
+| WebSocket auto-reconnect with backoff | Brief network hiccup or gateway restart disconnects the session permanently. Users must manually reload. | MEDIUM | Update both `apps/desktop/src/hooks/useWebSocket.ts` AND `packages/cli/src/hooks/useWebSocket.ts`. Exponential backoff: 1s, 2s, 4s, 8s, max 30s. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set AgentSpace apart. These are the "why use this instead of ChatGPT/OpenClaw/n8n" answers.
+Features that are not universally expected but make Tek stand out from Claude Code and Claudia.
+
+#### CLI Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Transparent context management** | No other consumer-facing platform shows users every byte sent to the model. Claude Code shows tool calls but not full context assembly. OpenClaw injects skills silently. This is AgentSpace's core differentiator -- full visibility into what the model sees. | HIGH | Show the assembled prompt: system prompt + memory + skills + conversation history + tool results. Byte count, token count, cost estimate before sending. Collapsible inspector panel. |
-| **Encrypted API key vault serving local apps** | LiteLLM offers virtual keys but requires running their proxy. No platform offers a local vault that other apps (CLI tools, scripts, IDE extensions) can request keys from via a local API. This turns AgentSpace into infrastructure. | HIGH | Local-only API endpoint (127.0.0.1). Apps authenticate with a session token. Keys never leave the machine unencrypted. Audit log of which app accessed which key. |
-| **Triple-mode workflow builder** | n8n has visual. Langflow has visual. Claude Code has conversational. Nobody offers all three in one: visual canvas, code editor, and conversational creation -- with round-trip sync between them. | HIGH | Visual node graph, TypeScript/Python code view, and "describe what you want" conversational mode. Changes in one mode reflect in the others. This is the hardest feature to build well. |
-| **Full Control vs Limited Control onboarding** | No platform does this. Claude Code has permission modes but they are binary (allow/deny). AgentSpace should offer two distinct onboarding paths: "I want to control everything" (shows all config, manual setup) vs "Just make it work" (sensible defaults, progressive disclosure). | MEDIUM | Not just a toggle -- different UI flows, different defaults, different documentation paths. Limited Control users get guardrails; Full Control users get raw access. Preference persists but can be changed. |
-| **Self-debugging agents with skill authoring** | OpenClaw's skills system is the closest -- agents can draft SKILL.md files. But no platform has agents that diagnose their own failures, write corrective skills, and test them in a sandbox before adding to their repertoire. | HIGH | Agent detects failure patterns, proposes a new skill or tool, tests it in sandbox, user approves, skill is registered. Requires: failure detection, skill templating, sandboxed execution, approval workflow. |
-| **Pre-flight thinking checklists** | Novel feature. No platform shows users a structured plan before execution. Claude Code's "thinking" is hidden. Cursor's agent mode just executes. AgentSpace should surface the plan, let users edit it, then execute. | MEDIUM | Before complex tasks: agent generates a checklist of steps, estimated cost, required permissions, potential risks. User reviews, edits, approves. Results are tracked against the plan. |
-| **Smart model routing** | Portkey and Bifrost do routing at the gateway level but lack task-awareness. OpenClaw routes by agent, not by task complexity. AgentSpace should route by intent: planning/architecture uses high-thinking models, simple Q&A uses budget models, code generation uses code-specialized models. | HIGH | Task classifier determines complexity/type. Router selects model based on task + user budget preferences + model capabilities. Show users the routing decision and let them override. Estimated 60-87% cost savings based on industry data. |
-| **Terminal proxy for interactive CLI** | interminai (PTY proxy) proves this is possible. Command Proxy MCP Server exists. But no integrated platform wraps this into the agent experience -- where the agent can interact with vim, git rebase -i, debuggers, and other TUI programs. | HIGH | PTY-based terminal emulator that the agent can read from and write to. User sees the terminal in real-time. Agent can be given control or observe. Critical for developer-focused users who live in the terminal. |
+| Multi-line input (Shift+Enter) | opencode supports Meta+Enter; Claude Code supports Shift+Enter. Essential for pasting code or multi-paragraph prompts. Most impactful single CLI improvement. | HIGH | `@inkjs/ui` `TextInput` is single-line only. Requires full custom input component using raw `useInput` to accumulate lines. Shift+Enter = newline, Enter = submit. Build this and history together — same custom component. |
+| Compact vs expanded tool display | Toggle with a key (e.g. `e` to expand/`c` to collapse all tools) between truncated name+status and full input/output. Claude Code has this. | MEDIUM | Global session toggle stored in `useChat` state. Propagated to `MessageBubble` via prop or context. |
+| Live step counter during agent loop | During multi-step tool sequences, users see only "streaming..." for 10-30 seconds. A `Step 3/10: bash_command` display makes it feel active. | LOW | Count `tool_call` events received during streaming. Display in `StreamingResponse.tsx`. Data already available from WS message flow. |
+| Token/cost in footer with short format | StatusBar already receives `usage` state but display is raw numbers. Short format (`12.3k tokens · $0.04`) is the Claude Code style. | LOW | Update `StatusBar.tsx` formatting only. No data changes needed. |
+
+#### Desktop Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Conversation history sidebar | Cannot resume sessions without this. The #1 UX gap for chat apps. Claudia has full session versioning; Tek needs at minimum a list with resume. | HIGH | New panel in `Layout.tsx` or separate sidebar component. Query `sessionManager.listSessions()` via new WebSocket message type OR via Tauri command. Click session to resume (resume flow already exists in CLI via `resumeSessionId`). |
+| Tool approval modal with argument preview | Claudia shows tool inputs before approval in a clean modal. Users can make informed approve/deny decisions. Desktop tool approval is absent entirely. | MEDIUM | Part of the tool approval feature. The approval modal should show: tool name, formatted args (JSON with syntax highlighting), approve / deny / approve-for-session buttons. |
+| Session context indicator in chat header | Users get confused about which prior session is resumed and how much context it has. Show session ID prefix + message count. | LOW | Data already in `chat.sessionId` from `useChat` hook. Display in `ChatPage.tsx` header area (space already exists). |
+| Tek brand identity (color + typography) | Claudia has purple/dark design language. ChatGPT has green. Tek currently uses generic default blue/gray with no personality. | MEDIUM | Define 3 brand colors in `tailwind.config.js`. Apply to active states, borders, highlights, and status indicators. Single pass update across all pages. Not a full design system — targeted polish only. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems. Deliberately exclude these.
-
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Cloud-hosted SaaS mode** | "I don't want to self-host." | Destroys the core value proposition of transparency and control. Cloud hosting means trusting a third party with API keys and conversations. Splits engineering focus. | Provide excellent Docker deployment and one-click install scripts. Make self-hosting so easy that cloud feels unnecessary. Consider a "hosted gateway" tier much later (v3+) if there is demand. |
-| **Built-in LLM hosting** | "Run models locally through AgentSpace." | Massive complexity (GPU management, model downloading, quantization). Ollama and llama.cpp already solve this well. | First-class Ollama integration. Treat local model servers as another provider, not a built-in feature. |
-| **Plugin/extension marketplace** | "Let the community extend it." | Premature. Marketplaces require trust infrastructure, review processes, versioning, and security auditing. OpenClaw's ClawHub is community-maintained and quality varies wildly. | Support a skills/tools directory (local filesystem) first. Document the extension API well. Community sharing can happen via Git repos initially. Marketplace is a v3+ consideration. |
-| **Real-time collaboration** | "Multiple users editing workflows together." | Enormous complexity (CRDTs, conflict resolution, presence). Very few users need this for a self-hosted agent platform. | Multi-user support with separate sessions. Shared workflow library (export/import). Real-time collab is a v4+ consideration if ever. |
-| **Voice/video input** | "Talk to my agent." | Adds significant complexity (speech-to-text pipeline, audio processing). Not core to the agent gateway value proposition. | Integrate with existing STT services (Whisper API) as an optional input mode in v2+. Not a launch feature. |
-| **Autonomous background agents** | "Agents that run 24/7 doing tasks." | AutoGPT proved this is dangerous and expensive. Runaway agents burn API credits and take unreviewed actions. Conflicts with the "user control" value. | Scheduled tasks with approval gates. Cron-triggered workflows that pause for user review before destructive actions. Never fully autonomous without human checkpoints. |
-| **Everything-is-an-agent abstraction** | "Every component should be an agent." | Over-abstraction. Not every task needs LLM reasoning. A file reader does not need to be an "agent." This pattern inflates costs and latency. | Clear separation: tools are deterministic functions, agents use LLM reasoning. Use agents only where judgment is needed. Tools for everything else. |
+| File tree view in CLI | Claude Code renders directory trees. Users want parity. | Claude Code's tree renderer is deeply custom and integrated with their file tool. Significant Ink complexity for marginal gain in Tek's general-purpose context. | Format shell tool output better: truncate, add line numbers, highlight changed lines. Defer tree view to a later milestone. |
+| Real-time message search in desktop | Find past information quickly | Requires full-text index across session history (SQLite FTS). SQLite FTS5 is manageable but adds schema complexity that does not belong in a visual polish milestone. | Ship conversation history sidebar first. Users can skim sessions visually. Add search in a dedicated data milestone. |
+| Multi-line paste detection in CLI | Pasting multi-line text should work even without Shift+Enter | Terminal paste events are raw character streams to Ink. Distinguishing paste from typed input requires OS-level bracketed paste mode — unreliable across terminal emulators. | Build Shift+Enter multi-line input first. Bracketed paste as a v2 enhancement. |
+| Dark/light theme toggle in desktop | Some users prefer light mode | Tailwind dark mode with a toggle requires threading theme state everywhere. The current dark theme just needs polish, not a second theme. | Apply `prefers-color-scheme` CSS media query passively. Ship one excellent dark theme. |
+| E2E tests calling real LLM API | "Real" integration tests | Slow (10-30s), costs money, fails in CI without API keys, tests LLM output not Tek behavior | Mock LLM at AI SDK registry level. Test Tek's handling of responses, not the LLM itself. |
+| Ink component snapshot tests | "Test the CLI UI" | Ink rendering in vitest environments requires complex node setup. Terminal output snapshots are brittle — ANSI escape sequences change on minor version bumps. | Test the hooks (`useChat`, `useWebSocket`) and pure logic in isolation. CLI visual testing is manual review. |
+| 100% code coverage target | Discipline metric | Chasing coverage means testing internals, not behavior. Leads to coupled tests that break on every refactor. | Cover the critical paths (tool loop, approval gate, routing, WebSocket protocol) at 60-70% meaningful coverage. |
+
+---
 
 ## Feature Dependencies
 
 ```
-[API Key Vault]
-    +-- requires --> [Encrypted Storage Layer]
-    +-- enables  --> [Smart Model Routing] (needs key access to multiple providers)
-    +-- enables  --> [Multi-provider LLM Support]
+[Markdown Rendering — Desktop]
+    └──required by──> [Code Block Copy Button]
+    └──required by──> [Tool Approval Modal with formatted args]
+    └──must precede──> visual polish work in ChatMessage.tsx
 
-[Multi-provider LLM Support]
-    +-- requires --> [API Key Configuration]
-    +-- requires --> [Streaming Responses]
-    +-- enables  --> [Smart Model Routing]
+[Tool Approval Modal — Desktop]
+    └──uses──> existing ToolApprovalResponse protocol (no gateway changes)
+    └──requires──> [WebSocket auto-reconnect] (approval must survive brief disconnects)
+    └──requires fixing──> desktop useChat hook to not discard tool_approval_request events
 
-[Conversation Persistence]
-    +-- requires --> [Database Layer (SQLite)]
-    +-- enables  --> [Multiple Threads]
-    +-- enables  --> [Context Assembly]
+[Conversation History Sidebar — Desktop]
+    └──requires──> session list API (sessionManager.listSessions() in gateway)
+    └──requires──> new WS message type OR Tauri command for session listing
+    └──requires──> session resume flow (already in CLI via resumeSessionId; needs desktop implementation)
 
-[Context Assembly]
-    +-- requires --> [Conversation Persistence]
-    +-- requires --> [System Prompt Management]
-    +-- enables  --> [Transparent Context Management] (can't show what you can't assemble)
+[Multi-line Input — CLI]
+    └──conflicts──> @inkjs/ui TextInput (must replace, not extend)
+    └──best built with──> [Input Command History] (same custom input component handles both)
 
-[Transparent Context Management]
-    +-- requires --> [Context Assembly]
-    +-- enhances --> [Pre-flight Checklists] (shows what will be sent)
-    +-- enhances --> [Cost Tracking] (shows cost before sending)
+[Input Command History — CLI]
+    └──depends on──> [Multi-line Input] if both are built, OR
+    └──can be──> standalone history hook on top of existing TextInput if done independently
 
-[Tool/Function Calling]
-    +-- requires --> [MCP Client Implementation]
-    +-- enables  --> [Self-debugging Agents] (needs tools to test/write skills)
-    +-- enables  --> [Terminal Proxy] (terminal is a tool)
+[Syntax Highlighting — CLI]
+    └──uses──> cli-highlight (already in package.json, no install needed)
+    └──enhances──> existing MarkdownRenderer.tsx fenced code block handling
 
-[Workflow Builder]
-    +-- requires --> [Tool/Function Calling]
-    +-- requires --> [Multi-provider LLM Support]
-    +-- requires --> [Context Assembly]
-    +-- enhances --> [Self-debugging Agents] (visual debugging)
+[Collapsible Tool Panels — CLI]
+    └──enhances──> existing MessageBubble.tsx tool_call case
+    └──needs──> per-panel open/closed state (useState in MessageBubble or lifted to MessageList)
 
-[Self-debugging Agents]
-    +-- requires --> [Tool/Function Calling]
-    +-- requires --> [Sandboxed Execution]
-    +-- requires --> [Skills/Prompt Template System]
+[WebSocket Auto-Reconnect]
+    └──required for──> [Tool Approval Modal] (approval flow must not drop mid-session)
+    └──applies to──> both CLI useWebSocket.ts AND Desktop useWebSocket.ts (same fix, two files)
+    └──no other features depend on it but it should be early in desktop phase
 
-[Pre-flight Checklists]
-    +-- requires --> [Context Assembly]
-    +-- requires --> [Cost Tracking]
-    +-- enhances --> [Smart Model Routing] (shows routing decision)
+[Error Boundary — Desktop]
+    └──no dependencies
+    └──should be first thing in desktop phase (protects all subsequent component work)
 
-[Terminal Proxy]
-    +-- requires --> [PTY Wrapper Layer]
-    +-- requires --> [Tool/Function Calling] (terminal as a tool)
+[LLM Router Tests]
+    └──requires──> no mocks (classifyComplexity is a pure function)
+    └──source──> packages/gateway/src/llm/router.ts
 
-[Full Control vs Limited Control]
-    +-- requires --> [System Prompt Management]
-    +-- requires --> [API Key Configuration]
-    +-- affects  --> ALL features (UI/UX layer across everything)
+[Agent Loop Tests]
+    └──requires──> mock Transport (interface already in transport.ts)
+    └──requires──> mock AI SDK streamText (vi.mock)
+    └──source──> packages/gateway/src/agent/tool-loop.ts
+
+[WebSocket Protocol Tests]
+    └──requires──> message factory functions from ws/protocol.ts
+    └──no external dependencies needed
+
+[Tool Approval Integration Test]
+    └──requires──> [Agent Loop Tests infrastructure] (mock transport)
+    └──requires──> vitest-websocket-mock or manual WS server
+    └──tests──> approval-gate.ts + tool-loop.ts + ws/handlers.ts interaction
 ```
 
 ### Dependency Notes
 
-- **Transparent Context Management requires Context Assembly:** You cannot show users what the model sees until you have a well-structured context assembly pipeline. This is foundational -- build it first, then add the transparency UI.
-- **Smart Model Routing requires API Key Vault:** Routing across providers means having keys for multiple providers readily available and managing them centrally.
-- **Self-debugging Agents requires Tool Calling + Sandbox:** Agents writing their own skills need both the ability to execute tools and a safe place to test them. Without sandboxing, a buggy self-authored skill could corrupt the system.
-- **Workflow Builder requires most core features:** This is a late-phase feature because it orchestrates everything else. Build the components first, then the visual orchestrator.
-- **Full Control vs Limited Control is a UX layer:** It does not depend on specific features but affects how every feature is presented. Design it into the architecture from the start but implement the full UX in a dedicated phase.
+- **Markdown rendering must precede copy button:** The copy button lives inside the markdown renderer's code block component — there is nothing to attach it to without first implementing markdown rendering.
+- **Tool approval modal requires no gateway changes:** The gateway already emits `tool_approval_request` and accepts `tool_approval_response`. The desktop hook receives approval request events and discards them. The fix is entirely in the desktop UI layer.
+- **Multi-line input and command history are best built together:** They share the same custom `useInput` event handler. Building history alone on the existing TextInput is fragile; it needs to be replaced or significantly extended either way.
+- **Error boundary should be first in desktop phase:** Any new component added can crash the app. Adding the boundary first protects all subsequent work.
+- **Agent loop tests unblock all other gateway tests:** Establishing the mock Transport and mock streamText pattern in tool-loop tests makes approval gate, failure detector, and handler tests easy to write.
 
-## MVP Definition
+---
 
-### Launch With (v1)
+## MVP Definition for This Milestone
 
-Minimum viable product -- validate that a transparent, self-hosted agent platform has an audience.
+### Launch With — Phase P1
 
-- [ ] **Multi-provider LLM support** -- OpenAI, Anthropic, Google, Ollama via unified API
-- [ ] **Encrypted API key management** -- Secure local storage, per-provider keys
-- [ ] **Conversation persistence** -- SQLite-based, multiple threads, search
-- [ ] **Streaming chat interface** -- Markdown rendering, code highlighting
-- [ ] **Transparent context inspector** -- See assembled prompt, token counts, cost estimate
-- [ ] **System prompt management** -- Per-thread and global system prompts
-- [ ] **Basic cost tracking** -- Per-request and cumulative cost display
-- [ ] **MCP tool support** -- Connect to MCP servers, execute tool calls
-- [ ] **Full Control vs Limited Control toggle** -- Two onboarding paths with different defaults
+These close the most visible gaps identified in `next-milestone/ASSESSMENT.md`.
 
-**Why these:** They validate the core thesis (transparency + control + multi-provider) with minimum engineering. The context inspector is the key differentiator that must ship in v1 to test the hypothesis that users want to see what their agent sees.
+**CLI:**
+- [ ] Syntax highlighting in fenced code blocks via `cli-highlight` wired into `MarkdownRenderer` — largest visual gap
+- [ ] Collapsible tool call panels (toggle expand/collapse) — makes tool-heavy sessions readable
+- [ ] Input command history (up/down arrow) — too basic to be missing
+- [ ] Truncated tool output with line cap + "N more lines" — prevents screen flooding
+- [ ] Empty state welcome screen with slash command list
 
-### Add After Validation (v1.x)
+**Desktop:**
+- [ ] Markdown rendering in `ChatMessage.tsx` assistant case via `react-markdown` + syntax highlighting — single most impactful change
+- [ ] Code block copy button — instant value, trivially complex
+- [ ] Tool approval modal wired to existing protocol — security and feature parity with CLI
+- [ ] Error boundary per page — correctness, prevents crashes from blocking testing
 
-Features to add once the core is working and users confirm the value proposition.
+**Testing:**
+- [ ] Unit tests for `classifyComplexity` (LLM router) — pure function, zero mocks needed, high regression value
+- [ ] Unit tests for `runAgentLoop` with mocked transport and mocked `streamText` — covers most critical server-side path
+- [ ] WebSocket protocol message shape tests — validates the client/server contract
+- [ ] Integration test for tool approval round-trip — most complex user-facing flow
 
-- [ ] **Pre-flight thinking checklists** -- Trigger: users report wanting to review before complex tasks execute
-- [ ] **Smart model routing** -- Trigger: users with multiple provider keys want cost optimization
-- [ ] **API key vault with local API** -- Trigger: users want to share keys with other local tools
-- [ ] **Skills/prompt template system** -- Trigger: users want reusable agent configurations
-- [ ] **Basic workflow builder (code-first)** -- Trigger: users want multi-step automated workflows
+### Add After P1 Stabilizes — Phase P2
 
-### Future Consideration (v2+)
+- [ ] Conversation history sidebar (desktop) — high value but requires WS or Tauri session list API
+- [ ] Multi-line input with Shift+Enter (CLI) — high impact but high effort; get other CLI work stable first
+- [ ] WebSocket auto-reconnect with backoff (both CLI and desktop)
+- [ ] Token/cost short format in CLI StatusBar
+- [ ] Session context indicator in desktop chat header
+- [ ] Approval gate policy tests (unit tests for `approval-gate.ts`)
+- [ ] Context assembly tests (unit tests for `assembleContext`)
 
-Features to defer until product-market fit is established.
+### Future Consideration — Later Milestone
 
-- [ ] **Visual workflow canvas** -- Defer: requires significant frontend investment, code-first workflow builder validates demand first
-- [ ] **Conversational workflow creation** -- Defer: requires workflow builder to exist first
-- [ ] **Self-debugging agents** -- Defer: requires mature skills system + sandboxing + significant R&D
-- [ ] **Terminal proxy** -- Defer: niche developer feature, validate audience size first
-- [ ] **Multi-channel support** (Telegram, Discord, Slack) -- Defer: OpenClaw already owns this. Differentiate on desktop/web UX first, channels later
-- [ ] **Triple-mode workflow sync** -- Defer: extremely complex bidirectional sync. Build each mode independently first
+- [ ] Tek brand design system (beyond spot color changes)
+- [ ] Session search in desktop
+- [ ] Collapsible tool timeline accordion (more complex than collapsible panels)
+- [ ] Step counter in streaming response
+- [ ] Session persistence tests with SQLite test database setup
+
+---
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Multi-provider LLM support | HIGH | MEDIUM | P1 |
-| Encrypted API key storage | HIGH | LOW | P1 |
-| Conversation persistence + threads | HIGH | MEDIUM | P1 |
-| Streaming chat interface | HIGH | LOW | P1 |
-| Transparent context inspector | HIGH | MEDIUM | P1 |
-| MCP tool support | HIGH | HIGH | P1 |
-| System prompt management | MEDIUM | LOW | P1 |
-| Basic cost tracking | MEDIUM | LOW | P1 |
-| Full Control / Limited Control UX | MEDIUM | MEDIUM | P1 |
-| Pre-flight thinking checklists | HIGH | MEDIUM | P2 |
-| Smart model routing | HIGH | HIGH | P2 |
-| API key vault (local API for other apps) | MEDIUM | MEDIUM | P2 |
-| Skills/template system | MEDIUM | MEDIUM | P2 |
-| Code-first workflow builder | MEDIUM | HIGH | P2 |
-| Visual workflow canvas | MEDIUM | HIGH | P3 |
-| Self-debugging agents | HIGH | HIGH | P3 |
-| Terminal proxy | MEDIUM | HIGH | P3 |
-| Multi-channel adapters | MEDIUM | HIGH | P3 |
-| Conversational workflow creation | MEDIUM | HIGH | P3 |
-| Triple-mode workflow sync | LOW | HIGH | P3 |
+| Desktop markdown rendering | HIGH | MEDIUM | P1 |
+| CLI syntax highlighting | HIGH | LOW | P1 |
+| Tool approval modal (desktop) | HIGH | HIGH | P1 |
+| CLI collapsible tool panels | HIGH | MEDIUM | P1 |
+| Code block copy button (desktop) | HIGH | LOW | P1 |
+| Error boundary (desktop) | HIGH | LOW | P1 |
+| CLI input command history | MEDIUM | MEDIUM | P1 |
+| CLI truncated tool output | MEDIUM | LOW | P1 |
+| CLI empty state | MEDIUM | LOW | P1 |
+| LLM router unit tests | HIGH | LOW | P1 |
+| Agent loop unit tests | HIGH | MEDIUM | P1 |
+| WS protocol shape tests | HIGH | LOW | P1 |
+| Tool approval integration test | HIGH | MEDIUM | P1 |
+| Conversation history sidebar | HIGH | HIGH | P2 |
+| WS auto-reconnect | HIGH | MEDIUM | P2 |
+| Multi-line CLI input | HIGH | HIGH | P2 |
+| Session context indicator | MEDIUM | LOW | P2 |
+| Approval gate policy tests | HIGH | LOW | P2 |
+| Token/cost display format CLI | LOW | LOW | P2 |
+| Brand color identity | MEDIUM | MEDIUM | P3 |
+| Session search desktop | HIGH | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch -- validates core thesis
-- P2: Should have, add when core is validated
-- P3: Nice to have, future consideration after product-market fit
+- P1: Must have for this milestone to meet its stated goal
+- P2: Should have once P1 is stable
+- P3: Nice to have, future milestone
+
+---
 
 ## Competitor Feature Analysis
 
-| Feature | OpenClaw | Claude Code | Cursor/Windsurf | n8n/Langflow | AutoGPT | AgentSpace (Our Plan) |
-|---------|----------|-------------|-----------------|--------------|---------|----------------------|
-| Multi-provider LLM | Yes (via config) | Anthropic only | Multiple (built-in) | Yes (nodes) | Yes | Yes -- unified API |
-| Self-hosted | Yes | Local CLI | Local app | Yes | Yes | Yes -- Docker-first |
-| Context transparency | No (silent injection) | Partial (shows tool calls) | No | Partial (visual flow) | No | **Full visibility** -- every byte |
-| Encrypted key vault | No | No | No | Credential store | No | **Yes -- with local API** |
-| Multi-channel | **16+ channels** | Terminal only | IDE only | Triggers | Web only | Desktop/web first, channels later |
-| Workflow builder | No (imperative skills) | No | No | **Visual canvas** | No | Visual + code + conversational |
-| Model routing | Per-agent | N/A | Built-in | Per-node | Per-agent | **Task-aware routing** |
-| Skills/extensibility | **SKILL.md system** | Skills + hooks | Extensions | Custom nodes | Marketplace | Skills + self-authoring |
-| Pre-flight planning | No | Hidden thinking | No | No | No | **Visible checklists** |
-| Terminal proxy | N/A | **Native** | **Native** | No | No | PTY-based proxy |
-| Cost tracking | Basic | Token display | None visible | Per-execution | Basic | Per-request + projections |
-| Onboarding modes | Single mode | Permission flags | Guided setup | Templates | Simple | **Dual-track onboarding** |
-| Self-debugging | Skill drafting | No | No | No | No | **Full loop** (detect, draft, test, register) |
+| Feature | Claude Code (CLI) | opencode (CLI) | Claudia (Desktop) | Tek Current | Tek Target |
+|---------|-------------------|----------------|-------------------|-------------|------------|
+| Syntax highlighting in terminal | YES (custom ANSI) | YES (terminal renderer) | N/A (web view) | Partial (marked-terminal inconsistent) | YES (cli-highlight wired into MarkdownRenderer) |
+| Collapsible tool panels | YES (keyboard toggle) | YES (BasicTool card with expand) | YES (accordion) | NO | YES (keyboard toggle in MessageBubble) |
+| Markdown rendering (desktop) | N/A | N/A | YES (react-markdown + Shiki) | NO (whitespace-pre-wrap) | YES (react-markdown + rehype-highlight) |
+| Code block copy button | N/A | N/A | YES | NO | YES (overlay in code block component) |
+| Input history | YES (up/down) | YES | YES | NO | YES (custom hook + circular buffer) |
+| Multi-line input | YES (Shift+Enter) | YES (Meta+Enter) | YES | NO | YES (custom Ink component) |
+| Tool approval UI | YES (Y/N/S) | YES | YES | CLI: YES, Desktop: NO | Desktop: YES (modal with arg preview) |
+| Conversation history | YES (session list) | YES (session tree) | YES (full sidebar + versioning) | NO | YES (sidebar with resume) |
+| WebSocket auto-reconnect | YES | YES | YES | NO | YES (exponential backoff) |
+| Error boundaries | YES | YES | YES | NO | YES (per page) |
+| Token/cost display | YES (compact format) | YES | YES (analytics page) | Partial (raw numbers) | YES (12.3k · $0.04 format) |
+| Test coverage | Unknown (closed) | YES (Go tests) | YES (Rust + vitest) | NO (vitest configured, 0 test files) | YES (unit + integration) |
 
-### Competitive Positioning
-
-**vs OpenClaw:** OpenClaw wins on channel breadth (16+ messaging platforms) and community size. AgentSpace wins on transparency, security (key vault), and workflow tooling. Do not compete on channels -- compete on quality of the desktop/web experience and the "see everything" philosophy.
-
-**vs Claude Code:** Claude Code wins on deep coding integration and Anthropic model optimization. AgentSpace wins on provider flexibility, transparency, and being a platform (not just a coding tool). Claude Code is single-purpose; AgentSpace is general-purpose.
-
-**vs Cursor/Windsurf:** These are IDE-embedded agents, not standalone platforms. Different category. AgentSpace can complement them by serving as the key vault and model router that Cursor/Windsurf connect to.
-
-**vs n8n/Langflow:** n8n wins on workflow maturity and integration count (400+ nodes). AgentSpace wins on agent-native design and context transparency. n8n retrofitted AI onto a workflow platform; AgentSpace is AI-first with workflow capabilities.
-
-**vs AutoGPT:** AutoGPT pioneered autonomous agents but suffered from runaway execution and cost overruns. AgentSpace explicitly rejects full autonomy in favor of human-supervised execution with pre-flight checklists and approval gates.
+---
 
 ## Sources
 
-- [5 Best AI Gateways in 2026](https://www.getmaxim.ai/articles/5-best-ai-gateways-in-2026/) -- Gateway feature landscape (MEDIUM confidence)
-- [OpenClaw Architecture, Explained](https://ppaolo.substack.com/p/openclaw-system-architecture-overview) -- OpenClaw component architecture (MEDIUM confidence)
-- [OpenClaw Skills System - DeepWiki](https://deepwiki.com/openclaw/openclaw/6.3-skills-system) -- Skills framework details (MEDIUM confidence)
-- [OpenClaw GitHub](https://github.com/openclaw/openclaw) -- Feature list and channel support (HIGH confidence)
-- [LiteLLM Proxy Documentation](https://docs.litellm.ai/docs/proxy/security_encryption_faq) -- Key management and encryption patterns (HIGH confidence)
-- [n8n AI Agents](https://n8n.io/ai-agents/) -- Workflow builder features (HIGH confidence)
-- [Langflow Documentation](https://docs.langflow.org/) -- Visual builder capabilities (HIGH confidence)
-- [interminai GitHub](https://github.com/mstsirkin/interminai) -- Terminal proxy prior art (MEDIUM confidence)
-- [Command Proxy MCP Server](https://skywork.ai/skypage/en/command-proxy-mcp-server-ai-engineers/1979084403256893440) -- CLI bridge for AI agents (MEDIUM confidence)
-- [AI Model Router Saves 87% on API Costs](https://www.techedubyte.com/ai-model-router-saves-api-costs/) -- Cost optimization data (LOW confidence)
-- [OpenClaw API Cost Optimization](https://zenvanriel.nl/ai-engineer-blog/openclaw-api-cost-optimization-guide/) -- Smart routing patterns (MEDIUM confidence)
-- [Claude Code Overview](https://code.claude.com/docs/en/overview) -- Claude Code features (HIGH confidence)
-- [Windsurf vs Cursor Comparison](https://windsurf.com/compare/windsurf-vs-cursor) -- IDE agent features (MEDIUM confidence)
-- [AutoGPT Platform](https://agpt.co/blog/introducing-the-autogpt-platform) -- Autonomous agent features (MEDIUM confidence)
-- [Best MCP Gateways 2026](https://www.integrate.io/blog/best-mcp-gateways-and-ai-agent-security-tools/) -- MCP gateway landscape (MEDIUM confidence)
+- Direct codebase inspection: `packages/cli/src/`, `apps/desktop/src/`, `packages/gateway/src/`
+- `/Users/hitekmedia/Documents/GitHub/tek/next-milestone/ASSESSMENT.md` — primary gap analysis
+- `/Users/hitekmedia/Documents/GitHub/tek/next-milestone/QUICK-WINS.md` — low-effort improvements
+- [Claude Code Terminal UI internals (Medium)](https://kotrotsos.medium.com/claude-code-internals-part-11-terminal-ui-542fe17db016) — Ink + Yoga rendering architecture
+- [How Claude Code is built (Pragmatic Engineer)](https://newsletter.pragmaticengineer.com/p/how-claude-code-is-built)
+- [opencode TUI Prompt Component (DeepWiki)](https://deepwiki.com/sst/opencode/6.5-tui-prompt-component-and-input-handling) — multiline, history, autocomplete features
+- [Claudia desktop GUI features (BrightCoding, 2025)](https://www.blog.brightcoding.dev/2025/07/04/claudia-a-powerful-gui-app-and-toolkit-for-claude-code/) — session versioning, markdown, analytics
+- [ink-ui component library (GitHub)](https://github.com/vadimdemedes/ink-ui) — TextInput and other Ink components
+- [ink-syntax-highlight (GitHub)](https://github.com/vsashyn/ink-syntax-highlight) — syntax highlighting for Ink
+- [vitest-websocket-mock (GitHub)](https://github.com/akiomik/vitest-websocket-mock) — WS mock for integration tests
+- [WebSocket integration testing with Vitest (Medium)](https://thomason-isaiah.medium.com/writing-integration-tests-for-websocket-servers-using-jest-and-ws-8e5c61726b2a)
+- [react-markdown (remarkjs)](https://github.com/remarkjs/react-markdown) — markdown component for React
+- [react-shiki (GitHub)](https://github.com/avgvstvs96/react-shiki) — Shiki-powered highlighting hook for React
+- [shadcn AI code block component](https://www.shadcn.io/ai/code-block) — copy button + Shiki in chat UI pattern
 
 ---
-*Feature research for: AgentSpace -- self-hosted AI agent gateway platform*
-*Researched: 2026-02-15*
+*Feature research for: Tek agent platform — CLI visual overhaul, desktop UI overhaul, testing foundation*
+*Researched: 2026-02-20*

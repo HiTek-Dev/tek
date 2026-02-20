@@ -1,412 +1,257 @@
 # Project Research Summary
 
-**Project:** AgentSpace - Self-hosted AI Agent Gateway Platform
-**Domain:** AI Agent Gateway / Multi-Provider LLM Orchestration
-**Researched:** 2026-02-15
-**Confidence:** MEDIUM-HIGH
+**Project:** Tek — Visual Polish & Testing Milestone (post v0.0.24)
+**Domain:** CLI visual overhaul + Desktop UI overhaul + Testing foundation
+**Researched:** 2026-02-20
+**Confidence:** HIGH
 
 ## Executive Summary
 
-AgentSpace is a self-hosted AI agent gateway platform designed to provide transparency and control over multi-provider LLM interactions. Research confirms the domain is well-established with clear patterns: successful platforms like OpenClaw, LiteLLM, and Claude Code demonstrate proven architectures for channel adapters, provider abstraction, and session management. The recommended approach is a **modular monolith** built with TypeScript/Node.js, using Fastify for the gateway server, AI SDK 6 for provider abstraction, SQLite with vector extensions for local storage, and a typed event bus for inter-module communication.
+Tek is a self-hosted AI agent platform with an Ink-based CLI and a Tauri + React desktop app, both communicating with a shared gateway over WebSocket. The existing backend (gateway, agent loop, MCP, memory, multi-provider routing) is fully built. This milestone is a targeted polish sprint: make the CLI feel like Claude Code, make the desktop feel like Claudia, and establish a test harness over the most critical gateway paths. The research is drawn directly from the live codebase — confidence is high because there is no speculation involved.
 
-The core differentiator is **transparent context management** — showing users exactly what the agent sees and sends to the LLM, byte-by-byte. This addresses a gap in the market where OpenClaw injects skills silently, Claude Code shows tool calls but not full context assembly, and n8n hides prompt construction behind visual nodes. Combined with encrypted API key vaulting, multi-provider smart routing, and "Full Control vs Limited Control" dual-track onboarding, AgentSpace positions itself between power-user developer tools (Claude Code, Cursor) and simpler chat interfaces (ChatGPT, Perplexity).
+The recommended approach is to front-load two blockers before any visible work begins: (1) extract the vault from `@tek/cli` into `@tek/core` to break a confirmed circular dependency that prevents gateway tests from running in isolation, and (2) add per-page error boundaries to the desktop app to protect all subsequent component work. After those two tasks, CLI and desktop visual work can proceed in parallel with test infrastructure. The dependency order within each surface is clear: markdown rendering precedes the copy button and tool approval modal on desktop; collapsible panels and syntax highlighting are independent CLI tasks; test harness setup precedes any handler tests.
 
-The primary risk is **context window bloat** leading to degraded agent performance and runaway costs. Prevention requires explicit token budgeting, just-in-time context retrieval, and conversation summarization built into the core architecture from Phase 1. Secondary risks include insecure API key storage (mitigated with OS keychain integration), session state complexity (mitigated with bounded context decomposition), and WebSocket reliability over real networks (mitigated with reconnection logic and message sequencing). All critical pitfalls have established prevention patterns and must be addressed in foundational phases to avoid costly rewrites.
+The dominant risks are architectural and Ink-specific. Ink's `Static` component will silently swallow state updates if developers add `useState` inside `MessageBubble`, which is rendered inside `<Static>`. Ink's full-screen re-render at terminal height triggers a documented upstream flicker bug requiring message windowing as a mitigation. The `handlers.ts` file (1,422 lines, zero tests) is a refactor trap — any restructuring without characterization tests first will cause silent regressions. On the desktop side, Tauri's CSP must be verified after every new dependency addition, and `react-markdown` (not raw `marked`) must be used to avoid XSS from agent-controlled content rendering in the WebView.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The research validates a **TypeScript/Node.js monorepo** with clear technology leaders in each category. Node.js 24.x LTS provides stability through April 2028, pnpm workspaces with Turborepo offers 3x faster builds than Nx for small projects, and the ecosystem has matured to the point where most choices have obvious winners.
+This milestone adds a small, targeted set of libraries to the existing stack. The headline choice is using `shiki` as the unified syntax highlighting engine for both CLI (via `codeToAnsi()` from `@shikijs/cli`) and desktop (via `@shikijs/rehype` with `react-markdown`). This replaces the abandoned `cli-highlight` and achieves VS Code-quality TextMate grammar highlighting on both surfaces from a single dependency family. All three shiki packages (`shiki`, `@shikijs/cli`, `@shikijs/rehype`) are versioned together at `3.22.0` and must be pinned as a set.
 
-**Core technologies:**
-- **Fastify 5.x**: HTTP/WebSocket gateway server — 40K+ req/s performance, schema-based validation, mature plugin ecosystem; superior to Hono for Node.js-only deployment and to Express in every metric
-- **AI SDK 6.x (Vercel)**: Multi-provider LLM abstraction — 2M+ weekly downloads, unified API for streaming/tool calling/structured output, type-safe throughout; dominates the TypeScript LLM toolkit space
-- **Drizzle ORM + better-sqlite3**: Database layer — SQL-centric ORM with sync API for SQLite, zero-dependency, generates migrations; paired with sqlite-vec for embedded vector search (good for tens of thousands of embeddings)
-- **Ink 6.x**: Terminal UI framework — React-based component model for rich CLI rendering, only serious option for interactive TUIs in Node.js ecosystem (blessed unmaintained since 2018)
-- **@napi-rs/keyring**: Encrypted credential storage — keytar replacement with Rust-based native bindings, 100% API-compatible, no libsecret dependency for WSL2/headless support
-- **Next.js 16.x + shadcn/ui**: Web dashboard (later phase) — App Router with Turbopack, copy-paste components give full ownership, Tailwind 4.x for styling
-- **grammY**: Telegram bot framework (later phase) — TypeScript-first, modern successor to Telegraf, better DX and plugin ecosystem
+For desktop markdown, `react-markdown@10.1.0` + `remark-gfm@4.0.1` is the clear choice: React 19 compatible, no `dangerouslySetInnerHTML`, CSP-safe by construction. Animations use `motion@12.34.3` (the renamed Framer Motion) — import from `motion/react`, not the old `framer-motion` package name. Testing uses `msw@2.12.10` for both HTTP and WebSocket mocking (the Vitest-official recommendation), with no polyfills needed because Node 22 provides a native `WebSocket` global.
 
-**Critical version notes:**
-- TypeScript 5.9 stable (not 6.0 beta), Node.js 24.x LTS tested with all native addons (node-pty, better-sqlite3, @napi-rs/keyring)
-- AI SDK requires matching provider versions (@ai-sdk/anthropic@latest, @ai-sdk/openai@3.x)
-- sqlite-vec is the successor to deprecated sqlite-vss (pure C, no FAISS dependency)
+**Core new technologies:**
+- `shiki` / `@shikijs/cli` / `@shikijs/rehype` `^3.22.0`: unified syntax highlighting engine — VS Code TextMate grammars, replaces abandoned cli-highlight; pin all three packages at the same version
+- `react-markdown@^10.1.0` + `remark-gfm@^4.0.1`: markdown rendering in desktop — safe, React 19 compatible, CSP-compatible by construction
+- `@tailwindcss/typography@^0.5.19`: prose styling for react-markdown output — configure via CSS `@plugin` directive in Tailwind v4, not `plugins: []`
+- `motion@^12.34.3`: entrance animations and panel transitions — React 19 compatible, import from `motion/react` not `framer-motion`
+- `react-diff-viewer-continued@^4.1.2`: diff display in chat — React 19 peer dep confirmed, accepts raw string input
+- `msw@^2.12.10`: WebSocket and HTTP mocking in tests — Vitest-official recommendation, works in Node 22 with no polyfill
+- `diff@^7.0.0`: programmatic diff computation in CLI — zero dependencies, ESM/CJS compatible
 
-**What to avoid:** Express (slower, worse TypeScript), Prisma (heavy for embedded SQLite), keytar (archived Dec 2022), LangChain.js (heavyweight abstraction not needed), Socket.IO (unnecessary overhead when controlling both ends), blessed (unmaintained).
+**Notable exclusions:**
+- `ink-syntax-highlight`: abandoned, CommonJS-only, incompatible with Ink 6 ESM
+- `framer-motion`: renamed — install `motion` instead
+- `rehype-raw`: must never be enabled in Tauri desktop — opens XSS vector through agent-controlled markdown
+- `react-syntax-highlighter`: heavy, uses weaker highlight.js grammars; `@shikijs/rehype` is the replacement
 
 ### Expected Features
 
-Research reveals a clear three-tier feature hierarchy: table stakes (users expect these or the product feels broken), differentiators (competitive advantage), and anti-features (commonly requested but problematic).
+**Must have (table stakes) — Phase P1:**
+- CLI syntax highlighting in fenced code blocks via shiki — biggest visual gap, lowest effort
+- CLI collapsible tool call panels — tool-heavy sessions are unreadable without this
+- CLI input command history (up/down arrow) — too basic to be absent
+- CLI truncated tool output with "N more lines" — prevents screen flooding
+- CLI empty state welcome screen with slash command list
+- Desktop markdown rendering in ChatMessage.tsx — single most impactful desktop change
+- Desktop code block copy button — trivial effort, constant user friction without it
+- Desktop tool approval modal wired to existing gateway protocol — security gap and parity with CLI
+- Desktop error boundary per page — prevents render crashes from blanking the entire app
+- Gateway unit tests: LLM router `classifyComplexity` (pure function, zero mocks), agent loop with mock transport, WS protocol schema shapes, tool approval integration test
 
-**Must have (table stakes):**
-- **Multi-provider LLM support** — Every gateway (LiteLLM, Portkey, Bifrost) supports 100+ providers; users will not adopt platform locked to one provider
-- **Conversation persistence** — OpenClaw, Claude Code, and every chat product stores history; losing context between sessions is a dealbreaker
-- **Tool/function calling** — MCP support is mandatory (100M+ monthly downloads, 3000+ servers as of Jan 2026); agents without tools are just chatbots
-- **Streaming responses** — All modern LLM interfaces stream; users will not wait for complete responses
-- **Basic cost tracking** — LiteLLM, Portkey, and every gateway tracks token usage; users managing API spend expect visibility
-- **API key configuration** — Secure storage (encrypted at rest), per-provider config, validation on entry
-- **Markdown/code rendering** — Claude Code, Cursor, ChatGPT all render markdown with syntax highlighting
-- **System prompt management** — Every agent platform allows customizing agent personality and constraints
+**Should have (competitive differentiators) — Phase P2:**
+- Conversation history sidebar in desktop — HIGH value, HIGH complexity; requires new `session.load` WS message not yet in protocol
+- WebSocket auto-reconnect with exponential backoff, both CLI and desktop
+- Multi-line input with Shift+Enter in CLI — same custom component as command history; best built together
+- Token/cost short format in CLI StatusBar (`12.3k · $0.04`)
+- Session context indicator in desktop chat header
+- Approval gate policy unit tests, context assembly unit tests
 
-**Should have (competitive differentiators):**
-- **Transparent context management** — No other consumer platform shows users every byte sent to the model; this is AgentSpace's core differentiator
-- **Encrypted API key vault serving local apps** — Local-only API (127.0.0.1) that other apps can request keys from; turns AgentSpace into infrastructure
-- **Smart model routing** — Task-aware routing (planning uses high-thinking models, simple Q&A uses budget models); estimated 60-87% cost savings
-- **Pre-flight thinking checklists** — Before complex tasks, agent generates plan with cost estimate and required permissions; user reviews/edits before execution
-- **Full Control vs Limited Control onboarding** — Two distinct paths: "control everything" (shows all config) vs "just make it work" (sensible defaults)
-- **Self-debugging agents with skill authoring** — Agents detect failure patterns, propose corrective skills, test in sandbox, user approves registration
-- **Terminal proxy for interactive CLI** — PTY-based terminal that agent can interact with (vim, git rebase -i, debuggers); proven by interminai project
-
-**Defer (v2+):**
-- **Triple-mode workflow builder** — Visual canvas, code editor, conversational creation with round-trip sync; extremely complex bidirectional sync, build modes independently first
-- **Voice/video input** — Adds complexity (STT pipeline); not core to gateway value proposition
-- **Multi-channel support** (Telegram/Discord/Slack) — OpenClaw owns this; differentiate on desktop/web UX first
-- **Autonomous background agents** — AutoGPT proved this is dangerous/expensive; use scheduled tasks with approval gates instead
-- **Cloud-hosted SaaS mode** — Destroys core value proposition (transparency/control); make self-hosting so easy that cloud feels unnecessary
-
-**Anti-features (deliberately exclude):**
-- **Built-in LLM hosting** — Ollama/llama.cpp already solve this; treat local models as another provider
-- **Plugin marketplace** — Premature (needs trust infrastructure, review processes); support local skills directory first, marketplace is v3+
-- **Real-time collaboration** — Enormous complexity (CRDTs, conflict resolution); very few users need this for self-hosted platform
-- **Everything-is-an-agent abstraction** — Over-abstraction inflates costs/latency; use agents only where judgment needed, tools for deterministic functions
+**Defer (P3 / future milestone):**
+- Tek brand design system beyond spot color changes
+- Session search in desktop — requires SQLite FTS, belongs in a dedicated data milestone
+- Step counter in streaming response
+- Ink component snapshot tests — brittle ANSI escape sequences
+- 100% code coverage targets — cover critical paths at 60-70% meaningful coverage instead
 
 ### Architecture Approach
 
-The architecture should be a **modular monolith** — single process with strict internal module boundaries enforced through TypeScript barrel exports and a typed event bus. This gives OpenClaw's capabilities (which has 153 files in gateway, 353 in agents directories) without OpenClaw's sprawl. Target is 60-80 files total by keeping modules focused and avoiding premature abstraction.
+The architecture for this milestone is additive — no new packages, no new services. The one structural change required is the vault extraction: move `packages/cli/src/vault/` into `packages/core/src/vault/` and update 6 gateway import sites. This eliminates the confirmed `@tek/cli -> @tek/gateway -> @tek/cli/vault` circular dependency, giving Turbo a clean DAG and allowing gateway tests to run without pulling in Ink and the full CLI tree. Beyond that, new components (`CollapsiblePanel`, `ToolApprovalModal`, `SessionHistoryPanel`) slot into existing trees without restructuring them. The gateway adds two new WS messages (`session.load` / `session.messages`) to support the desktop session history feature.
 
-**Major components:**
+**Major components (new or significantly modified):**
+1. `@tek/core/vault/` — NEW, moved from CLI; breaks the circular dependency and enables isolated gateway tests
+2. `CollapsiblePanel.tsx` (CLI) — NEW; `useInput` toggle for tool/bash blocks in `MessageBubble`
+3. `ChatMessage.tsx` (Desktop) — MODIFIED; replace `whitespace-pre-wrap` with `react-markdown` + shiki pipeline
+4. `ToolApprovalModal.tsx` (Desktop) — NEW; wires to the existing gateway approval protocol the desktop currently ignores
+5. `SessionHistoryPanel.tsx` (Desktop) — NEW; requires new `session.load` WS message in gateway protocol
+6. `vitest.workspace.ts` + per-package `vitest.config.ts` — NEW; enables `pnpm test` from repo root
+7. `packages/gateway/src/ws/__tests__/harness.ts` — NEW; `MockTransport` pattern enables all handler tests without a live server
 
-1. **Interface Layer (Channel Adapters)** — CLI (Ink-based TUI), Web Dashboard (Next.js + WebSocket), Telegram Bot (grammY); every interface implements same adapter protocol, normalizing inputs to `GatewayMessage` format before entering gateway core
-
-2. **Gateway Core** — Message Router (normalize, dispatch), Session Manager (lifecycle, context windows), Event Bus (typed pub/sub for module communication), Approval Gate (human-in-the-loop with async state persistence), Workflow Engine (multi-step with resumable state)
-
-3. **Agent Layer** — Agent Runtime (orchestrates agent loop: assemble context, call LLM, parse response, execute tools), LLM Router (unified provider interface with failover/retries), Skill Registry (plugin system with typed tool definitions), Context Assembler (builds prompt from session history + memories + system instructions + available skills)
-
-4. **Data Layer** — Memory Store (SQLite + sqlite-vec for vector embeddings), Session Store (SQLite for conversation state), Credential Vault (AES-256 encrypted storage with OS keychain fallback), Scheduler (cron-like for heartbeat checks and periodic workflows)
-
-**Key architectural patterns:**
-- **Channel Adapter Protocol**: Every interface normalizes to `GatewayMessage`; gateway is interface-agnostic (proven by OpenClaw's multi-channel support)
-- **Typed Event Bus**: Modules communicate through events, not direct imports; prevents coupling that killed OpenClaw's maintainability
-- **LLM Provider Abstraction**: All providers implement unified interface; router handles model selection, failover, retries (inspired by LiteLLM but native TypeScript)
-- **Skill as Typed Tool Definition**: Plugins defined as typed tool definitions with runtime registration; code-first (no JSON drift)
-
-**Build order** (dependency chain):
-1. Foundation: shared utilities, SQLite connection, Event Bus
-2. Data Layer: Credential Vault (needed before API calls), Memory Store, Session Manager
-3. Agent Core: LLM Router, Skill Registry, Context Assembler, Agent Runtime
-4. Gateway Routing: Message Router, first channel adapter (CLI for fastest testing)
-5. Advanced Features: Approval Gate, Workflow Engine, Scheduler
-6. Additional Channels: Web Dashboard, Telegram Bot
+**Key patterns to follow:**
+- `MessageBubble` is a pure stateless component — no `useState` or `useEffect` ever; it lives inside Ink's `<Static>` which forbids updates after first render
+- Markdown applies only to completed messages — never to `StreamingText.tsx` / `StreamingResponse.tsx` (partial markdown produces garbage output)
+- `pendingApproval` state goes in `app-store.ts` (Zustand), not `ChatPage` local state — must survive page navigation
+- Gateway handler tests use `MockTransport` — never test against a live WebSocket server or the production SQLite file
+- All gateway handler functions take explicit `Transport` + `ConnectionState` + message params — no module-level singleton capture in extracted functions
 
 ### Critical Pitfalls
 
-Research identified 13 domain-specific pitfalls with authoritative sources (Anthropic engineering guidance, Microsoft PTY warnings, Playwright memory leak issues). Top 5 critical pitfalls that cause rewrites or data loss:
+1. **Ink `Static` contract violation** — `MessageBubble` is rendered inside `<Static>`, which renders items once and never re-renders them. Any `useState` or `useEffect` inside `MessageBubble` produces invisible updates or flickering artifacts. Enforce a "pure props only" rule on `MessageBubble`; all interactive state (collapsible toggle, etc.) must live in components rendered outside `<Static>`.
 
-1. **Context Window Bloat Kills Reliability Before You Notice** — Sending everything on every turn (24K+ chars of bootstrap like OpenClaw) causes "context rot" where model attention degrades even before token limits; instructions buried in middle get ignored, leading to hallucinations and missed instructions. **Avoid with:** Explicit token budgets per context section, just-in-time context retrieval (load tool definitions only when needed), conversation summarization, scope tool definitions to current task. **Address in Phase 1** — foundational to context assembly pipeline.
+2. **Ink terminal overflow / history destruction** — When rendered output height reaches `process.stdout.rows`, Ink clears the screen and destroys scroll history (documented Ink Issue #450 and #382). Implement message windowing: render only the last `Math.max(5, process.stdout.rows - 8)` messages. Listen to `process.stdout.resize`. Test with a 20-row terminal. This is an upstream architectural limitation, not fixable by Ink itself.
 
-2. **API Keys Stored in Plain Text or Config Files** — OpenClaw stores keys in plain JSON; 60% of API key leaks come from public repos. Real consequence: leaked OpenAI key can cost thousands in minutes. **Avoid with:** OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service) for local apps, AES-256 encryption at rest as fallback, never log keys, implement key rotation support. **Address in Phase 1** — exponentially harder to retrofit.
+3. **Circular dependency blocking gateway tests** — `@tek/gateway` imports from `@tek/cli/vault`; `@tek/cli` depends on `@tek/gateway`. Gateway tests that import from the package transitively pull in Ink, React, commander, node-pty. Tests fail in CI. Fix: extract vault to `@tek/core` before writing any gateway tests. If deferred, use `vi.mock('@tek/cli/vault')` as a temporary stub, documented as tech debt.
 
-3. **Session State Becomes Unmaintainable Monster** — Session management grows into 846-line god object managing conversation, tool states, approval queues, provider preferences, memory refs, active tasks, UI state; every change has blast radius. **Avoid with:** Decompose into bounded contexts (conversation state, provider state, tool state separate), event-driven updates instead of shared mutation, keep core session lean (ID, timestamps, refs only), define schema with versioning. **Address in Phase 1** — highest-leverage architectural decision for maintainability.
+4. **`handlers.ts` refactor regression risk** — The file is 1,422 lines with zero tests. Refactoring without first writing characterization tests will cause silent regressions. Use Strangler Fig: extract one handler at a time, test it, then move to the next. Never extract and refactor simultaneously in the same PR.
 
-4. **Multi-Provider Failover That Makes Things Worse** — Naive failover creates retry storms during outages (hammering failing endpoints), burns tokens on redundant requests, adds latency as each provider times out sequentially; silent fallback to weaker model produces subtly wrong results harder to catch than outright failure. **Avoid with:** Three-layer resilience (retries with exponential backoff, fallbacks with capability matching, circuit breakers to remove unhealthy providers), normalize errors before routing, match fallback models by capability, log all failover events. **Address in Phase 2** — build into provider abstraction layer.
+5. **Tauri CSP blocking new dependencies** — Tauri v2 enforces CSP. Any library loading external fonts, CDN CSS, or using `dangerouslySetInnerHTML` breaks in the WebView. Use `react-markdown` (JSX-based, no raw HTML) exclusively. Never enable `rehype-raw`. Verify zero CSP violations in DevTools after each library addition.
 
-5. **Plugin/Skill System That Is Either Too Rigid or Too Fragile** — Two failure modes: too rigid (plugins can only do what core anticipated) or too fragile (plugins reach into internals, break each other, crash host). **Avoid with:** Start with 3 concrete plugins before designing system (let API emerge from real usage), minimal interface (register/initialize/execute/cleanup), sandbox API not core internals access, validate manifests at load time, version API explicitly, error boundaries per plugin. **Address in Phase 3** — build 3-5 built-in skills first as if they were plugins, then extract interface.
-
-**Additional critical pitfalls:**
-- **WebSocket Gateway Cannot Survive Real Networks** — Connections drop constantly (mobile, laptop sleep, ISP hiccups); treating disconnection as exceptional loses messages/corrupts state. Needs reconnection with exponential backoff, session ID survives reconnect, message sequencing/replay, heartbeat/ping-pong. **Address in Phase 1** — transport layer is foundation.
-- **SQLite Vector Search Hits Wall** — Performance degrades non-linearly; at 1M vectors with 3072 dimensions, queries take 8.5+ seconds. Use only for local/per-user memory (<10K documents), quantize vectors (int8), monitor query latency. **Address in Phase 2-3** — architect abstraction layer so storage backend can change.
-- **Approval UX Makes Users Hate Agent** — Too many approvals (every action) turns 30-second task into 5 minutes; too few approvals (destructive actions auto-approve) destroys trust. Needs tiered approval (risk levels), user-configurable thresholds, batch approvals, action previews. **Address in Phase 2** — part of agent execution loop.
+6. **AI SDK v6 type mismatch in tests** — AI SDK v6 removed `CoreMessage` (replaced by `ModelMessage`) and `convertToCoreMessages` (replaced by async `convertToModelMessages`). Test code based on older API knowledge will compile but fail at runtime. Audit all AI SDK imports before writing gateway tests; run `npx @ai-sdk/codemod v6` if needed.
 
 ## Implications for Roadmap
 
-Based on dependency analysis, pitfall prevention requirements, and feature complexity, research suggests **5-6 phases** with clear architectural boundaries.
+Based on combined research, the milestone should be structured into 4 phases with a strict ordering constraint on Phase 1.
 
-### Phase 1: Foundation & Core Gateway
-**Rationale:** Must establish foundational architecture (event bus, session boundaries, credential vault) before any features build on top. Context management and WebSocket reliability are critical-path pitfalls that cause rewrites if gotten wrong. This phase validates the modular monolith architecture and core hypothesis (users want transparency).
+### Phase 1: Foundation and Blockers
 
-**Delivers:** Working gateway server with single provider, basic chat interface (CLI), transparent context inspector, encrypted API key storage
+**Rationale:** Two blockers must be resolved before any other work can proceed safely. The circular dependency prevents gateway tests from running in CI. Missing error boundaries mean any new component added to the desktop can crash the entire app. Both are low-effort (hours, not days) and unblock everything downstream. The vault extraction also gives the test infrastructure team a clean import graph to write against from day one.
 
-**Addresses (from FEATURES.md):**
-- Multi-provider LLM support (start with Anthropic, architecture for multiple)
-- Encrypted API key management (OS keychain + AES-256 fallback)
-- Streaming chat interface (Ink TUI)
-- Transparent context inspector (THE core differentiator)
-- Basic cost tracking (token counts, cost estimates)
-- WebSocket/event infrastructure (for future channels)
+**Delivers:** Clean Turbo build DAG, isolated gateway test environment, crash-protected desktop app shell
 
-**Avoids (from PITFALLS.md):**
-- Pitfall 1: Context window bloat (explicit token budgets in Context Assembler)
-- Pitfall 2: Plain-text API keys (Credential Vault with @napi-rs/keyring)
-- Pitfall 3: Session state monster (bounded context decomposition)
-- Pitfall 6: WebSocket reliability (reconnection logic, message sequencing)
+**Addresses:**
+- Vault extraction: `packages/cli/src/vault/` moved to `packages/core/src/vault/`; update 6 gateway import sites in `handlers.ts`, `llm/registry.ts`, `llm/provider.ts`, `key-server/routes.ts`, `key-server/auth.ts`, `index.ts`; remove `@tek/gateway` from CLI's `package.json` dependencies
+- Error boundary per desktop page — wrap each page in `Layout.tsx` with a React ErrorBoundary class component
+- Vitest workspace config — `vitest.workspace.ts` at repo root + per-package `vitest.config.ts` files with `env: { DB_PATH: ":memory:" }`
 
-**Uses (from STACK.md):**
-- Node.js 24.x, TypeScript 5.9, pnpm + Turborepo
-- Fastify 5.x, @fastify/websocket, ws
-- AI SDK 6.x + @ai-sdk/anthropic
-- Drizzle ORM + better-sqlite3 for Session Store
-- @napi-rs/keyring for Credential Vault
-- Ink 6.x for CLI
+**Avoids:** Pitfall 3 (circular dep blocking tests), Pitfall 5 (handlers.ts regression from untested refactor)
 
-**Success criteria:** User can chat with Claude via CLI, see full context before sending, costs displayed per turn, API key stored securely, sessions persist across restarts
+**Research flag:** Standard patterns — skip `/gsd:research-phase`. Vault extraction is a mechanical file move with no design decisions. Error boundaries are a React standard. Vitest workspace config is well-documented.
 
-### Phase 2: Multi-Provider Intelligence & Memory
-**Rationale:** With foundation stable, add provider abstraction (OpenAI, Ollama), long-term memory with vector search, and conversation persistence. This phase enables smart routing and cross-session memory, validating the agent intelligence layer before adding complexity.
+---
 
-**Delivers:** Multiple LLM providers with smart routing, conversation history with semantic search, system prompt management, improved context assembly with memory retrieval
+### Phase 2: CLI Visual Overhaul
 
-**Addresses (from FEATURES.md):**
-- Multi-provider LLM support (OpenAI, Ollama via openai-compatible)
-- Conversation persistence (SQLite with vector search)
-- System prompt management (per-thread and global)
-- Multiple conversation threads (thread management with search)
-- Smart model routing (task classifier + capability matching)
+**Rationale:** CLI work is entirely self-contained within `packages/cli/src/components/`. No gateway protocol changes required. All work enhances existing components or adds new Ink components alongside them. Syntax highlighting and collapsible panels are independent tasks. Starting here while desktop work proceeds in parallel maximizes velocity with multiple engineers.
 
-**Uses (from STACK.md):**
-- AI SDK providers: @ai-sdk/openai, @ai-sdk/openai-compatible (for Ollama)
-- sqlite-vec for vector embeddings
-- Drizzle ORM for Memory Store schema
+**Delivers:** Claude Code-quality CLI experience — syntax-highlighted code blocks, collapsible tool panels, command history, clean welcome screen, truncated output with line caps
 
-**Avoids (from PITFALLS.md):**
-- Pitfall 4: Multi-provider failover storms (circuit breakers, exponential backoff)
-- Pitfall 7: SQLite vector performance wall (explicit limits, query monitoring)
-- Pitfall 13: Treating providers as interchangeable (expose provider-specific capabilities)
+**Addresses:**
+- `shiki` / `codeToAnsi` wired into `MarkdownRenderer.tsx` code block renderer (replaces `cli-highlight`)
+- `CollapsiblePanel.tsx` — new component; wrap `tool_call` and `bash_command` branches in `MessageBubble`
+- Message windowing in `MessageList.tsx` — render last N messages based on `process.stdout.rows` (required to prevent Pitfall 2)
+- CLI empty state in `Chat.tsx` — show agent name, available slash commands, keyboard shortcuts
+- Truncated tool output in `MessageBubble` — cap at ~20 lines, show "... (N more lines)"
+- Input command history — custom hook with circular buffer; coordinate with or defer multi-line input to P2
 
-**Implements (from ARCHITECTURE.md):**
-- LLM Router with provider abstraction
-- Memory Store with vector search
-- Context Assembler with just-in-time retrieval
+**Avoids:** Pitfall 1 (Static contract — MessageBubble stays pure/stateless), Pitfall 2 (terminal overflow — implement windowing in this phase), Pitfall 3 (Ink re-render cascade — keep StatusBar computation cheap, no animated components adjacent to streaming)
 
-**Success criteria:** User can switch providers mid-conversation, agent uses relevant past conversations in context, semantic search finds related threads, smart routing reduces costs measurably
+**Research flag:** Standard patterns — skip `/gsd:research-phase`. All patterns (useInput toggle, message windowing, history buffer) are documented in Ink issues and implemented in Claude Code and opencode reference apps.
 
-### Phase 3: Tool System & MCP Integration
-**Rationale:** MCP is table stakes (100M+ monthly downloads); tool calling enables real agent capabilities beyond chat. Build 3-5 built-in skills first to inform plugin API design, avoiding Pitfall 5 (premature abstraction).
+---
 
-**Delivers:** MCP client integration, Skill Registry with 3-5 built-in skills (web search, file operations, browser automation), typed tool definitions for agent use, basic approval gate for destructive actions
+### Phase 3: Desktop UI Overhaul
 
-**Addresses (from FEATURES.md):**
-- Tool/function calling (MCP standard)
-- Basic approval system (tiered by risk level)
-- Skills/prompt template system (reusable agent configurations)
+**Rationale:** Desktop work is more complex than CLI work because it involves both new UI components and a gateway protocol addition. Markdown rendering must come first because the copy button and tool approval modal both depend on it. Tool approval modal requires no gateway changes — the protocol exists and the desktop hook already receives but discards approval events. Session history requires a new gateway WS message (`session.load`), so it is sequenced last within this phase.
 
-**Uses (from STACK.md):**
-- AI SDK 6.x MCP compatibility
-- Playwright for browser automation skill
-- zod for skill manifest validation
-- Node.js dynamic import for skill loading
+**Delivers:** Production-quality desktop chat — rendered markdown, syntax-highlighted code with copy buttons, functional tool approval modal, conversation history sidebar
 
-**Avoids (from PITFALLS.md):**
-- Pitfall 5: Plugin system too rigid/fragile (build 3 skills first, extract API)
-- Pitfall 8: Approval UX that annoys users (tiered approval by risk)
-- Pitfall 11: Playwright memory leaks (recycle contexts, set timeouts)
+**Addresses:**
+- `react-markdown` + `remark-gfm` + `@shikijs/rehype` + `@tailwindcss/typography` in `ChatMessage.tsx` assistant branch only (streaming in `StreamingText.tsx` stays plain text)
+- Code block copy button as overlay component inside markdown renderer's code block
+- `ToolApprovalModal.tsx` — new component; wire `tool.approval.request` handler in `useChat.ts`; add `pendingApproval` to `app-store.ts` (Zustand, not local state)
+- `react-diff-viewer-continued` for diff-format tool outputs
+- `motion` for message entrance animations and panel transitions — use sparingly
+- `session.load` + `session.messages` WS messages added to gateway `protocol.ts` and `handlers.ts`
+- `SessionHistoryPanel.tsx` + `app-store.ts` `sessions[]` state + `useChat.ts` session load handler
+- WS auto-reconnect with exponential backoff (1s/2s/4s/8s/max 30s) in `useWebSocket.ts` for both desktop and CLI
 
-**Implements (from ARCHITECTURE.md):**
-- Skill Registry with runtime registration
-- Approval Gate (async with persisted state)
-- Agent Runtime tool execution loop
+**Avoids:** Pitfall 4 (Tauri CSP — validate DevTools after each new library; never enable `rehype-raw`), XSS via agent markdown (`react-markdown` JSX-based, safe by construction), streaming markdown artifacts (preserve `StreamingText` plain text path)
 
-**Success criteria:** Agent can search web, read/write files, control browser; user approves only destructive actions; built-in skills work as examples for future plugins
+**Research flag:** Tool approval modal UX and session history integration may benefit from a short `/gsd:research-phase` pass to confirm WS message schema design and whether the gateway needs per-session ownership checks for `session.load` (single-user self-hosted: likely not needed; worth confirming).
 
-### Phase 4: Web Dashboard & Multi-Channel
-**Rationale:** With agent core stable, add web interface for monitoring/interaction and first external channel (Telegram). This validates the Channel Adapter Protocol and expands user touchpoints.
+---
 
-**Delivers:** Next.js web dashboard with WebSocket streaming, terminal viewer (@xterm/xterm), session management UI, Telegram bot channel adapter
+### Phase 4: Test Infrastructure
 
-**Addresses (from FEATURES.md):**
-- Web dashboard (browser-based monitoring and interaction)
-- Multi-channel foundation (Telegram as first external channel)
-- Full Control vs Limited Control toggle (two UX paths in web UI)
+**Rationale:** Test infrastructure can run in parallel with Phases 2 and 3 after Phase 1 completes, but the correct internal ordering is: Zod schema tests first (fastest, no mocks), then mock transport harness, then handler tests (require vault extraction from Phase 1), then desktop hook tests (require approval handler work from Phase 3). Agent loop tests unblock all other gateway tests by establishing the `MockTransport` + mock `streamText` pattern.
 
-**Uses (from STACK.md):**
-- Next.js 16.x, React 19.x, shadcn/ui, Tailwind 4.x
-- @xterm/xterm for web terminal viewer
-- grammY for Telegram bot
-- Recharts/Tremor for dashboard visualizations
+**Delivers:** 60-70% meaningful coverage over critical gateway paths — LLM router, agent loop, WS protocol contracts, tool approval round-trip, context assembly
 
-**Implements (from ARCHITECTURE.md):**
-- Channel Adapter Protocol (validate with 3 adapters: CLI, Web, Telegram)
-- Web channel adapter (HTTP + WebSocket server)
-- Telegram channel adapter
+**Addresses:**
+- WS protocol Zod schema unit tests (`protocol.test.ts`) — no mocks, fast regression detection; first suite to write
+- `MockTransport` harness (`__tests__/harness.ts`) — enables all handler tests without live server or live AI provider
+- `classifyComplexity` (LLM router) unit tests — pure function, zero mocks, high regression value
+- `runAgentLoop` unit tests with mock transport and mock AI SDK `streamText`
+- `handleChatSend` characterization tests
+- `handleToolApprovalResponse` integration test — most complex user-facing flow
+- `handleSessionList` + `handleSessionLoad` handler tests
+- Desktop `useChat` hook tests (React Testing Library) — test approval event handler path
 
-**Success criteria:** User can monitor agent from web dashboard in real-time, interact via web chat or Telegram, switch channels mid-conversation, UI adapts to Full Control vs Limited Control preference
+**Avoids:** Pitfall 5 (handlers.ts regression — characterization tests before any extraction), Pitfall 6 (AI SDK v6 type mismatch — audit all `ModelMessage` / `streamText` imports before writing gateway tests), production SQLite contamination (use `DB_PATH=:memory:` in all test environments)
 
-### Phase 5: Advanced Features & Workflow
-**Rationale:** Core platform is feature-complete; add differentiating features (pre-flight checklists, workflow engine, API key vault serving other apps). These are complex but non-blocking for daily use.
+**Research flag:** The AI SDK v6 mock setup for `streamText` / `ModelMessage` API surface may benefit from a targeted research pass before writing agent loop tests to confirm the correct `vi.mock` patterns.
 
-**Delivers:** Pre-flight thinking checklists, code-first workflow builder, API key vault with local API for other apps, enhanced self-debugging agent capabilities
-
-**Addresses (from FEATURES.md):**
-- Pre-flight thinking checklists (plan review before execution)
-- Code-first workflow builder (multi-step automation)
-- API key vault serving local apps (local-only API endpoint)
-- Enhanced smart routing (with pre-flight cost estimates)
-
-**Uses (from STACK.md):**
-- Workflow Engine (new component)
-- Scheduler for heartbeat/cron tasks
-- Local API endpoint (Fastify routes on 127.0.0.1)
-
-**Avoids (from PITFALLS.md):**
-- Pitfall 10: Workflow over-engineering (start with sequential composition)
-- Pitfall 12: Cron reliability (persistent job queue for critical tasks)
-
-**Implements (from ARCHITECTURE.md):**
-- Workflow Engine with resumable state
-- Scheduler for periodic tasks
-- Enhanced Context Assembler with pre-flight analysis
-
-**Success criteria:** User reviews and edits agent plan before complex tasks, workflows survive app restart, other local apps can request API keys from vault, workflow tasks run on schedule
-
-### Phase 6: Developer Tools & Terminal Proxy
-**Rationale:** Niche developer-focused features (terminal proxy, enhanced debugging) for power users. Deferred because these are high-complexity, lower-demand features that require mature core.
-
-**Delivers:** PTY-based terminal proxy for interactive CLI tools (vim, git rebase -i, debuggers), enhanced self-debugging with sandboxed skill testing, conversational workflow creation (describe workflows in natural language)
-
-**Addresses (from FEATURES.md):**
-- Terminal proxy for interactive CLI
-- Self-debugging agents with skill authoring (sandbox testing)
-- Conversational workflow creation (describe workflows, agent builds them)
-
-**Uses (from STACK.md):**
-- node-pty for pseudoterminal forking
-- @xterm/xterm for terminal rendering
-- Sandboxed execution environment (container or restricted user)
-
-**Avoids (from PITFALLS.md):**
-- Pitfall 9: Terminal proxy security leaks (sandbox PTY, track orphaned processes)
-
-**Implements (from ARCHITECTURE.md):**
-- PTY wrapper layer with security boundaries
-- Sandboxed execution for skill testing
-- Enhanced Skill Registry with self-authoring
-
-**Success criteria:** Agent can interact with vim/git/debuggers, self-authored skills tested in sandbox before registration, user describes workflow in chat and agent builds runnable workflow
+---
 
 ### Phase Ordering Rationale
 
-**Dependency chain justification:**
-- **Phase 1 first**: Cannot build features without foundation (event bus, session boundaries, credential security, WebSocket reliability). Context bloat and API key security are critical pitfalls that cause rewrites if wrong.
-- **Phase 2 second**: Multi-provider and memory enable smart routing and cross-session intelligence. Memory Store must exist before tool system (tools may reference past knowledge).
-- **Phase 3 third**: Tool calling is table stakes, but requires stable LLM layer. Building 3-5 skills first (before plugin system) avoids premature abstraction.
-- **Phase 4 fourth**: Web dashboard and channels validate adapter protocol but need working agent to showcase. Full Control/Limited Control UX layer spans all features.
-- **Phase 5 fifth**: Workflow engine and pre-flight checklists orchestrate existing capabilities; must come after tools/memory. API vault serving other apps is infrastructure play, non-blocking for core UX.
-- **Phase 6 last**: Terminal proxy and self-debugging are complex, niche features for power users. Validate core product-market fit first.
-
-**Architecture-driven groupings:**
-- Phase 1 establishes all 4 layers (Interface, Gateway Core, Agent, Data)
-- Phase 2 expands Agent and Data layers (intelligence)
-- Phase 3 expands Agent layer (capabilities via tools)
-- Phase 4 expands Interface layer (channels)
-- Phase 5 expands Gateway Core (orchestration)
-- Phase 6 adds specialized Agent capabilities (developer tools)
-
-**Pitfall avoidance:**
-- Critical pitfalls (1-6) addressed in Phases 1-2 (foundation)
-- Moderate pitfalls (7-11) addressed when relevant features built (Phases 2-4)
-- Minor pitfalls (12-13) noted as implementation details in later phases
+- **Phase 1 must come first and is non-negotiable.** The circular dependency is a hard blocker for CI tests. Error boundaries protect all future desktop work. Neither task has any dependencies.
+- **Phases 2 and 3 can proceed in parallel** if multiple engineers are available. CLI work (Phase 2) has zero gateway protocol dependencies. Desktop work (Phase 3) adds one new WS message but does not touch existing handlers.
+- **Phase 4 can run continuously alongside Phases 2 and 3** after Phase 1 completes. Protocol tests and mock transport harness can be written immediately after Phase 1. Handler tests follow in order of dependency.
+- **Session history (end of Phase 3) is the only feature with a cross-surface protocol dependency.** It requires gateway protocol additions (`session.load` / `session.messages`) before the desktop component can be built. This dependency is correctly isolated to the end of Phase 3.
+- **Multi-line input and command history share the same custom Ink input component.** P1 includes command history; P2 includes multi-line Shift+Enter. If resources allow, building both in Phase 2 avoids building the custom component twice.
 
 ### Research Flags
 
-**Phases likely needing `/gsd:research-phase` during planning:**
+Phases likely needing deeper research during planning:
+- **Phase 3 (tool approval modal UX):** The approval modal needs a decision on blocking vs inline rendering. Reference app analysis (Claudia, Claude Code) shows different approaches — a short research pass on approval UX patterns is warranted before implementation.
+- **Phase 3 (session.load security):** Confirm whether gateway `handleSessionLoad` needs per-session ownership checks. In a single-user self-hosted deployment this is likely unnecessary, but worth explicit confirmation before adding the handler.
+- **Phase 4 (AI SDK v6 mock patterns):** The migration from `CoreMessage` / `streamObject` to `ModelMessage` / `streamText` with `output` parameter requires careful mock setup — worth a targeted research pass before writing agent loop tests.
 
-- **Phase 3 (Tool System):** MCP protocol specifics need deeper research — spec is evolving, need to validate current best practices for MCP client implementation, tool definition formats, and error handling patterns
-- **Phase 5 (Workflow Engine):** Workflow state persistence and resumption patterns need research — validate approaches for DAG execution, compensation patterns, and state recovery after crashes
-- **Phase 6 (Terminal Proxy):** PTY sandboxing strategies need research — validate container vs restricted user approaches, escape sequence sanitization techniques, and cross-platform PTY security on macOS/Linux/Windows
-
-**Phases with standard patterns (skip research-phase):**
-
-- **Phase 1 (Foundation):** Well-documented patterns for Fastify, SQLite, WebSocket reconnection; stack research already complete
-- **Phase 2 (Multi-Provider):** LLM provider integration is well-documented in AI SDK docs; circuit breaker patterns are standard
-- **Phase 4 (Web Dashboard):** Next.js + shadcn/ui is extremely well-documented; Telegram bot via grammY has comprehensive guides
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** Vault extraction is a mechanical move of 4 files. Vitest workspace config is copy-paste from Vitest docs. Error boundaries are a React standard.
+- **Phase 2:** All CLI patterns (useInput toggle, message windowing, command history buffer) are documented in Ink upstream issues and implemented in Claude Code and opencode. No new design decisions.
+- **Phase 3 (markdown pipeline):** `react-markdown` + `@shikijs/rehype` + `@tailwindcss/typography` is a standard, well-documented stack with no ambiguous integration points.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | **HIGH** | Core technologies (Fastify, AI SDK, Drizzle, Ink) have authoritative docs, proven track records, and active maintenance. Version compatibility verified via official release notes. Only medium confidence on @napi-rs/keyring (smaller community) and Next.js 16 dashboard details (later phase, exact component needs may shift). |
-| Features | **MEDIUM** | Table stakes features well-documented via competitor analysis (OpenClaw, LiteLLM, Claude Code all public). Differentiators are novel with limited prior art (transparent context management, API vault serving local apps, triple-mode workflow) — these are hypotheses to validate. MCP adoption data from official sources (100M+ downloads) confirms tool calling as mandatory. |
-| Architecture | **MEDIUM-HIGH** | Modular monolith pattern well-established in Node.js ecosystem. Channel Adapter Protocol proven by OpenClaw (16+ channels). Typed event bus is standard practice. LLM Router abstraction inspired by LiteLLM with clear patterns. Medium confidence on workflow engine design (defer complexity until Phase 5 when needs are clearer). Build order dependency chain is sound based on component relationships. |
-| Pitfalls | **HIGH** | Multiple authoritative sources per critical pitfall: Anthropic engineering blog on context management, Microsoft warnings on node-pty security, Playwright GitHub issues on memory leaks, Portkey/LiteLLM production patterns on failover. 60% of pitfalls have primary sources (official docs, maintainer guidance). Prevention strategies validated by production deployments. |
+| Stack | HIGH | All version numbers verified via npm registry February 2026. React 19 peer deps confirmed via `npm show`. Tailwind v4 `@plugin` directive sourced from community discussion thread (only MEDIUM confidence point in this area). |
+| Features | HIGH | Based on direct codebase inspection of all three surfaces plus competitor analysis (Claude Code, opencode, Claudia). Gap identification is authoritative — drawn from live source files. |
+| Architecture | HIGH | All findings from direct source reading of `handlers.ts`, `protocol.ts`, `useChat.ts`, `ChatMessage.tsx`, CLI component tree. No speculation. Circular dependency confirmed via explicit import tracing. |
+| Pitfalls | HIGH | Ink flicker pitfalls confirmed via upstream GitHub issues with numbers cited. Tauri CSP issues confirmed via official docs and a specific bug report. AI SDK v6 migration from official Vercel migration guide. |
 
-**Overall confidence: MEDIUM-HIGH**
-
-Research is comprehensive for core platform (Phases 1-3). Later phases (4-6) have medium confidence because exact feature needs and UX patterns will emerge from early user feedback. Architecture is sound but will need refinement as complexity grows (expected and acceptable).
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-**Gaps requiring validation during planning/implementation:**
+- **`@inkjs/ui` version compatibility with Ink v6:** The pitfalls research flagged that `@inkjs/ui` v2 requires Ink v5+ and v3 may be needed for Ink v6. `@inkjs/ui@^2.0.0` is already installed. Verify during Phase 2 that `useInput` and `TextInput` behave correctly before building the custom input component. May require upgrading to `@inkjs/ui` v3.
 
-- **MCP Protocol Specifics (Phase 3):** Current research covers MCP existence and adoption, but not detailed protocol implementation. Need to research: authentication patterns for MCP servers, error handling and recovery, tool definition schemas, versioning strategy. **Validation approach:** Deep-dive research in Phase 3 planning using official MCP spec and reference implementations.
+- **`session.load` WS message authorization:** The architecture research provides the full schema for `session.load` but does not address whether the gateway needs to verify the requesting client owns the session. Current `handleSessionList` returns all sessions globally. For a single-user self-hosted deployment this is acceptable; multi-user deployments would need per-session ownership validation. Flag for explicit decision during Phase 3 planning.
 
-- **Full Control vs Limited Control UX Patterns (Phase 1/4):** Research identifies this as a differentiator but does not specify exact UI/UX implementation. Need to validate: what settings are "Full Control" vs "Limited Control", how users discover and switch modes, what defaults make sense for each. **Validation approach:** Design research in Phase 1 (CLI) and Phase 4 (Web UI), potentially user interviews or competitive UX analysis.
+- **Tailwind v4 typography `@plugin` directive:** The `@tailwindcss/typography` v4 integration was sourced from a community discussion thread, not official documentation. Verify this config pattern works in the actual Vite build during Phase 3 implementation before committing to the approach; have a fallback (CSS-based manual prose styles) ready.
 
-- **Smart Model Routing Heuristics (Phase 2):** Research cites 60-87% cost savings but does not provide task classification algorithms. Need to validate: how to classify task complexity, which model capabilities map to which tasks, how users override routing decisions. **Validation approach:** Implement simple heuristics first (e.g., code tasks → code models, long context → extended context models), refine based on usage data.
-
-- **Plugin API Surface (Phase 3):** Research recommends building 3 skills first, but does not define exact plugin interface. Need to validate: what methods/hooks plugins need, what sandbox API looks like, versioning strategy. **Validation approach:** Build 3-5 built-in skills treating them as external plugins, extract common interface from working code.
-
-- **Workflow DSL/Format (Phase 5):** Research warns against over-engineering but does not specify workflow definition format. Need to validate: YAML vs JSON vs TypeScript, DAG structure vs sequential steps, how users author workflows. **Validation approach:** Start with simple TypeScript function composition, add abstraction only when real use cases demand it.
-
-- **SQLite Vector Performance Thresholds (Phase 2-3):** Research cites 1M vectors as problematic but does not specify exact thresholds for AgentSpace use case. Need to validate: at what vector count does query latency become unacceptable, optimal vector dimensions (1536 vs 3072), quantization trade-offs. **Validation approach:** Performance testing with realistic datasets, monitoring in production.
+- **Multi-line input and command history sequencing:** P1 includes command history as a standalone feature on the existing `TextInput`. P2 includes multi-line Shift+Enter via a full custom input component. If command history is added to `@inkjs/ui TextInput` first, that work may be discarded when the custom component is built. Consider building both in Phase 2 to avoid duplication, or explicitly plan Phase 2 to replace the Phase 1 history implementation.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-**Stack research:**
-- [AI SDK Documentation](https://ai-sdk.dev/docs/introduction) — AI SDK architecture, provider model, v6 features
-- [Drizzle ORM SQLite Docs](https://orm.drizzle.team/docs/get-started-sqlite) — better-sqlite3 integration, sync API
-- [Ink GitHub](https://github.com/vadimdemedes/ink) — React terminal renderer, v6.7.0
-- [Node.js 24 LTS Release](https://nodejs.org/en/blog/release/v24.13.1) — Current Active LTS support timeline
-- [Playwright Documentation](https://playwright.dev/docs/release-notes) — v1.58.x features
-- [sqlite-vec GitHub](https://github.com/asg017/sqlite-vec) — Pure C vector search, SIMD acceleration
-
-**Feature research:**
-- [OpenClaw GitHub](https://github.com/openclaw/openclaw) — Feature list, channel support, skills system
-- [LiteLLM Proxy Documentation](https://docs.litellm.ai/docs/proxy/security_encryption_faq) — Key management patterns
-- [Claude Code Overview](https://code.claude.com/docs/en/overview) — Claude Code features and architecture
-
-**Architecture research:**
-- [OpenClaw Gateway Architecture](https://docs.openclaw.ai/concepts/architecture) — Channel adapter pattern, WebSocket protocol design
-- [LiteLLM AI Gateway](https://docs.litellm.ai/docs/simple_proxy) — Multi-provider routing, failover strategies
-- [Azure AI Agent Orchestration Patterns](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) — Workflow and approval gate patterns
-
-**Pitfalls research:**
-- [Anthropic: Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Context management best practices
-- [microsoft/node-pty GitHub](https://github.com/microsoft/node-pty) — PTY limitations and security warnings
-- [Playwright Issue #6319](https://github.com/microsoft/playwright/issues/6319) — Memory leak documentation
-- [sqlite-vec stable release blog](https://alexgarcia.xyz/blog/2024/sqlite-vec-stable-release/index.html) — Performance benchmarks
+- Direct codebase inspection: `packages/gateway/src/ws/handlers.ts`, `protocol.ts`, `packages/cli/src/components/*.tsx`, `apps/desktop/src/components/ChatMessage.tsx`, `apps/desktop/src/hooks/useChat.ts`, `packages/gateway/src/session/manager.ts`, `packages/cli/package.json`, `packages/gateway/package.json` — all architectural findings
+- npm registry, February 2026 — all version numbers verified via `npm show [package] version`
+- [Shiki GitHub](https://github.com/shikijs/shiki) — active maintenance, `codeToANSI` confirmed in `@shikijs/cli`
+- [react-markdown GitHub](https://github.com/remarkjs/react-markdown) — v10, React 19 support confirmed
+- [MSW WebSocket docs](https://mswjs.io/docs/websocket/) — WebSocket interception, Node 22 native WebSocket requirement
+- [Vitest mocking/requests docs](https://vitest.dev/guide/mocking/requests) — MSW as official Vitest recommendation
+- [motion.dev React docs](https://motion.dev/docs/react) — React 19 compatibility confirmed
+- [AI SDK Migration Guide: v5 to v6](https://ai-sdk.dev/docs/migration-guides/migration-guide-6-0) — CoreMessage removed, ModelMessage, streamText with output parameter
+- [Tauri v2 CSP Documentation](https://v2.tauri.app/security/csp/) — CSP defaults and configuration
+- [Ink GitHub Issue #450](https://github.com/vadimdemedes/ink/issues/450) — terminal overflow flicker bug
+- [Ink GitHub Issue #382](https://github.com/vadimdemedes/ink/issues/382) — history destruction at full screen height
+- [Ink v6.7.0 Release Notes](https://github.com/vadimdemedes/ink/releases/tag/v6.7.0) — synchronized updates support
+- [ink-syntax-highlight GitHub issue #4](https://github.com/vsashyn/ink-syntax-highlight/issues/4) — Ink incompatibility confirmed, no maintainer response
+- `/Users/hitekmedia/Documents/GitHub/tek/next-milestone/ASSESSMENT.md` — primary gap analysis source
 
 ### Secondary (MEDIUM confidence)
-
-**Stack research:**
-- [Fastify vs Hono Comparison](https://betterstack.com/community/guides/scaling-nodejs/hono-vs-fastify/) — Performance benchmarks
-- [@napi-rs/keyring GitHub](https://github.com/Brooooooklyn/keyring-node) — keytar replacement, Rust bindings
-- [Turborepo 2.7 Blog](https://turborepo.dev/blog/turbo-2-7) — Devtools, composable config
-- [Nx vs Turborepo Comparison](https://www.wisp.blog/blog/nx-vs-turborepo-a-comprehensive-guide-to-monorepo-tools) — Monorepo tool selection
-
-**Feature research:**
-- [5 Best AI Gateways in 2026](https://www.getmaxim.ai/articles/5-best-ai-gateways-in-2026/) — Gateway feature landscape
-- [OpenClaw Architecture, Explained](https://ppaolo.substack.com/p/openclaw-system-architecture-overview) — Component architecture
-- [interminai GitHub](https://github.com/mstsirkin/interminai) — Terminal proxy prior art
-- [Command Proxy MCP Server](https://skywork.ai/skypage/en/command-proxy-mcp-server-ai-engineers/1979084403256893440) — CLI bridge for AI agents
-
-**Architecture research:**
-- [GoCodeo: Modular vs Monolithic AI Agent Frameworks](https://www.gocodeo.com/post/decoding-architecture-patterns-in-ai-agent-frameworks-modular-vs-monolithic) — Architecture pattern trade-offs
-- [Composio MCP Gateways Guide](https://composio.dev/blog/mcp-gateways-guide) — Gateway-as-reverse-proxy pattern
-- [WebSocket Gateway Reference Architecture](https://www.dasmeta.com/docs/solutions/websocket-gateway-reference-architecture/index) — WebSocket session management
-
-**Pitfalls research:**
-- [Portkey: Retries, Fallbacks, and Circuit Breakers](https://portkey.ai/blog/retries-fallbacks-and-circuit-breakers-in-llm-apps/) — Production failover patterns
-- [GitGuardian: API Key Management Best Practices](https://blog.gitguardian.com/secrets-api-management/) — Secrets security
-- [WebScraping.AI: Playwright Memory Management](https://webscraping.ai/faq/playwright/what-are-the-memory-management-best-practices-when-running-long-playwright-sessions) — Practical guidance
-- [OneUptime: WebSocket Reconnection Logic](https://oneuptime.com/blog/post/2026-01-24-websocket-reconnection-logic/view) — Reconnection patterns
-
-### Tertiary (LOW confidence)
-
-- [AI Model Router Saves 87% on API Costs](https://www.techedubyte.com/ai-model-router-saves-api-costs/) — Cost optimization data (unverified claim)
-- [Medium: AI Gateway as Enterprise Pattern](https://medium.com/vedcraft/agentic-ai-gateway-the-proven-architecture-pattern-for-enterprise-genai-security-and-governance-3abe0ca8af6a) — Enterprise patterns (may not apply at self-hosted scale)
+- [Tailwind v4 typography discussion](https://github.com/tailwindlabs/tailwindcss/discussions/14120) — `@plugin` directive for v4 (community thread, not official docs)
+- [Claude Code Terminal UI internals (Medium)](https://kotrotsos.medium.com/claude-code-internals-part-11-terminal-ui-542fe17db016) — Ink rendering architecture reference
+- [Claudia desktop GUI features (BrightCoding)](https://www.blog.brightcoding.dev/2025/07/04/claudia-a-powerful-gui-app-and-toolkit-for-claude-code/) — session versioning, markdown, analytics competitor analysis
+- [opencode TUI Prompt Component (DeepWiki)](https://deepwiki.com/sst/opencode/6.5-tui-prompt-component-and-input-handling) — multiline, history, autocomplete feature patterns
+- [Avoiding XSS via Markdown in React (Medium)](https://medium.com/javascript-security/avoiding-xss-via-markdown-in-react-91665479900) — security analysis
+- [Tauri GitHub Issue #14707](https://github.com/tauri-apps/tauri/issues/14707) — CSP prevents IPC requests (confirmed bug report)
+- [test-ink-flickering/INK-ANALYSIS.md](https://github.com/atxtechbro/test-ink-flickering/blob/main/INK-ANALYSIS.md) — deep architectural analysis of Ink's rendering model
 
 ---
-*Research completed: 2026-02-15*
+*Research completed: 2026-02-20*
 *Ready for roadmap: yes*

@@ -1,274 +1,207 @@
-# Stack Research
+# Stack Research — Visual Polish & Testing Milestone
 
-**Domain:** Self-hosted AI Agent Gateway Platform
-**Researched:** 2026-02-15
-**Confidence:** HIGH (core stack) / MEDIUM (some library versions need validation at install time)
+**Domain:** CLI visual overhaul, Desktop UI overhaul, Testing foundation (additions only)
+**Project:** Tek — self-hosted AI agent platform (milestone after v0.0.24)
+**Researched:** 2026-02-20
+**Confidence:** HIGH (all versions verified via npm registry February 2026)
 
-## Recommended Stack
+> This document covers ONLY NEW additions required for this milestone.
+> The existing stack (Ink, React, Tailwind v4, Zustand, Vitest, Drizzle, AI SDK) is already in place and validated.
 
-### Runtime and Language
+---
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Node.js | 24.x LTS | Runtime | Current Active LTS (Krypton), supported through April 2028. Playwright, node-pty, better-sqlite3 all tested against it. |
-| TypeScript | 5.9 (stable) | Type safety | Latest stable release. TS 6.0 beta exists but is not production-ready yet. Stay on 5.9 until 6.0 GA. |
-| pnpm | 9.x | Package manager | Content-addressable storage saves disk, strict node_modules prevents phantom dependencies, native workspace support. Standard for monorepos in 2025/2026. |
+## What This Milestone Adds
 
-### Monorepo Tooling
+| Area | Current state | Target state |
+|------|--------------|--------------|
+| CLI syntax highlighting | `marked-terminal` (highlight.js, basic) | `shiki` via `codeToAnsi` (VS Code-quality, ANSI output) |
+| CLI collapsible panels | Not implemented | Custom Ink component with `useInput` toggle |
+| CLI diff rendering | Not implemented | Plain text delta display with `chalk` + `diff` |
+| Desktop markdown | Raw `whitespace-pre-wrap` in `<pre>` | `react-markdown` + `@shikijs/rehype` + GFM |
+| Desktop typography | None | `@tailwindcss/typography` prose classes |
+| Desktop animations | None | `motion` (Motion for React v12) |
+| Desktop diff view | Not implemented | `react-diff-viewer-continued` |
+| WebSocket testing | No tests at all | `msw` with WebSocket handlers |
+| Unit/integration tests | `vitest` installed, zero test files | Write tests with `vitest` + `msw` |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Turborepo | 2.8.x | Build orchestration | 3x faster than Nx on small projects (our case: ~6-8 packages). Simpler config, JS/TS focused. Vercel-maintained. Start here, evaluate Nx only if hitting 15+ packages. |
-| pnpm workspaces | (built-in) | Package linking | Native workspace:* protocol for local dependencies. No extra tool needed. TypeScript project references for incremental builds. |
+---
 
-### Workspace Package Layout
+## Recommended Additions
 
-```
-packages/
-  @agentspace/core        # Shared types, config, crypto utilities
-  @agentspace/gateway      # WebSocket server, session management, LLM routing
-  @agentspace/cli          # Terminal UI (Ink-based)
-  @agentspace/web          # Next.js dashboard
-  @agentspace/telegram     # grammY bot
-  @agentspace/db           # Drizzle schema, migrations, vector search
-  @agentspace/plugins      # Plugin system, skill registry
-```
+### CLI: Syntax Highlighting
 
-### Core Framework (Gateway Server)
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `shiki` | `^3.22.0` | Syntax highlighting engine | VS Code-identical grammar support. `codeToAnsi()` converts code to ANSI escape codes for terminal output. Replaces `cli-highlight` which uses a much weaker highlight.js grammar. 15M weekly downloads. ESM-only (matches project). |
+| `@shikijs/cli` | `^3.22.0` | Exports `codeToAnsi` function | The `codeToAnsi(code, lang, theme)` function lives in this package. Import from here rather than the main `shiki` package for ANSI terminal output specifically. |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Fastify | 5.x | HTTP server for gateway | Best raw performance on Node.js (40K+ req/s). Schema-based validation built-in. Mature plugin ecosystem. Better than Hono here because we are Node.js only (not edge/multi-runtime) and need WebSocket integration via @fastify/websocket. |
-| ws | 8.x | WebSocket server | 35M weekly npm downloads, battle-tested, zero-bloat. Used under @fastify/websocket. No need for Socket.IO overhead since we control both client and server. |
-| @fastify/websocket | 11.x | WS integration | Clean integration of ws into Fastify request lifecycle, with route-level WebSocket handlers. |
+**Integration point:** Replace the `cli-highlight` call inside `marked-terminal`'s code renderer with `shiki`'s `codeToAnsi`. The `marked-terminal` package accepts a `code` renderer function — override it to call `await codeToAnsi(code, lang, 'github-dark')` and return the ANSI-escaped string.
 
-### LLM Provider Integration
+**Why not keep `cli-highlight`:** `cli-highlight` uses highlight.js regex grammars, which miss many tokens that TextMate grammars (used by shiki/VS Code) catch. The visual quality gap is noticeable on TypeScript and Python code. `cli-highlight` also has no maintainer activity since 2022.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| ai (Vercel AI SDK) | 6.x | Multi-provider LLM abstraction | 2M+ weekly downloads. Unified API for streaming, tool calling, structured output. Agent abstraction in v6. Type-safe throughout. The standard for TS LLM apps. |
-| @ai-sdk/anthropic | latest | Anthropic provider | Official provider package for Claude models. |
-| @ai-sdk/openai | latest | OpenAI provider | Official provider package for GPT models. |
-| @ai-sdk/openai-compatible | latest | Ollama provider | Ollama exposes OpenAI-compatible API. Use createOpenAICompatible() pointed at localhost:11434. Avoids depending on community Ollama packages with version churn. |
-| zod | 4.x | Schema validation | 14x faster string parsing vs v3, ~1.9KB mini variant. Used by AI SDK for tool definitions. Standard for runtime validation in TS ecosystem. |
+**Why not `ink-syntax-highlight` (npm package):** Abandoned. Last published 2 years ago, CommonJS-only (incompatible with Ink 6 ESM), open GitHub issue confirming Ink version incompatibility with no maintainer response.
 
-**Confidence: HIGH** -- AI SDK is the dominant TS LLM toolkit. Provider packages are well-maintained. Ollama via openai-compatible is documented officially.
+### CLI: Collapsible Panels
 
-### Database and Storage
+| Approach | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| Custom Ink component | N/A — no library needed | Toggle-able tool call blocks | Ink's `useInput` + React `useState` is sufficient. Zero external dependency. Pattern: render `▶ tool_name (enter to expand)` collapsed, `▼ tool_name` + indented content when expanded. Standard pattern used in Claude Code and similar tools. |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| better-sqlite3 | 11.x | SQLite driver | Synchronous API (simpler mental model for CLI/gateway), fastest Node.js SQLite driver, well-maintained. Required by sqlite-vec. |
-| drizzle-orm | 0.45.x | SQL ORM | TypeScript-first, zero dependencies, SQL-centric (not hiding SQL). Sync API support for better-sqlite3. Built-in Zod integration for validators. Generates migrations via drizzle-kit. |
-| drizzle-kit | latest | Migrations | Schema push and migration generation. Works with better-sqlite3. |
-| sqlite-vec | latest | Vector search | Pure C, no dependencies, successor to sqlite-vss. SIMD-accelerated. Runs anywhere SQLite runs. Loads as extension into better-sqlite3. Good for tens of thousands of embeddings (plenty for self-hosted agent memory). |
+**Why no library:** No mature Ink-native collapsible library exists. `@inkjs/ui` (already installed at `^2.0.0`) does not include an accordion/collapsible component. The terminal has no click events — toggling is keyboard-driven via `useInput`. A custom ~40-line component with `useState(false)` + `useInput` is the correct approach here.
 
-**Confidence: HIGH** -- Drizzle + better-sqlite3 is the standard pattern. sqlite-vec is the only maintained option for SQLite vector search.
+### CLI: Diff Rendering
 
-### CLI Interface
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `chalk` | `^5.0.0` (already installed) | Color `+`/`-` diff lines | Terminal diff rendering is colored text. Green for additions, red for deletions. No dedicated library needed for display. |
+| `diff` | `^7.0.0` | Compute diffs programmatically | If the agent produces before/after content and the CLI needs to compute the diff. Lightweight, zero dependencies. Used internally by `react-diff-viewer-continued`. |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Ink | 6.x | React-based terminal UI | Component model for rich terminal rendering. Flexbox layout via Yoga. Claude Code-style UI needs dynamic updating, spinners, inline tool output -- Ink handles this natively. |
-| Ink UI | latest | Pre-built CLI components | Themed UI components (spinners, selects, text input). Saves building from scratch. |
-| @inkjs/ui | latest | Additional UI primitives | Progress bars, status messages, alerts. |
-| chalk | 5.x | Terminal colors | ESM-native, zero-dependency string coloring. Used within Ink components. |
-| commander | 12.x | CLI argument parsing | Mature, well-typed, supports subcommands. Handles `agentspace chat`, `agentspace config` etc. |
+**Why not a terminal diff library:** There is no maintained, Ink-compatible terminal diff renderer with meaningful adoption. The correct approach is to receive unified diff output from the agent (already in standard format) and render with colored chalk. This is exactly what Claude Code does — it is colored text, not a library.
 
-**Confidence: HIGH** -- Ink is the only serious React-for-terminal solution. 3,247 dependents on npm. Actively maintained (6.7.0 published days ago).
+---
 
-### Web Dashboard
+### Desktop: Markdown Rendering
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Next.js | 16.x | Dashboard framework | App Router, Turbopack default, React Server Components. Standard for React dashboards. |
-| React | 19.x | UI library | Bundled with Next.js 16. Server Components for data-heavy dashboard pages. |
-| shadcn/ui | latest | Component library | Copy-paste components (not a dependency). Tailwind-based. Many admin dashboard templates exist. Full ownership of code. |
-| Tailwind CSS | 4.x | Styling | Utility-first, works with shadcn/ui. v4 ships with Next.js 16 starter. |
-| @xterm/xterm | 5.x | Web terminal | For terminal view in dashboard. Powers VS Code's terminal. Use @xterm/* scoped packages (old xterm packages deprecated). |
-| Recharts or Tremor | latest | Charts/monitoring | Dashboard visualization for token usage, request metrics, session timelines. |
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `react-markdown` | `^10.1.0` | Markdown to React component tree | Safe, no `dangerouslySetInnerHTML`. Plugin system via remark/rehype. Built on unified ecosystem. 10M weekly downloads. The standard for React markdown rendering. |
+| `remark-gfm` | `^4.0.1` | GitHub Flavored Markdown | Tables, task lists, strikethrough, autolink. AI responses frequently use GFM syntax. Required alongside react-markdown. |
+| `@shikijs/rehype` | `^3.22.0` | Syntax highlighting in markdown | Rehype plugin that runs Shiki over code blocks in markdown. Produces syntax-highlighted HTML with inline styles — no separate CSS needed. Matches theme to rest of desktop UI. |
 
-**Confidence: MEDIUM** -- Next.js 16 + shadcn is the standard pattern, but dashboard comes in a later phase. Exact component needs may shift.
+**Integration:** In `ChatMessage.tsx`, replace the `whitespace-pre-wrap` pre tag with `<ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeShiki, { theme: 'github-dark' }]]}>{content}</ReactMarkdown>`. Apply `prose dark:prose-invert` className wrapper for typography.
 
-### Telegram Bot
+**Why `@shikijs/rehype` over `rehype-highlight`:** `rehype-highlight` uses highlight.js grammars (same weakness as `cli-highlight`). `@shikijs/rehype` uses TextMate grammars identical to VS Code. Since we use shiki in the CLI too, a single highlighting engine across both surfaces is architecturally cleaner. Same theme means consistent color tokens.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| grammY | latest | Telegram bot framework | TypeScript-first, runs on Node.js/Deno/browser. Best DX of Telegram bot libraries. Plugin ecosystem (sessions, menus, conversations). Better maintained and more modern than Telegraf. |
+### Desktop: Typography
 
-**Confidence: HIGH** -- grammY is the clear winner for TypeScript Telegram bots.
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `@tailwindcss/typography` | `^0.5.19` | Prose styling for markdown output | The `prose` class applies opinionated typography defaults to arbitrary HTML (exactly what react-markdown produces). Dark mode support via `prose-invert`. Size variants via `prose-sm`, `prose-base`. v4 integration: add `@plugin "@tailwindcss/typography"` to your CSS instead of `tailwind.config.js`. |
 
-### Encrypted Credential Storage
+**v4 compatibility:** `@tailwindcss/typography` 0.5.x works with Tailwind CSS v4. The plugin API changed — configure via CSS `@plugin` directive, not `plugins: []` in config. The existing `tailwindcss@^4` + `@tailwindcss/vite@^4` setup is compatible.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| @napi-rs/keyring | 1.x | OS keychain access | Rust-based (via napi-rs), 100% keytar-compatible API. No libsecret dependency (works in WSL2, headless). Backed by Microsoft OSS fund. Replaces deprecated keytar. |
-| Node.js crypto | (built-in) | Encryption fallback | AES-256-GCM for encrypting secrets at rest when keychain unavailable. No external dependency needed. |
+### Desktop: Animations
 
-**Architecture:** Try OS keychain first (@napi-rs/keyring). Fall back to AES-256-GCM encrypted file with key derived from machine-specific entropy. Never store API keys in plain text config files.
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `motion` | `^12.34.3` | UI animations | `motion` is the current package name for Motion for React (previously Framer Motion). v12 is React 19 compatible (required, since desktop uses React 19). Vite works out of the box, no special Tauri configuration needed. Tree-shakeable. Use for message entrance animations, skeleton loading states, smooth panel transitions. |
 
-**Confidence: MEDIUM** -- @napi-rs/keyring is the best keytar replacement available, but has a smaller community. Validate prebuilt binaries work on target platforms.
+**Important naming note:** The npm package is now `motion`, not `framer-motion`. Both exist in the registry but `motion` is the current canonical package. Import as `import { motion } from 'motion/react'` for React components.
 
-### Browser Automation
+**Scope:** Use sparingly — entrance animations for new chat messages (fade + translate-y 8px, 200ms), smooth expand/collapse for panels, skeleton loading for conversation history load. Avoid decorative animations that add latency to the feel of an AI response interface.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Playwright | 1.58.x | Browser automation | Microsoft-maintained. Chromium, Firefox, WebKit. Headless and headed modes. Auto-wait, network interception, screenshots, PDF. The standard for Node.js browser automation. |
+### Desktop: Diff Rendering
 
-**Confidence: HIGH** -- Playwright is unchallenged in this space.
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `react-diff-viewer-continued` | `^4.1.2` | File diff display in chat | Actively maintained (published within days of research date). Peer dependencies explicitly list React 19 (`^19.0.0`). Split and unified view modes. Word-level diff highlighting. Matches GitHub-style diff presentation familiar to developers. Fork of the abandoned `react-diff-viewer`. |
 
-### Terminal Proxy
+**When to use:** Only for `tool_call` and `bash_command` message types where output contains a diff (unified diff format from git or AI-generated patch). Do not use for general content — this is specifically for displaying file changes.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| node-pty | 1.x | Pseudoterminal forking | Microsoft-maintained. Powers VS Code terminal, Tabby, Hyper. Supports Linux, macOS, Windows (conpty). Required for interactive CLI app proxying. |
-| @xterm/xterm | 5.x | Terminal rendering (web) | Paired with node-pty for web-based terminal. Stream pty output over WebSocket to xterm.js in dashboard. |
+---
 
-**Confidence: HIGH** -- node-pty is the only maintained Node.js PTY library. Native addon requires build tools (Python, C++ compiler) at install time.
+### Testing: WebSocket Mocking
 
-### Plugin System
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `msw` | `^2.12.10` | API and WebSocket mocking | Industry standard. First-class WebSocket support added in MSW 2.x. Officially recommended by Vitest docs for network mocking. Mocks at the network layer — no app code changes needed. Works in Node.js 22+ natively (project already requires `node >= 22`). Reuse same mock handlers across unit tests and browser tests. |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| zod | 4.x | Plugin manifest validation | Validate plugin.json manifests. Same library already used for AI SDK tools. |
-| Node.js dynamic import | (built-in) | Plugin loading | `import()` for loading plugin modules at runtime. No extra framework needed. |
+**WebSocket-specific:** MSW v2 added `ws()` handlers alongside existing `http()` handlers. Define a handler once, use it across all test files. No separate mock server process needed.
 
-**Architecture:** Plugins as npm packages or local directories with a standard manifest. Each plugin exports tools (for AI SDK), UI components (optional), and lifecycle hooks. Keep it simple -- no heavyweight plugin framework.
+**Why not `vitest-websocket-mock`:** Lower-level utility requiring manual message tracking. MSW is the Vitest-recommended approach and handles both HTTP and WebSocket in one framework. Since Tek's gateway mixes both HTTP and WS traffic, a unified mock layer is cleaner. `vitest-websocket-mock` is a viable fallback if specific WS assertion matchers are needed, but MSW covers the core use case.
 
-**Confidence: MEDIUM** -- Plugin architecture is custom. Pattern is well-established but implementation details need phase-specific design.
+**Node.js 22 note:** The existing `package.json` engines field already specifies `"node": ">=22"`. MSW's WebSocket interception requires a global `WebSocket` class, which Node.js 22 provides natively. No polyfill or custom Vitest environment needed.
 
-### Development Tools
+---
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Vitest | Unit/integration testing | Fast, ESM-native, compatible with Turborepo caching. Use instead of Jest. |
-| Biome | Linting + formatting | Single tool replaces ESLint + Prettier. Turborepo 2.7 added Biome rule support. Faster than ESLint. |
-| tsx | TypeScript execution | For running TS files directly during development. Faster than ts-node. |
-| changesets | Version management | Standard for pnpm monorepo versioning and changelogs. |
-
-## Installation
+## Installation Commands
 
 ```bash
-# Initialize monorepo
-pnpm init
-pnpm add -Dw turbo typescript @types/node vitest @biomejs/biome tsx
+# CLI: syntax highlighting upgrade
+pnpm --filter @tek/cli add shiki @shikijs/cli
 
-# Gateway package
-pnpm --filter @agentspace/gateway add fastify @fastify/websocket ai @ai-sdk/anthropic @ai-sdk/openai @ai-sdk/openai-compatible zod
+# CLI: diff compute (chalk already present; add diff for compute if needed)
+pnpm --filter @tek/cli add diff
 
-# Database package
-pnpm --filter @agentspace/db add better-sqlite3 drizzle-orm sqlite-vec
-pnpm --filter @agentspace/db add -D drizzle-kit @types/better-sqlite3
+# Desktop: markdown rendering stack
+pnpm --filter @tek/desktop add react-markdown remark-gfm @shikijs/rehype
 
-# CLI package
-pnpm --filter @agentspace/cli add ink ink-ui @inkjs/ui chalk commander @napi-rs/keyring
+# Desktop: typography plugin
+pnpm --filter @tek/desktop add @tailwindcss/typography
 
-# Web dashboard package (later phase)
-pnpm --filter @agentspace/web add next react react-dom @xterm/xterm
-pnpm --filter @agentspace/web add -D tailwindcss @types/react
+# Desktop: animations
+pnpm --filter @tek/desktop add motion
 
-# Telegram package (later phase)
-pnpm --filter @agentspace/telegram add grammy
+# Desktop: diff viewer
+pnpm --filter @tek/desktop add react-diff-viewer-continued
 
-# Browser automation (later phase)
-pnpm --filter @agentspace/plugins add playwright
-
-# Terminal proxy
-pnpm --filter @agentspace/gateway add node-pty
+# Testing: WebSocket mocking (workspace root dev dep, shared across packages)
+pnpm add -Dw msw
 ```
+
+**Note on shiki versioning:** `shiki`, `@shikijs/cli`, and `@shikijs/rehype` are all published at the same version (`3.22.0`). Pin them together in the same version range to avoid mismatch issues.
+
+---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Fastify | Hono | If you need edge/multi-runtime deployment. AgentSpace is self-hosted Node.js, so Fastify's raw performance wins. |
-| Fastify | Express | Never for new projects. Express 5 exists but Fastify is faster with better TypeScript support. |
-| ws (via @fastify/websocket) | Socket.IO | If you need browser fallback transports (long-polling). We control both ends, so pure WebSocket is cleaner and lighter. |
-| AI SDK 6 | LangChain.js | If you need LangGraph-style stateful agent graphs. AI SDK is simpler, more TypeScript-native, and has better streaming. LangChain adds complexity we don't need. |
-| AI SDK 6 | Direct provider SDKs | If you only need one LLM provider. We need three (Anthropic, OpenAI, Ollama), so a unified abstraction pays for itself immediately. |
-| Drizzle ORM | Prisma | If you need a visual schema editor or more abstraction. Drizzle is closer to SQL, lighter, and has sync API for SQLite. Prisma's engine binary is unnecessary overhead for embedded SQLite. |
-| Drizzle ORM | Raw better-sqlite3 | If queries are trivially simple. We have migrations, multiple tables, vector search -- ORM pays for itself in type safety and migration management. |
-| Turborepo | Nx | If monorepo grows past 15+ packages or you need code generators. Start simple, migrate later if needed. |
-| Ink | blessed/blessed-contrib | Never. Blessed is unmaintained since 2018. Ink is actively developed with React mental model. |
-| Biome | ESLint + Prettier | If you need ESLint plugins not yet available in Biome (some niche cases). For standard TS/React linting, Biome covers everything faster. |
-| @napi-rs/keyring | keytar | Never. keytar is archived (Dec 2022). @napi-rs/keyring is the maintained successor with no libsecret dependency. |
-| sqlite-vec | Dedicated vector DB (Pinecone, Qdrant) | If you need millions of embeddings or distributed vector search. Self-hosted agent with tens of thousands of embeddings runs perfectly on sqlite-vec. No infrastructure needed. |
-| grammY | Telegraf | Never for new projects. grammY is the modern TypeScript-first successor with better plugin support and maintenance. |
-| Vitest | Jest | If you have existing Jest config to maintain. For greenfield, Vitest is faster and ESM-native. |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `shiki` / `codeToAnsi` | Keep `cli-highlight` | cli-highlight uses regex-based highlight.js grammars; shiki uses VS Code's TextMate grammars. Quality difference is visible, especially on TypeScript. cli-highlight maintenance is dead. |
+| `@shikijs/rehype` | `rehype-highlight` (highlight.js) | Same quality argument as above. Single engine across CLI and desktop is architecturally simpler. |
+| `motion` (v12) | `framer-motion` | `motion` IS framer-motion renamed. Always install `motion`, not `framer-motion`. |
+| `motion` | `@formkit/auto-animate` | Auto-animate is useful for list reordering. Too limited for entrance animations and panel layout transitions needed here. |
+| `msw` | `vitest-websocket-mock` | MSW handles both HTTP and WS in one framework, matches Vitest's official recommendation, cleaner for Tek's mixed gateway. |
+| `msw` | Custom WS mock | Too much boilerplate; MSW is maintained, well-documented, and community-supported. |
+| `react-diff-viewer-continued` | `react-diff-view` | `react-diff-view` requires parsing unified diff yourself before passing to the component. `react-diff-viewer-continued` accepts raw string inputs. Simpler API for our use case. |
+| `@tailwindcss/typography` | Manual prose CSS | The prose plugin is 8 years of typographic refinement. Manual CSS is reinventing it badly. |
 
-## What NOT to Use
+---
+
+## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Express | Slower than Fastify, worse TypeScript support, no built-in schema validation | Fastify 5.x |
-| Prisma | Heavy engine binary, async-only, overkill for embedded SQLite | Drizzle ORM |
-| keytar | Archived December 2022, no longer maintained | @napi-rs/keyring |
-| sqlite-vss | Deprecated predecessor with FAISS dependency | sqlite-vec (pure C, no dependencies) |
-| blessed | Unmaintained since 2018 | Ink 6.x |
-| Telegraf | Less maintained, worse TypeScript types | grammY |
-| npm/yarn | npm lacks workspace strictness; yarn has overhead for this use case | pnpm |
-| Jest | Slower, CJS-first, config-heavy | Vitest |
-| ESLint + Prettier | Two tools where one suffices | Biome |
-| Webpack | Slow, complex config | Turborepo + built-in bundlers (Next.js Turbopack, tsup for packages) |
-| Socket.IO | Unnecessary protocol overhead when you control both ends | ws via @fastify/websocket |
-| LangChain.js | Heavyweight abstraction, Python-first mentality ported to JS | AI SDK 6 |
-| dotenv for secrets | Plain text .env files are insecure for API keys | @napi-rs/keyring + AES-256-GCM fallback |
+| `ink-syntax-highlight` | CommonJS-only, abandoned, incompatible with Ink 6 ESM | `shiki` / `codeToAnsi` from `@shikijs/cli` |
+| `react-syntax-highlighter` | Heavy (~2MB), uses Prism or highlight.js grammars, outdated approach | `@shikijs/rehype` plugin with react-markdown |
+| `framer-motion` (old package name) | Renamed to `motion` — installing old name gets stale releases | Install `motion` |
+| `socket.io-client` for testing | Overkill; Tek gateway uses plain `ws`, not Socket.IO protocol | `msw` ws() handlers |
+| `jest-websocket-mock` | Jest-specific; project uses Vitest | `msw` |
+| shadcn/ui or Radix | Not scoped for this milestone — full design system is a separate concern | Hand-crafted components + `@tailwindcss/typography` for this milestone |
+| `prism-react-renderer` | Prism grammars are weaker than Shiki; outdated approach for new projects | `@shikijs/rehype` |
+| `highlight.js` directly | Already moving away from it by removing `cli-highlight` | `shiki` unified engine |
 
-## Stack Patterns by Variant
-
-**If adding MCP (Model Context Protocol) server support later:**
-- AI SDK 6 has built-in MCP compatibility
-- Next.js 16 includes MCP Devtools support
-- Design tool system to be MCP-compatible from the start
-
-**If macOS native companion app is needed:**
-- Use Swift + SwiftUI for the native app
-- Communicate with gateway over local WebSocket (already built)
-- Share no Node.js code with native app -- clean boundary at the WebSocket API
-- Consider Tauri as alternative if cross-platform desktop is desired instead of macOS-only
-
-**If scaling beyond single machine:**
-- SQLite becomes a bottleneck -- migrate Drizzle schema to PostgreSQL (Drizzle supports both)
-- Gateway becomes stateless, sessions move to Redis
-- This is unlikely for self-hosted agent platform but architecture should not preclude it
+---
 
 ## Version Compatibility
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| ai@6.x | @ai-sdk/anthropic@latest, @ai-sdk/openai@3.x | AI SDK 6 requires matching provider versions. Use latest of each. |
-| ai@6.x | zod@4.x | AI SDK 6 supports Zod 4 and Standard JSON Schema interface |
-| drizzle-orm@0.45.x | better-sqlite3@11.x | Drizzle has sync API specifically for better-sqlite3 |
-| better-sqlite3@11.x | sqlite-vec | sqlite-vec loads as extension via better-sqlite3's loadExtension() |
-| Ink@6.x | React@18.x | Ink uses its own React renderer, not React DOM. Ships with compatible React. |
-| Next.js@16.x | React@19.x | Next.js 16 requires React 19. Dashboard is separate from CLI (different React versions OK in monorepo). |
-| node-pty@1.x | Node.js@24.x | Requires Python 3 + C++ compiler at install time for native build |
-| @napi-rs/keyring@1.x | Node.js@24.x | Prebuilt binaries for major platforms. Falls back to build if unavailable. |
-| Turborepo@2.8.x | pnpm@9.x | Full workspace integration, including workspace:* protocol |
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `shiki@3.22.0` | `@shikijs/cli@3.22.0`, `@shikijs/rehype@3.22.0` | Shiki packages are versioned together — always install same version across the `@shikijs/*` family. |
+| `react-markdown@10.1.0` | `react@19.0.0`, `remark-gfm@4.0.1` | react-markdown 10.x supports React 19. remark-gfm 4.x is the correct companion. |
+| `@shikijs/rehype@3.22.0` | `react-markdown@10.1.0`, rehype ecosystem | Compatible with full unified/rehype plugin ecosystem. No conflicts. |
+| `@tailwindcss/typography@0.5.19` | `tailwindcss@4.x` | v4 config: use `@plugin "@tailwindcss/typography"` in CSS, NOT `plugins: []` in config. |
+| `motion@12.34.3` | `react@19.0.0`, `vite@6.x` | React 19 compatible. No Tauri-specific configuration needed. |
+| `react-diff-viewer-continued@4.1.2` | `react@19.0.0`, `react-dom@19.0.0` | Peer deps explicitly list React 19. Verified via `npm show react-diff-viewer-continued peerDependencies`. |
+| `msw@2.12.10` | `vitest@4.x`, `node@22+` | Node 22 provides native `WebSocket` global — no polyfill needed for MSW WS interception in tests. |
+| `diff@7.0.0` | No peers | Zero dependencies, ESM and CJS compatible. |
+
+---
 
 ## Sources
 
-- [AI SDK Documentation](https://ai-sdk.dev/docs/introduction) -- AI SDK architecture, provider model, v6 features (HIGH confidence)
-- [AI SDK 6 Blog Post](https://vercel.com/blog/ai-sdk-6) -- Agent abstraction, unified structured output (HIGH confidence)
-- [AI SDK Ollama Community Provider](https://ai-sdk.dev/providers/community-providers/ollama) -- Ollama integration options (HIGH confidence)
-- [AI SDK OpenAI-Compatible Providers](https://ai-sdk.dev/providers/openai-compatible-providers) -- createOpenAICompatible for Ollama (HIGH confidence)
-- [Drizzle ORM SQLite Docs](https://orm.drizzle.team/docs/get-started-sqlite) -- better-sqlite3 integration, sync API (HIGH confidence)
-- [sqlite-vec GitHub](https://github.com/asg017/sqlite-vec) -- Pure C vector search, SIMD acceleration (HIGH confidence)
-- [Ink GitHub](https://github.com/vadimdemedes/ink) -- React terminal renderer, v6.7.0 (HIGH confidence)
-- [grammY Official Site](https://grammy.dev/) -- TypeScript Telegram bot framework (HIGH confidence)
-- [node-pty GitHub](https://github.com/microsoft/node-pty) -- PTY forking, platform support (HIGH confidence)
-- [Playwright Release Notes](https://playwright.dev/docs/release-notes) -- v1.58.x features (HIGH confidence)
-- [@napi-rs/keyring GitHub](https://github.com/Brooooooklyn/keyring-node) -- keytar replacement, Rust bindings (MEDIUM confidence)
-- [Fastify vs Hono Comparison](https://betterstack.com/community/guides/scaling-nodejs/hono-vs-fastify/) -- Performance benchmarks, use cases (MEDIUM confidence)
-- [Turborepo 2.7 Blog](https://turborepo.dev/blog/turbo-2-7) -- Devtools, composable config (HIGH confidence)
-- [Zod v4 Release](https://www.infoq.com/news/2025/08/zod-v4-available/) -- Performance improvements, mini package (HIGH confidence)
-- [Next.js 16 Blog](https://nextjs.org/blog/next-16) -- Turbopack default, PPR, Proxy (HIGH confidence)
-- [xterm.js GitHub](https://github.com/xtermjs/xterm.js) -- Scoped @xterm/* packages (HIGH confidence)
-- [pnpm Workspaces Docs](https://pnpm.io/workspaces) -- Workspace protocol, configuration (HIGH confidence)
-- [Node.js 24 LTS](https://nodejs.org/en/blog/release/v24.13.1) -- Current Active LTS (HIGH confidence)
-- [TypeScript 5.9 Docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html) -- Latest stable TS (HIGH confidence)
-- [Nx vs Turborepo Comparison](https://www.wisp.blog/blog/nx-vs-turborepo-a-comprehensive-guide-to-monorepo-tools) -- When to choose each (MEDIUM confidence)
+- npm registry, February 2026 — all version numbers verified via `npm show [package] version`
+- [Shiki CLI package docs](https://shiki.style/packages/cli) — `codeToANSI` function confirmed in `@shikijs/cli` (HIGH confidence)
+- [Shiki GitHub](https://github.com/shikijs/shiki) — active maintenance, 3.22.0 confirmed current (HIGH confidence)
+- [react-markdown GitHub](https://github.com/remarkjs/react-markdown) — v10, React 19 support (HIGH confidence)
+- [MSW WebSocket docs](https://mswjs.io/docs/websocket/) — first-class WebSocket mocking (HIGH confidence)
+- [MSW: Enter WebSockets blog](https://mswjs.io/blog/enter-websockets/) — WebSocket interception requirements (HIGH confidence)
+- [Vitest mocking/requests docs](https://vitest.dev/guide/mocking/requests) — MSW as official Vitest recommendation (HIGH confidence)
+- [motion.dev React docs](https://motion.dev/docs/react) — React 19 compatibility confirmed (HIGH confidence)
+- `npm show react-diff-viewer-continued peerDependencies` — React 19 in peer deps verified directly (HIGH confidence)
+- [Tailwind v4 typography discussion](https://github.com/tailwindlabs/tailwindcss/discussions/14120) — `@plugin` directive for v4 (MEDIUM confidence — community discussion thread)
+- [ink-syntax-highlight GitHub issue #4](https://github.com/vsashyn/ink-syntax-highlight/issues/4) — Ink incompatibility confirmed, no maintainer response (HIGH confidence)
 
 ---
-*Stack research for: Self-hosted AI Agent Gateway Platform (AgentSpace)*
-*Researched: 2026-02-15*
+*Stack research for: Tek visual polish & testing milestone*
+*Researched: 2026-02-20*
