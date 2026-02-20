@@ -26,6 +26,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 12: Expanded Providers** - Venice AI (text/image/video), Google AI Studio (Gemini), Ollama remote/cloud hosts, provider hot-swap (completed 2026-02-18)
 - [x] **Phase 13: Rebrand to tek** - Rename CLI command and package scope from agentspace to tek, centralize project name constant, update all paths and references (completed 2026-02-18)
 - [x] **Phase 14: CLI & Setup Polish** - Gateway subcommand, skippable setup steps, full model catalog with recommendations, tek uninstall (completed 2026-02-18)
+- [x] **Phase 15: Init & Onboarding Polish** - Model alias flow, Telegram setup, personality Hatch step (completed 2026-02-19)
+- [x] **Phase 16: Agent Personality System** - Multi-file identity, personality evolution, agent isolation (completed 2026-02-19)
+- [ ] **Phase 17: Desktop Frontend (Tauri)** - Native macOS desktop GUI with chat, agents, settings
+- [x] **Phase 18: Onboarding Research** - Research AI agent personality and onboarding patterns (completed 2026-02-19)
+- [ ] **Phase 19: Desktop & Integration Polish** - Bug fixes, UI polish, Telegram bot, end-to-end verification
+- [x] **Phase 20: Agent Identity & Memory Access** - Identity injection, memory tools, provider validation (completed 2026-02-20)
+- [ ] **Phase 21: Init & Agent Onboarding Rework** - Separate app init from agent onboarding, `tek onboard` command, agent selection in chat, gateway identity injection
 
 ## Phase Details
 
@@ -228,6 +235,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
 | 19. Desktop & Integration Polish | 5/6 | In Progress|  |
 | 20. Agent Identity & Memory Access | 2/2 | Complete    | 2026-02-20 |
+| 21. Init & Agent Onboarding Rework | 0/3 | Not started | - |
 
 ### Phase 11: Install & Update System
 
@@ -406,3 +414,14 @@ Plans:
 Plans:
 - [ ] 20-01-PLAN.md — Memory read/write tools and tool registry registration
 - [ ] 20-02-PLAN.md — Provider validation before streaming and desktop verification
+
+### Phase 21: Init & Agent Onboarding Rework
+
+**Goal:** Separate app-level init (`tek init`) from agent onboarding (`tek onboard`). App init handles keys and global config only. Agent onboarding creates a named agent with default model, workspace scope (limited/full), purpose description, and name inspiration. `tek chat` prompts for agent selection when multiple agents exist. Gateway manages identity injection and memory for the active agent. Full code review and CLI verification before desktop work.
+**Depends on:** Phase 20
+**Plans:** 3 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Slim tek init, extend AgentDefinitionSchema, create tek onboard command
+- [ ] 21-02-PLAN.md — Agent selection in tek chat, per-session agentId in gateway WS protocol
+- [ ] 21-03-PLAN.md — End-to-end CLI verification of init -> onboard -> chat flow
