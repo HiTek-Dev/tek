@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 23 of 23 (Agent Tools & Error Recovery)
-Plan: 2 of 3 in current phase
-Status: Executing phase 23
-Last activity: 2026-02-20 - Completed 23-01: Tool paths, error relay, delete & fetch
+Plan: 3 of 3 in current phase
+Status: Phase 23 complete
+Last activity: 2026-02-20 - Completed 23-03: Brave Search skill, API key wiring, init wizard
 
-Progress: [████████████████████████████████████████░░] 95%
+Progress: [██████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -81,6 +81,7 @@ Progress: [███████████████████████
 | Phase 22 P01 | 3min | 2 tasks | 4 files |
 | Phase 23 P02 | 1min | 1 tasks | 3 files |
 | Phase 23 P01 | 3min | 2 tasks | 6 files |
+| Phase 23 P03 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -304,6 +305,8 @@ Recent decisions affecting current work:
 - [Phase 23]: [23-01]: resolveAgentPath before checkWorkspace for workspace-relative path resolution in all file/shell tools
 - [Phase 23]: [23-01]: fetch_url uses session approval tier; 30s timeout; 100KB response truncation
 - [Phase 23]: [23-01]: Shell tool defaults cwd to workspaceDir even in full-control mode (sensible default, not a restriction)
+- [Phase 23]: [23-03]: Brave Search uses inputSchema pattern consistent with existing Tavily web search tool
+- [Phase 23]: [23-03]: Brave Search uses auto approval tier (read-only); brave-ask/brave-input steps in init between Telegram and model-select
 
 ### Roadmap Evolution
 
@@ -352,5 +355,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 23-02-PLAN.md
+Stopped at: Completed 23-03-PLAN.md (Phase 23 complete)
 Resume file: None
