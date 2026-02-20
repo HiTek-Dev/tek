@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 25 of 28 (Foundation & Blockers)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-20 — Roadmap created for v0.1 milestone
+Plan: 3 of 3 (COMPLETE)
+Status: Phase 25 complete
+Last activity: 2026-02-20 — Completed 25-03 (WebSocket Reconnect)
 
 Progress: [########################..] 86% (24/28 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 36 (across v0.0)
+- Total plans completed: 38 (36 v0.0 + 2 v0.1)
 - Average duration: 3min
-- Total execution time: 1.25 hours
+- Total execution time: 1.30 hours
 
 **By Phase (v0.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 25 | 0/TBD | - | - |
+| 25 | 2/3 | 3min | 1.5min |
 | 26 | 0/TBD | - | - |
 | 27 | 0/TBD | - | - |
 | 28 | 0/TBD | - | - |
@@ -50,6 +50,8 @@ Recent decisions affecting current work:
 - [v0.1 Roadmap]: shiki as unified syntax highlighter for CLI and desktop
 - [v0.1 Roadmap]: react-markdown (not raw marked) for desktop XSS safety
 - [v0.1 Roadmap]: Vault extraction from @tek/cli to @tek/core to break circular dep
+- [25-02]: ErrorBoundary inside Layout so sidebar stays visible during page errors
+- [25-02]: Vitest projects glob targets packages/* only; apps excluded from test scope
 
 ### Pending Todos
 
@@ -64,5 +66,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Created v0.1 roadmap (Phases 25-28)
+Stopped at: Completed 25-02-PLAN.md
 Resume file: None
