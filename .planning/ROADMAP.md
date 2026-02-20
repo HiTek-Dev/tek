@@ -33,6 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 19: Desktop & Integration Polish** - Bug fixes, UI polish, Telegram bot, end-to-end verification
 - [x] **Phase 20: Agent Identity & Memory Access** - Identity injection, memory tools, provider validation (completed 2026-02-20)
 - [ ] **Phase 21: Init & Agent Onboarding Rework** - Separate app init from agent onboarding, `tek onboard` command, agent selection in chat, gateway identity injection
+- [ ] **Phase 22: Agent First Contact & Dashboard Polish** - Fix agent first-chat identity and greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery and chat, dashboard UI spacing, OpenClaw-inspired UX research
 
 ## Phase Details
 
@@ -236,6 +237,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 19. Desktop & Integration Polish | 5/6 | In Progress|  |
 | 20. Agent Identity & Memory Access | 2/2 | Complete    | 2026-02-20 |
 | 21. Init & Agent Onboarding Rework | 2/3 | In Progress|  |
+| 22. Agent First Contact & Dashboard Polish | 0/0 | Not started | - |
 
 ### Phase 11: Install & Update System
 
@@ -425,3 +427,30 @@ Plans:
 - [ ] 21-01-PLAN.md — Slim tek init, extend AgentDefinitionSchema, create tek onboard command
 - [ ] 21-02-PLAN.md — Agent selection in tek chat, per-session agentId in gateway WS protocol
 - [ ] 21-03-PLAN.md — End-to-end CLI verification of init -> onboard -> chat flow
+
+### Phase 22: Agent First Contact & Dashboard Polish
+
+**Goal:** The agent's first chat session feels alive — it greets the user by name, introduces itself with personality, and proactively asks questions to learn about the user (writing to USER.md and evolving SOUL.md). The "default" agent is removed; only user-created agents exist. Desktop dashboard discovers and controls the gateway reliably, chat connects without errors, and the UI has proper spacing and polish. Research OpenClaw and modern agent UX patterns for inspiration.
+**Depends on:** Phase 21
+**Requirements**:
+  - Agent first-chat uses identity files correctly (knows own name, user's name, personality)
+  - Agent proactively asks onboarding questions on first contact and writes answers to USER.md/SOUL.md
+  - Remove "default" agent concept; only explicitly onboarded agents exist
+  - Desktop gateway discovery works (detects running gateway, can start/stop)
+  - Desktop chat connects to gateway and streams responses
+  - Dashboard sidebar and content areas have proper padding/spacing
+  - Research OpenClaw and other agent platforms for onboarding UX inspiration
+**Success Criteria** (what must be TRUE):
+  1. First `tek chat` session with a new agent: agent greets user by name, introduces itself with personality
+  2. Agent asks clarifying questions about the user and writes responses to its USER.md
+  3. No "default" agent appears in agent listings — only user-created agents from `tek onboard`
+  4. Desktop app detects running gateway and shows connected status
+  5. Desktop chat sends messages and receives streaming responses
+  6. Dashboard UI has consistent padding, spacing between sidebar and content
+  7. OpenClaw/modern agent UX research documented with actionable recommendations
+**Plans:** 3 plans
+
+Plans:
+- [ ] 22-01-PLAN.md — First-contact system prompt injection and agent-aware memory writes
+- [ ] 22-02-PLAN.md — Remove "default" agent sentinel from codebase (config, db, gateway, CLI)
+- [ ] 22-03-PLAN.md — Desktop chat agentId flow, agent selector, agents page cleanup, layout spacing
