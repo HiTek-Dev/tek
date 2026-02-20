@@ -78,6 +78,7 @@ Progress: [███████████████████████
 | Phase 21 P02 | 3min | 2 tasks | 7 files |
 | Phase 22 P02 | 2min | 2 tasks | 9 files |
 | Phase 22 P03 | 2min | 2 tasks | 9 files |
+| Phase 22 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -296,6 +297,7 @@ Recent decisions affecting current work:
 - [Phase 22]: [22-03]: selectedAgentId in Zustand store for cross-page agent state persistence
 - [Phase 22]: [22-03]: Auto-select uses config defaultAgentId with fallback to first agent in list
 - [Phase 22]: [22-03]: useIdentityFiles cache key changed from 'default' to 'global' for clarity
+- [Phase 22]: [22-01]: Inline first-contact prompt in buildFirstContactPrompt() over file-read; 50-char USER.md threshold for first-contact detection
 
 ### Roadmap Evolution
 
