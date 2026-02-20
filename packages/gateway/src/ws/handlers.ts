@@ -428,7 +428,7 @@ export async function handleChatSend(
 	if (tools && Object.keys(tools).length > 0 && connState.approvalPolicy) {
 		// Agent mode: tool-aware streaming with multi-step loop
 		try {
-			await runAgentLoop({
+			const agentResponse = await runAgentLoop({
 				transport,
 				model,
 				messages: context.messages,
@@ -462,6 +462,11 @@ export async function handleChatSend(
 					});
 				},
 			});
+
+			// Persist assistant message to session (matches streamToClient pattern)
+			if (agentResponse) {
+				sessionManager.addMessage(sessionId, "assistant", agentResponse);
+			}
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Unknown agent error";
 			logger.error(`Agent loop error: ${message}`);
@@ -841,7 +846,7 @@ export async function handlePreflightApproval(
 
 	if (connState.approvalPolicy) {
 		try {
-			await runAgentLoop({
+			const agentResponse = await runAgentLoop({
 				transport,
 				model,
 				messages: context.messages,
@@ -875,6 +880,11 @@ export async function handlePreflightApproval(
 					});
 				},
 			});
+
+			// Persist assistant message to session (matches streamToClient pattern)
+			if (agentResponse) {
+				sessionManager.addMessage(sessionId, "assistant", agentResponse);
+			}
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Unknown agent error";
 			logger.error(`Agent loop error (post-preflight): ${message}`);
