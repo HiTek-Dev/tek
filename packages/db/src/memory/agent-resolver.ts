@@ -26,7 +26,7 @@ export function resolveIdentityFile(
 	filename: string,
 ): string {
 	// 1. Agent-specific
-	if (agentId && agentId !== "default") {
+	if (agentId) {
 		const agentPath = join(AGENTS_DIR, agentId, filename);
 		if (existsSync(agentPath)) return readFileSync(agentPath, "utf-8");
 	}
@@ -45,10 +45,10 @@ export function resolveIdentityFile(
 /**
  * Get the directory path for a specific agent's identity files.
  * Creates the directory if it doesn't exist (lazy creation).
- * Returns the global memory directory for the default agent.
+ * Returns the global memory directory when no agentId is provided.
  */
 export function resolveAgentDir(agentId?: string): string {
-	if (!agentId || agentId === "default") {
+	if (!agentId) {
 		return GLOBAL_MEMORY_DIR;
 	}
 	const agentDir = join(AGENTS_DIR, agentId);

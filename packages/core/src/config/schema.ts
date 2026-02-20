@@ -55,7 +55,7 @@ export const AgentDefinitionSchema = z.object({
 
 export const AgentsConfigSchema = z.object({
 	list: z.array(AgentDefinitionSchema).default([]),
-	defaultAgentId: z.string().default("default"),
+	defaultAgentId: z.string().default(""),
 });
 
 export const AppConfigSchema = z.object({

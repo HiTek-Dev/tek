@@ -18,12 +18,12 @@ const AGENTS_PATH = join(CONFIG_DIR, "memory", "AGENTS.md");
 
 /**
  * Load the contents of IDENTITY.md.
- * For non-default agents, uses cascade resolution (agent-specific > shared > global).
+ * When agentId is provided, uses cascade resolution (agent-specific > shared > global).
  * Seeds from template on first run for global path.
  * Returns empty string if the file doesn't exist and no template is available.
  */
 export function loadIdentity(agentId?: string): string {
-	if (agentId && agentId !== "default") {
+	if (agentId) {
 		const content = resolveIdentityFile(agentId, "IDENTITY.md");
 		if (content) return content;
 	}
@@ -35,12 +35,12 @@ export function loadIdentity(agentId?: string): string {
 
 /**
  * Load the contents of STYLE.md.
- * For non-default agents, uses cascade resolution (agent-specific > shared > global).
+ * When agentId is provided, uses cascade resolution (agent-specific > shared > global).
  * Seeds from template on first run for global path.
  * Returns empty string if the file doesn't exist and no template is available.
  */
 export function loadStyle(agentId?: string): string {
-	if (agentId && agentId !== "default") {
+	if (agentId) {
 		const content = resolveIdentityFile(agentId, "STYLE.md");
 		if (content) return content;
 	}
@@ -52,11 +52,16 @@ export function loadStyle(agentId?: string): string {
 
 /**
  * Load the contents of USER.md.
- * Always loads from global (shared across all agents).
+ * When agentId is provided, uses cascade resolution (agent-specific > shared > global).
+ * Otherwise loads from global (shared across all agents).
  * Seeds from template on first run.
  * Returns empty string if the file doesn't exist and no template is available.
  */
-export function loadUser(): string {
+export function loadUser(agentId?: string): string {
+	if (agentId) {
+		const content = resolveIdentityFile(agentId, "USER.md");
+		if (content) return content;
+	}
 	ensureMemoryFile("USER.md", "USER.md");
 	if (!existsSync(USER_PATH)) return "";
 	return readFileSync(USER_PATH, "utf-8");
