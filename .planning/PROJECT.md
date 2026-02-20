@@ -1,4 +1,4 @@
-# AgentSpace
+# Tek
 
 ## What This Is
 
@@ -12,35 +12,44 @@ Every interaction with your AI agent is transparent, secure, and under your cont
 
 ### Validated
 
-(None yet — ship to validate)
+<!-- Shipped in v0.0.1–v0.0.24 (Phases 1-24) -->
+
+- ✓ Agent gateway with WebSocket hub, session isolation, Fastify server — Phase 1-2
+- ✓ CLI interface with Ink-based chat, streaming, slash commands — Phase 3
+- ✓ Multi-provider support — Anthropic, OpenAI, Ollama, Venice AI, Google Gemini — Phase 4, 12
+- ✓ Smart model routing — complexity-based tier selection with user overrides — Phase 4
+- ✓ Soul/memory system — SOUL.md personality, MEMORY.md, daily logs, vector search (sqlite-vec) — Phase 5, 16
+- ✓ Tool infrastructure — MCP integration, built-in tools, skill discovery, approval gates — Phase 6
+- ✓ Self-debugging — step inspection, skill drafting, terminal proxy — Phase 7
+- ✓ Workflow builder — DAG-style steps, durable execution, heartbeat/scheduler — Phase 8
+- ✓ Telegram bot integration — pairing, transport, tool approval via inline keyboard — Phase 9
+- ✓ Claude Code relay — session management, approval proxy, run-to-completion — Phase 10
+- ✓ Web search (Tavily, Brave) + image generation (OpenAI, Stability, Venice) — Phase 10, 23
+- ✓ Google Workspace integration — Gmail, Drive, Calendar, Docs tools — Phase 10
+- ✓ Browser automation via Playwright MCP — Phase 10
+- ✓ Install/update/dist pipeline — CDN distribution, one-line install — Phase 11
+- ✓ Secure API key management — macOS Keychain, bearer auth, key serving — Phase 1
+- ✓ Rebrand from AgentSpace to Tek — Phase 13
+- ✓ Onboarding with Full Control / Limited Control modes — Phase 14-15
+- ✓ Agent personality system — multi-agent, per-agent soul/memory/identity — Phase 16, 21-22
+- ✓ Desktop app (Tauri) — dashboard, chat, agents, settings pages — Phase 17, 19
+- ✓ Session management with transparent context — Phase 2
+- ✓ Heartbeat system — configurable cron-based check-ins — Phase 8
+- ✓ Pre-flight thinking — checklist generation before complex operations — Phase 6
+- ✓ Approval center — tiered approval (auto/session/always) with CLI + Telegram UI — Phase 6, 9
 
 ### Active
 
-- [ ] Agent gateway that routes between models, manages sessions, and coordinates tools
-- [ ] CLI interface styled after Claude Code — showing bash commands, tool calls, and every step
-- [ ] Web dashboard for configuration, monitoring, and approval management
-- [ ] Telegram bot integration for mobile communication with agents
-- [ ] Soul/memory system — evolving personality + two-tier memory (daily logs + long-term)
-- [ ] Skill system — directory-based plugins with workspace/managed/bundled tiers
-- [ ] Secure API key management — encrypted storage, not plain config files
-- [ ] Multi-provider support — Anthropic, OpenAI, Ollama (local/network/cloud)
-- [ ] Session management with transparent context — show what's being sent to the model
-- [ ] Heartbeat system — configurable periodic check-ins with clear control UI
-- [ ] Approval center — web-based dashboard for permissions with per-task skip/ask controls
-- [ ] OS-level control capabilities — file system access, admin controls in designated folders
-- [ ] Workflow builder — visual, code-based, and conversational creation of step-by-step agent logic (pass/fail/decision branching)
-- [ ] Browser automation — starting with Playwright MCP, expanding to Chrome extension-style control
-- [ ] Terminal proxy — interactive mode for running CLI apps (claude code, opencode, etc.)
-- [ ] Image generation skills — connecting to major APIs (DALL-E, Midjourney, Stability, etc.)
-- [ ] Web search — API-based search and model-integrated search capabilities
-- [ ] Self-debugging — agents can inspect their own steps and add to their own skills
-- [ ] Google Workspace integration — Gmail, Drive, Calendar, Docs connectivity
-- [ ] Smart model routing — swap to high-thinking models for planning, budget models for simple tasks
-- [ ] Onboarding with control modes — "Full Control" (OS-level access) vs "Limited Control" (sandboxed workspace)
-- [ ] Notification system — native macOS app companion or web browser notifications
-- [ ] Secure input channels — only official Telegram bot or RDC-like system can send signals
-- [ ] API key serving — ability to serve keys to local apps so projects can reference AgentSpace's encrypted store at build time
-- [ ] Pre-flight thinking — built-in logic paths to walk through proper preparation checklists before executing complex requests
+## Current Milestone: v0.1 Product Polish
+
+**Goal:** Transform Tek from functional infrastructure into a polished, product-grade experience — CLI that feels like Claude Code, desktop app that feels like Claudia.
+
+**Target features:**
+- CLI visual overhaul (StatusBar, MessageBubble, InputBar, collapsible sections, syntax highlighting)
+- Desktop app visual overhaul (markdown rendering, tool approval UI, conversation history, design system)
+- Architecture cleanup (extract vault, fix circular dependency)
+- Testing foundation (WS protocol, agent loop, router, config tests)
+- Quick wins (error boundaries, auto-reconnect, empty states, timestamps)
 
 ### Out of Scope
 
@@ -140,4 +149,4 @@ AgentSpace draws architectural inspiration from OpenClaw (github.com/openclaw/op
 | Claude Code-style CLI over custom TUI | Better UX pattern — shows real commands and reasoning, not a chat bubble interface | — Pending |
 
 ---
-*Last updated: 2026-02-15 after initialization*
+*Last updated: 2026-02-20 after milestone v0.1 start*

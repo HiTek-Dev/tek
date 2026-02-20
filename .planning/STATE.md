@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 24 — Tools Actually Working
+**Current focus:** Milestone v0.1 — Product Polish
 
 ## Current Position
 
-Phase: 24 of 24 (Tools Actually Working)
-Plan: 2 of 2 in current phase
-Status: Phase 24 complete
-Last activity: 2026-02-20 - Completed 24-02: Agent loop session persistence and fallback
-
-Progress: [██████████████████████████████████████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v0.1 started
 
 ## Performance Metrics
 
