@@ -235,7 +235,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 18. Onboarding Research | 1/1 | Complete    | 2026-02-19 |
 | 19. Desktop & Integration Polish | 5/6 | In Progress|  |
 | 20. Agent Identity & Memory Access | 2/2 | Complete    | 2026-02-20 |
-| 21. Init & Agent Onboarding Rework | 0/3 | Not started | - |
+| 21. Init & Agent Onboarding Rework | 1/3 | In Progress|  |
 
 ### Phase 11: Install & Update System
 
@@ -419,7 +419,7 @@ Plans:
 
 **Goal:** Separate app-level init (`tek init`) from agent onboarding (`tek onboard`). App init handles keys and global config only. Agent onboarding creates a named agent with default model, workspace scope (limited/full), purpose description, and name inspiration. `tek chat` prompts for agent selection when multiple agents exist. Gateway manages identity injection and memory for the active agent. Full code review and CLI verification before desktop work.
 **Depends on:** Phase 20
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 21-01-PLAN.md — Slim tek init, extend AgentDefinitionSchema, create tek onboard command

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 20 — Agent Identity & Memory Access
+**Current focus:** Phase 21 — Init & Agent Onboarding Rework
 
 ## Current Position
 
-Phase: 20 of 20 (Agent Identity & Memory Access)
-Plan: 1 of 2 in current phase
-Status: Executing phase 20
-Last activity: 2026-02-19 - Completed 20-01: Memory read/write tools
+Phase: 21 of 21 (Init & Agent Onboarding Rework)
+Plan: 2 of 3 in current phase
+Status: Executing phase 21
+Last activity: 2026-02-19 - Completed 21-01: Init/Onboard separation
 
-Progress: [████████████████████████████████████████░░] 95%
+Progress: [████████████████████████████████████████░░] 96%
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: [███████████████████████
 | Phase 19 P03 | 2min | 2 tasks | 5 files |
 | Phase 19 P04 | 2min | 2 tasks | 7 files |
 | Phase 20 P02 | 1min | 2 tasks | 3 files |
+| Phase 21 P01 | 6min | 2 tasks | 8 files |
 | Phase 20 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
@@ -277,6 +278,9 @@ Recent decisions affecting current work:
 - [Phase 19]: [19-04]: Role labels and colored left borders for chat message user/assistant distinction
 - [Phase 20]: [20-02]: Provider validation placed after resolveModelId but before addMessage to avoid persisting messages for doomed requests
 - [Phase 20]: [20-02]: Error includes provider name, available providers list, and CLI fix command for actionable feedback
+- [Phase 21]: [21-01]: ensureMemoryFile/applyPersonalityPreset extended with optional agentId for per-agent directories
+- [Phase 21]: [21-01]: AgentDefinition and AgentsConfig types exported from @tek/core for cross-package use
+- [Phase 21]: [21-01]: tek init done step prompts user to run tek onboard; init no longer writes identity files
 - [Phase 20]: [20-01]: Memory read auto-approved; memory write requires session-level approval
 - [Phase 20]: [20-01]: Agent ID resolved from loadConfig at tool registry build time for agent-specific identity
 - [Phase 20]: [20-01]: Memory tools always registered (not gated on API keys), bypass workspace restrictions
@@ -293,6 +297,7 @@ Recent decisions affecting current work:
 - Phase 18 added: Onboarding Research — deep research on OpenClaw (Peter Steinberger's soul files/agents) and other systems to improve personality and onboarding flows
 - Phase 19 added: Desktop & Integration Polish — fix gateway stop, chat agent defaults, settings crash, agent workspace isolation, desktop UI/UX, Telegram bot, end-to-end verification
 - Phase 20 added: Agent Identity & Memory Access — fix system prompt identity injection, grant agent memory file read/write, fix desktop chat provider errors, fix agents page rendering
+- Phase 21 added: Init & Agent Onboarding Rework — separate app init from agent onboarding, tek onboard command, agent model/workspace config, agent selection in chat, gateway-managed identity injection, full CLI code review
 - [Phase 18]: [18-01]: Two-phase onboarding: infrastructure wizard then conversational Hatch step for personality
 - [Phase 18]: [18-01]: 5 personality presets (Professional/Friendly/Technical/Opinionated/Custom) as markdown templates
 - [Phase 18]: [18-01]: Multi-file identity architecture: SOUL.md + IDENTITY.md + USER.md + STYLE.md + AGENTS.md
@@ -325,5 +330,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 20-02-PLAN.md
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
