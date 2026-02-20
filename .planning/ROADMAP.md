@@ -35,6 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 21: Init & Agent Onboarding Rework** - Separate app init from agent onboarding, `tek onboard` command, agent selection in chat, gateway identity injection
 - [x] **Phase 22: Agent First Contact & Dashboard Polish** - Fix agent first-chat identity and greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery and chat, dashboard UI spacing, OpenClaw-inspired UX research (completed 2026-02-20)
 - [x] **Phase 23: Agent Tools & Error Recovery** - Fix tool workspace paths, tool error handling, complete base tool set, memory/system prompt loading, Brave Search skill, workspace permissions (completed 2026-02-20)
+- [ ] **Phase 24: Tools Actually Working** - Fix workspace dir creation, agent loop session persistence, tool error recovery
 
 ## Phase Details
 
@@ -240,6 +241,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 21. Init & Agent Onboarding Rework | 2/3 | In Progress|  |
 | 22. Agent First Contact & Dashboard Polish | 3/3 | Complete   | 2026-02-20 |
 | 23. Agent Tools & Error Recovery | 3/3 | Complete    | 2026-02-20 |
+| 24. Tools Actually Working | 0/0 | Not started | - |
 
 ### Phase 11: Install & Update System
 
@@ -490,3 +492,26 @@ Plans:
 - [ ] 23-01-PLAN.md — Fix tool workspace path resolution and add tool error handling to agent loop
 - [ ] 23-02-PLAN.md — Rewrite context inspector to use real assembler logic (fix 31-byte system prompt and 0-byte memory)
 - [ ] 23-03-PLAN.md — Add Brave Search API skill and wire missing API keys to tool registry
+
+### Phase 24: Tools Actually Working
+
+**Goal:** Fix the 3 root causes preventing agent tools from working in production: (1) workspace directory never created so file writes fail with ENOENT, (2) agent tool loop doesn't save assistant responses to session history so agent re-introduces itself every turn, (3) tool failures can cause the agent to go silent with no response to the user
+**Depends on:** Phase 23
+**Requirements**:
+  - Agent workspace directory auto-created on first tool use or chat session start (mkdir recursive)
+  - write_file creates parent directories (mkdir before writeFile)
+  - Agent tool loop collects text content and calls sessionManager.addMessage() for assistant response
+  - Agent maintains conversation continuity across tool-using turns (doesn't re-introduce)
+  - When all tools fail, agent still produces a text response explaining what went wrong
+  - Tool errors are visible to the user and don't cause silent session reset
+**Success Criteria** (what must be TRUE):
+  1. Agent can write files to workspace on first use (directory auto-created)
+  2. Agent remembers conversation history across tool-using turns (no re-introduction)
+  3. When tools fail, agent responds with error explanation instead of going silent
+  4. write_file to nested paths (e.g. "subdir/file.txt") creates parent directories
+  5. Agent tool loop saves assistant response to session after tool execution completes
+**Plans:** 2 plans
+
+Plans:
+- [ ] 24-01-PLAN.md — Fix workspace directory creation (mkdir in tool-registry and write_file)
+- [ ] 24-02-PLAN.md — Fix agent loop session persistence and silent failure recovery
