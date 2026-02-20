@@ -74,7 +74,12 @@ Plans:
   3. User can press up/down arrow to cycle through previous messages and Shift+Enter to insert a newline without submitting
   4. Long tool output is truncated at ~20 lines with a "(N more lines)" indicator; empty chat shows a welcome screen with agent name and available commands
   5. StatusBar displays a multi-zone layout with connection status, model/provider, and token count + cost in compact format; messages show dimmed HH:MM timestamps
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 26-01-PLAN.md — Shiki syntax highlighting integration
+- [ ] 26-02-PLAN.md — Custom multiline input with history
+- [ ] 26-03-PLAN.md — Message timestamps, truncation, and tool panels
+- [ ] 26-04-PLAN.md — Welcome screen, StatusBar redesign, and Chat wiring
 
 ### Phase 27: Desktop UI Overhaul
 **Goal**: Desktop app delivers a polished, branded chat experience with rendered markdown, functional tool approvals, conversation history, and cohesive visual design
