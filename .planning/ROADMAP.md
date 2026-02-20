@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 19: Desktop & Integration Polish** - Bug fixes, UI polish, Telegram bot, end-to-end verification
 - [x] **Phase 20: Agent Identity & Memory Access** - Identity injection, memory tools, provider validation (completed 2026-02-20)
 - [ ] **Phase 21: Init & Agent Onboarding Rework** - Separate app init from agent onboarding, `tek onboard` command, agent selection in chat, gateway identity injection
-- [ ] **Phase 22: Agent First Contact & Dashboard Polish** - Fix agent first-chat identity and greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery and chat, dashboard UI spacing, OpenClaw-inspired UX research
+- [x] **Phase 22: Agent First Contact & Dashboard Polish** - Fix agent first-chat identity and greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery and chat, dashboard UI spacing, OpenClaw-inspired UX research (completed 2026-02-20)
 
 ## Phase Details
 
@@ -237,7 +237,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 19. Desktop & Integration Polish | 5/6 | In Progress|  |
 | 20. Agent Identity & Memory Access | 2/2 | Complete    | 2026-02-20 |
 | 21. Init & Agent Onboarding Rework | 2/3 | In Progress|  |
-| 22. Agent First Contact & Dashboard Polish | 1/3 | In Progress|  |
+| 22. Agent First Contact & Dashboard Polish | 3/3 | Complete   | 2026-02-20 |
 
 ### Phase 11: Install & Update System
 
@@ -448,7 +448,7 @@ Plans:
   5. Desktop chat sends messages and receives streaming responses
   6. Dashboard UI has consistent padding, spacing between sidebar and content
   7. OpenClaw/modern agent UX research documented with actionable recommendations
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 22-01-PLAN.md — First-contact system prompt injection and agent-aware memory writes

@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 22 of 22 (Agent First Contact & Dashboard Polish)
-Plan: 2 of 3 in current phase
-Status: Executing phase 22
-Last activity: 2026-02-19 - Completed 22-02: Remove default agent sentinel
+Plan: 3 of 3 in current phase
+Status: Phase 22 complete
+Last activity: 2026-02-19 - Completed 22-03: Desktop agent selection & layout polish
 
-Progress: [█████████████████████████████████████████░] 98%
+Progress: [██████████████████████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -77,6 +77,7 @@ Progress: [███████████████████████
 | Phase 20 P01 | 2min | 2 tasks | 2 files |
 | Phase 21 P02 | 3min | 2 tasks | 7 files |
 | Phase 22 P02 | 2min | 2 tasks | 9 files |
+| Phase 22 P03 | 2min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -292,6 +293,9 @@ Recent decisions affecting current work:
 - [Phase 22]: [22-02]: || instead of ?? for agentId resolution so empty string falls through to undefined
 - [Phase 22]: [22-02]: Session key uses "global" prefix when no agentId (preserves key format)
 - [Phase 22]: [22-02]: Zero-agent chat exits with tek onboard prompt instead of silent legacy fallback
+- [Phase 22]: [22-03]: selectedAgentId in Zustand store for cross-page agent state persistence
+- [Phase 22]: [22-03]: Auto-select uses config defaultAgentId with fallback to first agent in list
+- [Phase 22]: [22-03]: useIdentityFiles cache key changed from 'default' to 'global' for clarity
 
 ### Roadmap Evolution
 
@@ -339,5 +343,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 22-02-PLAN.md
+Stopped at: Completed 22-03-PLAN.md (Phase 22 complete)
 Resume file: None
