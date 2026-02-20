@@ -31,6 +31,8 @@ import {
 	streamChatResponse,
 	resolveModelId,
 	routeMessage,
+	isProviderAvailable,
+	getAvailableProviders,
 } from "../llm/index.js";
 import { assembleContext } from "../context/index.js";
 import { inspectContext } from "../context/index.js";
@@ -301,6 +303,19 @@ export async function handleChatSend(
 
 	// Ensure model is provider-qualified for downstream use
 	model = resolveModelId(model);
+
+	// Validate that the resolved provider is actually registered
+	const providerPrefix = model.split(":")[0];
+	if (!isProviderAvailable(providerPrefix)) {
+		const available = getAvailableProviders();
+		transport.send({
+			type: "error",
+			requestId: msg.id,
+			code: "PROVIDER_NOT_CONFIGURED",
+			message: `Provider "${providerPrefix}" is not configured. Available providers: ${available.join(", ")}. Run: tek keys add ${providerPrefix}`,
+		});
+		return;
+	}
 
 	// Add user message to session
 	sessionManager.addMessage(sessionId, "user", msg.content);

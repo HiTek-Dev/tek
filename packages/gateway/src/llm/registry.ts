@@ -109,6 +109,14 @@ export function resolveModelId(model: string): string {
 }
 
 /**
+ * Check if a specific provider is available (has API key or is always-on like Ollama).
+ */
+export function isProviderAvailable(providerName: string): boolean {
+	const available = getAvailableProviders();
+	return available.includes(providerName);
+}
+
+/**
  * Get the list of providers that have valid API keys configured.
  * Ollama is always included (local, no key required).
  */

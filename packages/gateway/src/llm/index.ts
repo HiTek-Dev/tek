@@ -3,6 +3,7 @@ export {
 	getRegistry,
 	resolveModelId,
 	getAvailableProviders,
+	isProviderAvailable,
 } from "./registry.js";
 export { streamChatResponse } from "./stream.js";
 export {
