@@ -1,7 +1,7 @@
 # Requirements: Tek
 
 **Defined:** 2026-02-15
-**Core Value:** Every interaction with your AI agent is transparent, secure, and under your control — you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
+**Core Value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
 
 ## v0.0 Requirements (Shipped)
 
@@ -109,12 +109,12 @@ Requirements for the Product Polish milestone. Each maps to roadmap phases.
 
 - [ ] **FOUND-01**: Vault code extracted from @tek/cli to @tek/core, circular dependency eliminated, Turbo builds in one pass
 - [ ] **FOUND-02**: Desktop app has per-page React error boundaries with recovery UI
-- [ ] **FOUND-03**: CLI and desktop WebSocket clients auto-reconnect with exponential backoff (1s→2s→4s→8s→max 30s)
+- [ ] **FOUND-03**: CLI and desktop WebSocket clients auto-reconnect with exponential backoff (1s->2s->4s->8s->max 30s)
 
 ### CLI Visual
 
 - [ ] **CLIV-01**: Code blocks in CLI chat display syntax highlighting via shiki
-- [ ] **CLIV-02**: Tool call panels are collapsible — default collapsed showing tool name + status, expand to show args/output
+- [ ] **CLIV-02**: Tool call panels are collapsible -- default collapsed showing tool name + status, expand to show args/output
 - [ ] **CLIV-03**: User can cycle through previous messages with up/down arrow keys in input
 - [ ] **CLIV-04**: Tool output truncated at ~20 lines with "... (N more lines)" indicator
 - [ ] **CLIV-05**: Empty chat state shows welcome message with agent name, slash commands, and keyboard shortcuts
@@ -210,7 +210,7 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v0.0 (Shipped — Phases 1-24)
+### v0.0 (Shipped -- Phases 1-24)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -228,41 +228,41 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | — | Pending |
-| FOUND-02 | — | Pending |
-| FOUND-03 | — | Pending |
-| CLIV-01 | — | Pending |
-| CLIV-02 | — | Pending |
-| CLIV-03 | — | Pending |
-| CLIV-04 | — | Pending |
-| CLIV-05 | — | Pending |
-| CLIV-06 | — | Pending |
-| CLIV-07 | — | Pending |
-| CLIV-08 | — | Pending |
-| DSKV-01 | — | Pending |
-| DSKV-02 | — | Pending |
-| DSKV-03 | — | Pending |
-| DSKV-04 | — | Pending |
-| DSKV-05 | — | Pending |
-| DSKV-06 | — | Pending |
-| DSKV-07 | — | Pending |
-| DSKV-08 | — | Pending |
-| DSKV-09 | — | Pending |
-| DSKV-10 | — | Pending |
-| DSKV-11 | — | Pending |
-| DSKV-12 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| TEST-05 | — | Pending |
-| TEST-06 | — | Pending |
+| FOUND-01 | Phase 25 | Pending |
+| FOUND-02 | Phase 25 | Pending |
+| FOUND-03 | Phase 25 | Pending |
+| CLIV-01 | Phase 26 | Pending |
+| CLIV-02 | Phase 26 | Pending |
+| CLIV-03 | Phase 26 | Pending |
+| CLIV-04 | Phase 26 | Pending |
+| CLIV-05 | Phase 26 | Pending |
+| CLIV-06 | Phase 26 | Pending |
+| CLIV-07 | Phase 26 | Pending |
+| CLIV-08 | Phase 26 | Pending |
+| DSKV-01 | Phase 27 | Pending |
+| DSKV-02 | Phase 27 | Pending |
+| DSKV-03 | Phase 27 | Pending |
+| DSKV-04 | Phase 27 | Pending |
+| DSKV-05 | Phase 27 | Pending |
+| DSKV-06 | Phase 27 | Pending |
+| DSKV-07 | Phase 27 | Pending |
+| DSKV-08 | Phase 27 | Pending |
+| DSKV-09 | Phase 27 | Pending |
+| DSKV-10 | Phase 27 | Pending |
+| DSKV-11 | Phase 27 | Pending |
+| DSKV-12 | Phase 27 | Pending |
+| TEST-01 | Phase 28 | Pending |
+| TEST-02 | Phase 28 | Pending |
+| TEST-03 | Phase 28 | Pending |
+| TEST-04 | Phase 28 | Pending |
+| TEST-05 | Phase 28 | Pending |
+| TEST-06 | Phase 28 | Pending |
 
 **Coverage:**
-- v0.1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- v0.1 requirements: 29 total
+- Mapped to phases: 29
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-15*
-*Last updated: 2026-02-20 after milestone v0.1 definition*
+*Last updated: 2026-02-20 after v0.1 roadmap creation*
