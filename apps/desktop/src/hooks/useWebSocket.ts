@@ -2,8 +2,15 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import TauriWebSocket from "@tauri-apps/plugin-websocket";
 import type { Message } from "@tauri-apps/plugin-websocket";
 
-const MAX_RETRIES = 5;
-const RECONNECT_DELAY_MS = 3000;
+const BASE_DELAY_MS = 1000;
+const MAX_DELAY_MS = 30_000;
+const JITTER_FACTOR = 0.3;
+
+function getReconnectDelay(attempt: number): number {
+	const exponential = Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
+	const jitter = exponential * JITTER_FACTOR * Math.random();
+	return exponential + jitter;
+}
 
 export interface UseWebSocketReturn {
 	connected: boolean;
@@ -11,6 +18,7 @@ export interface UseWebSocketReturn {
 	send: (msg: object) => void;
 	addMessageHandler: (handler: (msg: unknown) => void) => void;
 	removeMessageHandler: (handler: (msg: unknown) => void) => void;
+	sessionId: string | null;
 }
 
 /**
@@ -18,7 +26,8 @@ export interface UseWebSocketReturn {
  * via the Tauri WebSocket plugin.
  *
  * Pass `null` as URL when gateway is not discovered -- no connection attempt.
- * Handles auto-reconnect on disconnect (max 5 retries, 3s delay).
+ * Handles auto-reconnect on disconnect with exponential backoff
+ * (1s->2s->4s->8s->max 30s) and unlimited retries.
  */
 export function useWebSocket(url: string | null): UseWebSocketReturn {
 	const [connected, setConnected] = useState(false);
@@ -30,6 +39,7 @@ export function useWebSocket(url: string | null): UseWebSocketReturn {
 	const mountedRef = useRef(true);
 	const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const urlRef = useRef(url);
+	const sessionIdRef = useRef<string | null>(null);
 	urlRef.current = url;
 
 	const cleanup = useCallback(() => {
@@ -70,6 +80,18 @@ export function useWebSocket(url: string | null): UseWebSocketReturn {
 				if (msg.type === "Text") {
 					try {
 						const parsed: unknown = JSON.parse(msg.data);
+						// Track sessionId if present for session resumption
+						if (
+							parsed &&
+							typeof parsed === "object" &&
+							"sessionId" in parsed &&
+							typeof (parsed as Record<string, unknown>).sessionId ===
+								"string"
+						) {
+							sessionIdRef.current = (
+								parsed as Record<string, unknown>
+							).sessionId as string;
+						}
 						for (const handler of handlersRef.current) {
 							handler(parsed);
 						}
@@ -80,16 +102,13 @@ export function useWebSocket(url: string | null): UseWebSocketReturn {
 					setConnected(false);
 					wsRef.current = null;
 
-					// Attempt reconnect if still mounted and retries remain
-					if (
-						mountedRef.current &&
-						retriesRef.current < MAX_RETRIES &&
-						urlRef.current
-					) {
+					// Attempt reconnect with exponential backoff (unlimited retries)
+					if (mountedRef.current && urlRef.current) {
+						const delay = getReconnectDelay(retriesRef.current);
 						retriesRef.current++;
 						reconnectTimerRef.current = setTimeout(() => {
 							connect();
-						}, RECONNECT_DELAY_MS);
+						}, delay);
 					}
 				}
 			});
@@ -101,12 +120,13 @@ export function useWebSocket(url: string | null): UseWebSocketReturn {
 			setError(message);
 			setConnected(false);
 
-			// Attempt reconnect
-			if (retriesRef.current < MAX_RETRIES && urlRef.current) {
+			// Attempt reconnect with exponential backoff (unlimited retries)
+			if (mountedRef.current && urlRef.current) {
+				const delay = getReconnectDelay(retriesRef.current);
 				retriesRef.current++;
 				reconnectTimerRef.current = setTimeout(() => {
 					connect();
-				}, RECONNECT_DELAY_MS);
+				}, delay);
 			}
 		}
 	}, []);
@@ -150,5 +170,12 @@ export function useWebSocket(url: string | null): UseWebSocketReturn {
 		[],
 	);
 
-	return { connected, error, send, addMessageHandler, removeMessageHandler };
+	return {
+		connected,
+		error,
+		send,
+		addMessageHandler,
+		removeMessageHandler,
+		sessionId: sessionIdRef.current,
+	};
 }
