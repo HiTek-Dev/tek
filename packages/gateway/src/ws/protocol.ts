@@ -8,6 +8,7 @@ const ChatSendSchema = z.object({
 	sessionId: z.string().optional(),
 	content: z.string(),
 	model: z.string().optional(),
+	agentId: z.string().optional(),
 });
 
 const ContextInspectSchema = z.object({

@@ -28,6 +28,7 @@ export interface ConnectionState {
 	terminalControlGranted: boolean;
 	pendingWorkflowApprovals: Map<string, { executionId: string; resolve: (approved: boolean) => void }>;
 	claudeCodeSessions: Map<string, string>;
+	lastAgentId?: string;
 }
 
 const connections = new Map<string, ConnectionState>();

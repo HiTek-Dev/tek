@@ -38,6 +38,7 @@ export interface ToolRegistryOptions {
 	stabilityApiKey?: string;
 	googleAuth?: { clientId: string; clientSecret: string; refreshToken: string };
 	veniceApiKey?: string;
+	agentId?: string;
 }
 
 /**
@@ -273,8 +274,7 @@ export async function buildToolRegistry(
 	// Add { playwright: getPlaywrightMcpConfig() } to mcpServers to enable.
 
 	// 7. Add memory tools (always available, bypasses workspace restrictions)
-	const agentConfig = loadConfig();
-	const currentAgentId = agentConfig?.agents?.defaultAgentId;
+	const currentAgentId = options.agentId ?? loadConfig()?.agents?.defaultAgentId;
 	const memoryRead = createMemoryReadTool(currentAgentId === "default" ? undefined : currentAgentId);
 	const memoryWrite = createMemoryWriteTool();
 

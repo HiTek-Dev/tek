@@ -243,8 +243,14 @@ export async function handleChatSend(
 	// Run identity file migration on first chat.send (once, non-blocking)
 	ensureMigration();
 
-	// Extract agentId from config for agent-aware identity loading
-	const agentId = loadConfig()?.agents?.defaultAgentId ?? "default";
+	// Extract agentId: per-message > config default > "default"
+	const agentId = msg.agentId ?? loadConfig()?.agents?.defaultAgentId ?? "default";
+
+	// Invalidate cached tools if agentId changed
+	if (connState.tools && connState.lastAgentId !== agentId) {
+		connState.tools = null;
+	}
+	connState.lastAgentId = agentId;
 
 	// Guard against concurrent streams
 	if (connState.streaming) {
@@ -359,6 +365,7 @@ export async function handleChatSend(
 					approvalPolicy,
 					openaiApiKey: getKey("openai") ?? undefined,
 					veniceApiKey: getKey("venice") ?? undefined,
+					agentId,
 				});
 				connState.tools = tools;
 			}
