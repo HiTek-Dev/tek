@@ -6,6 +6,7 @@ import { homedir, tmpdir } from "node:os";
 import type { MCPClientManager } from "../mcp/client-manager.js";
 import { createFilesystemTools } from "../tools/filesystem.js";
 import { createShellTool } from "../tools/shell.js";
+import { createFetchTool } from "../tools/fetch.js";
 import {
 	createSkillDraftTool,
 	createSkillRegisterTool,
@@ -23,6 +24,7 @@ import {
 	createGoogleWorkspaceTools,
 	createVeniceImageTool,
 	createVeniceVideoTool,
+	createBraveSearchTool,
 } from "../skills/index.js";
 
 const logger = createLogger("tool-registry");
@@ -38,6 +40,7 @@ export interface ToolRegistryOptions {
 	stabilityApiKey?: string;
 	googleAuth?: { clientId: string; clientSecret: string; refreshToken: string };
 	veniceApiKey?: string;
+	braveApiKey?: string;
 	agentId?: string;
 }
 
@@ -60,6 +63,7 @@ export async function buildToolRegistry(
 		stabilityApiKey,
 		googleAuth,
 		veniceApiKey,
+		braveApiKey,
 	} = options;
 
 	const tools: Record<string, unknown> = {};
@@ -78,6 +82,17 @@ export async function buildToolRegistry(
 	tools[shellName] = approvalPolicy
 		? wrapToolWithApproval(shellName, shellTool as unknown as Record<string, unknown>, approvalPolicy)
 		: shellTool;
+
+	// 2b. Add built-in fetch tool
+	const fetchTool = createFetchTool();
+	const fetchName = "fetch_url";
+	tools[fetchName] = approvalPolicy
+		? wrapToolWithApproval(fetchName, fetchTool as unknown as Record<string, unknown>, approvalPolicy)
+		: fetchTool;
+	// Fetch is read-mostly: use "session" tier (can POST to external services)
+	if (approvalPolicy) {
+		approvalPolicy.perTool[fetchName] = "session";
+	}
 
 	// 3. Add MCP server tools (lazy-connected)
 	for (const [serverName, config] of Object.entries(mcpConfigs)) {
@@ -223,6 +238,19 @@ export async function buildToolRegistry(
 		}
 
 		systemSkillCount += 2;
+	}
+
+	if (braveApiKey) {
+		const braveSearch = createBraveSearchTool(braveApiKey);
+		const braveSearchName = "brave_search";
+		tools[braveSearchName] = approvalPolicy
+			? wrapToolWithApproval(braveSearchName, braveSearch as unknown as Record<string, unknown>, approvalPolicy)
+			: braveSearch;
+		// Search is read-only: use "auto" tier
+		if (approvalPolicy) {
+			approvalPolicy.perTool[braveSearchName] = "auto";
+		}
+		systemSkillCount++;
 	}
 
 	if (systemSkillCount > 0) {

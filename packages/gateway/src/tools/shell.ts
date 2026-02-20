@@ -1,7 +1,16 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { execaCommand } from "execa";
+import { resolve, isAbsolute } from "node:path";
 import type { SecurityMode } from "@tek/core";
+
+/**
+ * Resolve a path relative to the agent workspace directory.
+ */
+function resolveAgentPath(path: string, workspaceDir?: string): string {
+	if (isAbsolute(path)) return path;
+	return workspaceDir ? resolve(workspaceDir, path) : resolve(path);
+}
 
 const MAX_OUTPUT_SIZE = 50 * 1024; // 50KB per stream
 
@@ -23,13 +32,13 @@ export function createShellTool(
 ) {
 	return tool({
 		description:
-			"Execute a shell command and return its output. Use for running build commands, git operations, or other CLI tools.",
+			"Execute a shell command and return its output. Commands run in your workspace directory by default. Use for running build commands, git operations, or other CLI tools.",
 		inputSchema: z.object({
 			command: z.string().describe("The shell command to execute"),
 			cwd: z
 				.string()
 				.optional()
-				.describe("Working directory for the command"),
+				.describe("Working directory for the command (relative to workspace)"),
 			timeout: z
 				.number()
 				.optional()
@@ -38,7 +47,7 @@ export function createShellTool(
 		}),
 		execute: async ({ command, cwd, timeout }) => {
 			// In limited-control mode, force cwd to workspace
-			let effectiveCwd = cwd;
+			let effectiveCwd: string | undefined;
 			if (securityMode === "limited-control") {
 				if (!workspaceDir) {
 					throw new Error(
@@ -46,6 +55,11 @@ export function createShellTool(
 					);
 				}
 				effectiveCwd = workspaceDir;
+			} else {
+				// Resolve relative cwd against workspace, default to workspace
+				effectiveCwd = cwd
+					? resolveAgentPath(cwd, workspaceDir)
+					: workspaceDir;
 			}
 
 			const result = await execaCommand(command, {
