@@ -34,6 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 20: Agent Identity & Memory Access** - Identity injection, memory tools, provider validation (completed 2026-02-20)
 - [ ] **Phase 21: Init & Agent Onboarding Rework** - Separate app init from agent onboarding, `tek onboard` command, agent selection in chat, gateway identity injection
 - [x] **Phase 22: Agent First Contact & Dashboard Polish** - Fix agent first-chat identity and greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery and chat, dashboard UI spacing, OpenClaw-inspired UX research (completed 2026-02-20)
+- [ ] **Phase 23: Agent Tools & Error Recovery** - Fix tool workspace paths, tool error handling, complete base tool set, memory/system prompt loading, Brave Search skill, workspace permissions
 
 ## Phase Details
 
@@ -238,6 +239,7 @@ Note: Phases 3, 4, and 5 can execute in parallel after Phase 2. Phases 7, 8, 9, 
 | 20. Agent Identity & Memory Access | 2/2 | Complete    | 2026-02-20 |
 | 21. Init & Agent Onboarding Rework | 2/3 | In Progress|  |
 | 22. Agent First Contact & Dashboard Polish | 3/3 | Complete   | 2026-02-20 |
+| 23. Agent Tools & Error Recovery | 0/3 | Not started | - |
 
 ### Phase 11: Install & Update System
 
@@ -454,3 +456,37 @@ Plans:
 - [ ] 22-01-PLAN.md — First-contact system prompt injection and agent-aware memory writes
 - [ ] 22-02-PLAN.md — Remove "default" agent sentinel from codebase (config, db, gateway, CLI)
 - [ ] 22-03-PLAN.md — Desktop chat agentId flow, agent selector, agents page cleanup, layout spacing
+
+### Phase 23: Agent Tools & Error Recovery
+
+**Goal:** The agent's tools actually work — file operations use correct workspace paths (not /home/user/), tool failures report back to the user instead of going silent/frozen, system prompt and memory load fully into context, base tool set is complete and reliable (file CRUD, fetch/HTTP, shell with proper cwd), memory tools work efficiently, and Brave Search API is available as a built-in skill with init setup.
+**Depends on:** Phase 22
+**Requirements**:
+  - Tool workspace resolution uses agent's actual directory (~/.config/tek/agents/{id}/ or configured workspace), not hardcoded /home/user/
+  - Tool error handling catches failures and reports back to user with actionable message ("that didn't work, these tools failed: ...")
+  - Agent tool loop doesn't freeze/go silent when tools fail — always returns a response
+  - System prompt loads full identity context (SOUL.md, USER.md, IDENTITY.md, STYLE.md) — not 31 bytes
+  - Memory context loads into assembled prompt (currently showing 0 bytes)
+  - File tools (read, write, list, delete) work with correct paths relative to agent workspace
+  - Shell/command execution tool uses proper cwd (agent workspace or user-specified)
+  - HTTP fetch tool for making web requests
+  - Brave Search API skill with API key setup in tek init
+  - Workspace permissions properly enforced: limited mode restricts to workspace, full mode allows OS-level access
+  - tek skills setup command for configuring individual skills outside of init
+**Success Criteria** (what must be TRUE):
+  1. Agent can create, read, edit, and delete files in its workspace without path errors
+  2. When a tool call fails, agent reports the failure to the user and continues the conversation
+  3. System prompt shows full identity context (>500 bytes including SOUL.md content)
+  4. Memory section in /context shows loaded memory content (>0 bytes when memories exist)
+  5. Agent can execute shell commands with output displayed inline
+  6. Agent can make HTTP requests via fetch tool
+  7. Agent can search the web via Brave Search API when configured
+  8. tek init includes Brave Search API key setup step
+  9. Tool failures never leave the agent frozen/unresponsive
+  10. File operations in limited mode are restricted to agent workspace; full mode allows broader access
+**Plans:** 3 plans
+
+Plans:
+- [ ] 23-01-PLAN.md — Fix tool workspace path resolution and add tool error handling to agent loop
+- [ ] 23-02-PLAN.md — Rewrite context inspector to use real assembler logic (fix 31-byte system prompt and 0-byte memory)
+- [ ] 23-03-PLAN.md — Add Brave Search API skill and wire missing API keys to tool registry
