@@ -508,6 +508,14 @@ const ToolResultNotifySchema = z.object({
 	result: z.unknown(),
 });
 
+const ToolErrorNotifySchema = z.object({
+	type: z.literal("tool.error"),
+	requestId: z.string(),
+	toolCallId: z.string(),
+	toolName: z.string(),
+	error: z.string(),
+});
+
 const ToolApprovalRequestSchema = z.object({
 	type: z.literal("tool.approval.request"),
 	requestId: z.string(),
@@ -692,6 +700,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	PromptListResultSchema,
 	ToolCallNotifySchema,
 	ToolResultNotifySchema,
+	ToolErrorNotifySchema,
 	ToolApprovalRequestSchema,
 	PreflightChecklistSchema,
 	FailureDetectedSchema,
@@ -727,6 +736,7 @@ export type PromptSetResult = z.infer<typeof PromptSetResultSchema>;
 export type PromptListResult = z.infer<typeof PromptListResultSchema>;
 export type ToolCallNotify = z.infer<typeof ToolCallNotifySchema>;
 export type ToolResultNotify = z.infer<typeof ToolResultNotifySchema>;
+export type ToolErrorNotify = z.infer<typeof ToolErrorNotifySchema>;
 export type ToolApprovalRequest = z.infer<typeof ToolApprovalRequestSchema>;
 export type PreflightChecklist = z.infer<typeof PreflightChecklistSchema>;
 export type FailureDetected = z.infer<typeof FailureDetectedSchema>;

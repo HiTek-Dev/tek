@@ -132,6 +132,28 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 					break;
 				}
 
+				case "tool-error": {
+					const toolCallId = part.toolCallId;
+					const toolName = String(part.toolName);
+					const errorMessage =
+						part.error instanceof Error
+							? part.error.message
+							: String(part.error);
+
+					logger.warn(
+						`Tool execution error [${toolName}]: ${errorMessage}`,
+					);
+
+					transport.send({
+						type: "tool.error",
+						requestId,
+						toolCallId,
+						toolName,
+						error: errorMessage,
+					});
+					break;
+				}
+
 				case "tool-approval-request": {
 					const toolCall = part.toolCall;
 					const toolCallId = toolCall.toolCallId;
@@ -195,7 +217,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<void> {
 				}
 
 				default:
-					// Ignore other part types (reasoning, sources, etc.)
+					// Log unexpected part types for debugging
+					logger.info(`Unhandled stream part type: ${(part as any).type}`);
 					break;
 			}
 		}
