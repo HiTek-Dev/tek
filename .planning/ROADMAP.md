@@ -107,7 +107,7 @@ Phase 25 first, then Phases 26, 27, and 28 can run in parallel.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 25. Foundation & Blockers | 4/4 | Complete   | 2026-02-20 | - |
+| 25. Foundation & Blockers | 4/4 | Complete    | 2026-02-20 | - |
 | 26. CLI Visual Overhaul | v0.1 | 0/TBD | Not started | - |
 | 27. Desktop UI Overhaul | v0.1 | 0/TBD | Not started | - |
 | 28. Testing Foundation | v0.1 | 0/TBD | Not started | - |
