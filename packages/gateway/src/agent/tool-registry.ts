@@ -274,8 +274,8 @@ export async function buildToolRegistry(
 	// Add { playwright: getPlaywrightMcpConfig() } to mcpServers to enable.
 
 	// 7. Add memory tools (always available, bypasses workspace restrictions)
-	const currentAgentId = options.agentId ?? loadConfig()?.agents?.defaultAgentId;
-	const memoryRead = createMemoryReadTool(currentAgentId === "default" ? undefined : currentAgentId);
+	const currentAgentId = options.agentId || loadConfig()?.agents?.defaultAgentId || undefined;
+	const memoryRead = createMemoryReadTool(currentAgentId);
 	const memoryWrite = createMemoryWriteTool();
 
 	tools.memory_read = approvalPolicy

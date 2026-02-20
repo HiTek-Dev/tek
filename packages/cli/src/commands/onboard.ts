@@ -125,14 +125,14 @@ export const onboardCommand = new Command("onboard")
 						// Update config (configExists() already verified above)
 						const config = loadConfig()!;
 						if (!config.agents) {
-							config.agents = { list: [], defaultAgentId: "default" };
+							config.agents = { list: [], defaultAgentId: "" };
 						}
 						config.agents.list.push(agent);
 
 						// Set as default if this is the first agent
 						if (
 							config.agents.list.length === 1 ||
-							config.agents.defaultAgentId === "default"
+							!config.agents.defaultAgentId
 						) {
 							config.agents.defaultAgentId = agentId;
 						}

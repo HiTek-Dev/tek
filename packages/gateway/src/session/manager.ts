@@ -20,13 +20,13 @@ export class SessionManager {
 	/**
 	 * Create a new session with a transparent key format: agent:{agentId}:{id}
 	 */
-	create(agentId: string = "default", model?: string): Session {
+	create(agentId?: string, model?: string): Session {
 		const id = nanoid();
 		const now = new Date().toISOString();
 		const session: Session = {
 			id,
-			sessionKey: `agent:${agentId}:${id}`,
-			agentId,
+			sessionKey: `agent:${agentId ?? "global"}:${id}`,
+			agentId: agentId ?? "",
 			model: model ?? getDefaultModel() ?? FALLBACK_MODEL,
 			createdAt: now,
 			lastActiveAt: now,

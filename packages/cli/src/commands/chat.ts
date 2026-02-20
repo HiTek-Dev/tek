@@ -65,7 +65,10 @@ async function resolveAgentId(explicitAgent?: string): Promise<string | undefine
 
 	// No --agent flag
 	if (agents.length === 0) {
-		return undefined; // Legacy mode
+		console.log(
+			`No agents configured. Run '${CLI_COMMAND} onboard' to create your first agent.`,
+		);
+		process.exit(0);
 	}
 
 	if (agents.length === 1) {

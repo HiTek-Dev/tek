@@ -243,8 +243,8 @@ export async function handleChatSend(
 	// Run identity file migration on first chat.send (once, non-blocking)
 	ensureMigration();
 
-	// Extract agentId: per-message > config default > "default"
-	const agentId = msg.agentId ?? loadConfig()?.agents?.defaultAgentId ?? "default";
+	// Extract agentId: per-message > config default > undefined (global fallback)
+	const agentId = msg.agentId || loadConfig()?.agents?.defaultAgentId || undefined;
 
 	// Invalidate cached tools if agentId changed
 	if (connState.tools && connState.lastAgentId !== agentId) {
@@ -295,7 +295,7 @@ export async function handleChatSend(
 		const requestedModel = msg.model
 			? resolveModelId(msg.model)
 			: defaultModel ?? undefined;
-		const session = sessionManager.create("default", requestedModel);
+		const session = sessionManager.create(agentId, requestedModel);
 		sessionId = session.id;
 		model = session.model;
 		transport.send({
