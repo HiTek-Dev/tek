@@ -93,16 +93,30 @@ trap 'rm -rf "$TMPDIR_INSTALL"' EXIT
 # 6. Download version info
 echo ""
 echo "  Downloading version info..."
-curl -fsSL "$CDN_BASE/version.json" -o "$TMPDIR_INSTALL/version.json"
+curl -fsSL "$CDN_BASE/version.json?t=$(date +%s)" -o "$TMPDIR_INSTALL/version.json"
 VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$TMPDIR_INSTALL/version.json','utf-8')).version)")
 COMMIT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$TMPDIR_INSTALL/version.json','utf-8')).commit)")
 DMG_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$TMPDIR_INSTALL/version.json','utf-8')).dmgFilename)")
+BACKEND_FILENAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$TMPDIR_INSTALL/version.json','utf-8')).backendFilename)")
+BACKEND_MD5=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$TMPDIR_INSTALL/version.json','utf-8')).backendMd5)")
 echo "  Installing Tek v$VERSION (${COMMIT})..."
 
-# 7. Download backend
+# 7. Download backend (unique filename per build avoids stale CDN cache)
 echo ""
 echo "  Downloading backend packages..."
-curl -fSL --progress-bar "$CDN_BASE/tek-backend-arm64.tar.gz" -o "$TMPDIR_INSTALL/tek-backend-arm64.tar.gz"
+curl -fSL --progress-bar "$CDN_BASE/$BACKEND_FILENAME" -o "$TMPDIR_INSTALL/backend.tar.gz"
+
+# 7a. Verify download integrity
+DL_MD5=$(md5 -q "$TMPDIR_INSTALL/backend.tar.gz")
+if [ "$DL_MD5" != "$BACKEND_MD5" ]; then
+  echo ""
+  echo "  ✗ Download integrity check failed!"
+  echo "    Expected: $BACKEND_MD5"
+  echo "    Got:      $DL_MD5"
+  echo "    Try running the installer again."
+  exit 1
+fi
+echo "  Verified ✓"
 
 # 8. Download desktop app DMG
 echo "  Downloading desktop app..."
@@ -124,7 +138,7 @@ fi
 echo ""
 echo "  Extracting backend..."
 mkdir -p "$INSTALL_DIR"
-tar -xzf "$TMPDIR_INSTALL/tek-backend-arm64.tar.gz" -C "$INSTALL_DIR"
+tar -xzf "$TMPDIR_INSTALL/backend.tar.gz" -C "$INSTALL_DIR"
 
 # 11. Create bin symlink
 mkdir -p "$INSTALL_DIR/bin"
@@ -218,6 +232,7 @@ echo "  Get started:"
 echo ""
 echo "    source ~/.zshrc              # load PATH in this terminal"
 echo "    tek init                     # setup wizard (API keys, model)"
+echo "    tek onboard                  # create your first agent"
 echo "    tek gateway start            # start the gateway server"
 echo "    tek chat                     # start chatting"
 echo ""

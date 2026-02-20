@@ -65,14 +65,39 @@ cp "$SOURCE_DIR/package.json" "$SOURCE_DIR/dist/staging/package.json"
 cp "$SOURCE_DIR/pnpm-lock.yaml" "$SOURCE_DIR/dist/staging/pnpm-lock.yaml"
 cp "$SOURCE_DIR/pnpm-workspace.yaml" "$SOURCE_DIR/dist/staging/pnpm-workspace.yaml"
 
-# Sync root node_modules
-rsync -a "$SOURCE_DIR/node_modules/" "$SOURCE_DIR/dist/staging/node_modules/"
+# Sync root node_modules (preserve pnpm symlink structure, exclude build-time packages)
+rsync -a \
+  --exclude='.ignored_*' \
+  --exclude='.bin/' \
+  --exclude='*.wasm' \
+  --exclude='vendor/ripgrep/' \
+  --exclude='esbuild/' \
+  --exclude='@esbuild/' \
+  --exclude='@biomejs/' \
+  --exclude='@img/' \
+  --exclude='sharp/' \
+  --exclude='rollup/' \
+  --exclude='@rollup/' \
+  --exclude='vite/' \
+  --exclude='@vitest/' \
+  --exclude='vitest/' \
+  --exclude='turbo/' \
+  --exclude='turbo-darwin-arm64/' \
+  --exclude='postcss/' \
+  --exclude='tailwindcss/' \
+  --exclude='@tailwindcss/' \
+  --exclude='lightningcss/' \
+  --exclude='typescript/' \
+  --exclude='@tauri-apps/' \
+  "$SOURCE_DIR/node_modules/" "$SOURCE_DIR/dist/staging/node_modules/"
 
 # Sync per-package node_modules
 for pkg in core db cli gateway telegram; do
   if [ -d "$SOURCE_DIR/packages/$pkg/node_modules" ]; then
     mkdir -p "$SOURCE_DIR/dist/staging/packages/$pkg/node_modules"
     rsync -a \
+      --exclude='.ignored_*' \
+      --exclude='.bin/' \
       "$SOURCE_DIR/packages/$pkg/node_modules/" \
       "$SOURCE_DIR/dist/staging/packages/$pkg/node_modules/"
   fi
@@ -82,11 +107,17 @@ done
 mkdir -p "$SOURCE_DIR/dist/staging/memory-files"
 cp "$SOURCE_DIR/packages/db/memory-files/"*.md "$SOURCE_DIR/dist/staging/memory-files/"
 
-# 5. Create tarball
-echo "Creating backend tarball..."
-tar -czf "$SOURCE_DIR/dist/tek-backend-arm64.tar.gz" -C "$SOURCE_DIR/dist/staging" .
+# 5. Compute commit hash for unique filenames (avoids CDN edge cache issues)
+COMMIT=$(cd "$SOURCE_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BACKEND_FILENAME="tek-backend-arm64-${COMMIT}.tar.gz"
 
-# 6. Copy DMG from Tauri build output
+# 6. Create tarball with checksum
+echo "Creating backend tarball..."
+tar -czf "$SOURCE_DIR/dist/$BACKEND_FILENAME" -C "$SOURCE_DIR/dist/staging" .
+BACKEND_MD5=$(md5 -q "$SOURCE_DIR/dist/$BACKEND_FILENAME")
+echo "  Checksum: $BACKEND_MD5"
+
+# 7. Copy DMG from Tauri build output
 echo "Copying DMG..."
 DMG_FILE=$(ls "$SOURCE_DIR/apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/"*.dmg 2>/dev/null | head -1)
 if [ -z "$DMG_FILE" ]; then
@@ -96,9 +127,8 @@ fi
 DMG_NAME=$(basename "$DMG_FILE")
 cp "$DMG_FILE" "$SOURCE_DIR/dist/$DMG_NAME"
 
-# 7. Create version.json (includes DMG filename for remote installer)
+# 8. Create version.json (includes filenames and checksum for remote installer)
 VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$SOURCE_DIR/package.json','utf-8')).version || '0.0.0')")
-COMMIT=$(cd "$SOURCE_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 cat > "$SOURCE_DIR/dist/version.json" <<VEOF
@@ -109,20 +139,21 @@ cat > "$SOURCE_DIR/dist/version.json" <<VEOF
   "arch": "aarch64",
   "platform": "darwin",
   "dmgFilename": "$DMG_NAME",
-  "backendFilename": "tek-backend-arm64.tar.gz"
+  "backendFilename": "$BACKEND_FILENAME",
+  "backendMd5": "$BACKEND_MD5"
 }
 VEOF
 
-# 8. Print summary
+# 9. Print summary
 echo ""
 echo "Distribution artifacts:"
 echo "======================="
-for f in "$SOURCE_DIR/dist/tek-backend-arm64.tar.gz" "$SOURCE_DIR/dist/$DMG_NAME" "$SOURCE_DIR/dist/version.json"; do
+for f in "$SOURCE_DIR/dist/$BACKEND_FILENAME" "$SOURCE_DIR/dist/$DMG_NAME" "$SOURCE_DIR/dist/version.json"; do
   SIZE=$(du -h "$f" | cut -f1)
   echo "  $SIZE  $(basename "$f")"
 done
 
-# 9. Clean up staging
+# 10. Clean up staging
 rm -rf "$SOURCE_DIR/dist/staging"
 
 echo ""
