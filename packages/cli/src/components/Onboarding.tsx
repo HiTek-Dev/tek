@@ -15,6 +15,8 @@ type OnboardingStep =
 	| "keys-more"
 	| "telegram-ask"
 	| "telegram-input"
+	| "brave-ask"
+	| "brave-input"
 	| "model-select"
 	| "model-alias-select"
 	| "model-alias-name"
@@ -63,6 +65,9 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 
 	// Telegram state
 	const [telegramToken, setTelegramToken] = useState("");
+
+	// Brave Search state
+	const [braveApiKey, setBraveApiKey] = useState("");
 
 	/** Build the list of available models from the full catalog for configured providers. */
 	function buildAvailableModels(): Array<{ label: string; value: string }> {
@@ -272,7 +277,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 				<ConfirmInput
 					onConfirm={() => setStep("telegram-input")}
 					onCancel={() => {
-						goToModelSelect();
+						setStep("brave-ask");
 					}}
 				/>
 			</Box>
@@ -292,6 +297,44 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					onSubmit={(value) => {
 						if (value.trim()) {
 							setTelegramToken(value.trim());
+						}
+						setStep("brave-ask");
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "brave-ask") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Set up Brave Search API?</Text>
+				<Text dimColor>
+					Free tier: 2000 queries/month. Get a key at https://brave.com/search/api/
+				</Text>
+				<Text />
+				<ConfirmInput
+					onConfirm={() => setStep("brave-input")}
+					onCancel={() => goToModelSelect()}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "brave-input") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Enter your Brave Search API key:</Text>
+				<Text dimColor>
+					Get one from https://brave.com/search/api/ -- click "Get API Key"
+				</Text>
+				<Text />
+				<TextInput
+					placeholder="BSA..."
+					onSubmit={(value) => {
+						if (value.trim()) {
+							setBraveApiKey(value.trim());
+							setKeys((prev) => [...prev, { provider: "brave" as Provider, key: value.trim() }]);
 						}
 						goToModelSelect();
 					}}
@@ -471,6 +514,12 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					Telegram:{" "}
 					<Text bold>
 						{telegramToken ? "configured" : "not configured"}
+					</Text>
+				</Text>
+				<Text>
+					Brave Search:{" "}
+					<Text bold>
+						{braveApiKey ? "configured" : "not configured"}
 					</Text>
 				</Text>
 				{defaultModel && (

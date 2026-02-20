@@ -363,8 +363,10 @@ export async function handleChatSend(
 					securityMode: config.securityMode ?? "limited-control",
 					workspaceDir: config.workspaceDir,
 					approvalPolicy,
+					tavilyApiKey: getKey("tavily") ?? undefined,
 					openaiApiKey: getKey("openai") ?? undefined,
 					veniceApiKey: getKey("venice") ?? undefined,
+					braveApiKey: getKey("brave") ?? undefined,
 					agentId,
 				});
 				connState.tools = tools;
