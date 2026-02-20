@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 23 — Agent Tools & Error Recovery
+**Current focus:** Phase 24 — Tools Actually Working
 
 ## Current Position
 
-Phase: 23 of 23 (Agent Tools & Error Recovery)
-Plan: 3 of 3 in current phase
-Status: Phase 23 complete
-Last activity: 2026-02-20 - Completed 23-03: Brave Search skill, API key wiring, init wizard
+Phase: 24 of 24 (Tools Actually Working)
+Plan: 1 of 2 in current phase
+Status: Executing phase 24
+Last activity: 2026-02-20 - Completed 24-01: Workspace dir auto-creation and write_file parent mkdir
 
-Progress: [██████████████████████████████████████████] 100%
+Progress: [████████████████████████████████████████░░] 95%
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Progress: [███████████████████████
 | Phase 23 P02 | 1min | 1 tasks | 3 files |
 | Phase 23 P01 | 3min | 2 tasks | 6 files |
 | Phase 23 P03 | 4min | 2 tasks | 6 files |
+| Phase 24 P01 | 1min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -307,6 +308,7 @@ Recent decisions affecting current work:
 - [Phase 23]: [23-01]: Shell tool defaults cwd to workspaceDir even in full-control mode (sensible default, not a restriction)
 - [Phase 23]: [23-03]: Brave Search uses inputSchema pattern consistent with existing Tavily web search tool
 - [Phase 23]: [23-03]: Brave Search uses auto approval tier (read-only); brave-ask/brave-input steps in init between Telegram and model-select
+- [Phase 24]: [24-01]: mkdir(dirname(path), { recursive: true }) before writeFile for nested path support; workspace dir created at buildToolRegistry start
 
 ### Roadmap Evolution
 
@@ -323,6 +325,7 @@ Recent decisions affecting current work:
 - Phase 21 added: Init & Agent Onboarding Rework — separate app init from agent onboarding, tek onboard command, agent model/workspace config, agent selection in chat, gateway-managed identity injection, full CLI code review
 - Phase 22 added: Agent First Contact & Dashboard Polish — fix agent first-chat identity/greeting, conversational onboarding to build USER/SOUL, remove default agent, fix desktop gateway discovery/chat, dashboard UI spacing, OpenClaw-inspired UX research
 - Phase 23 added: Agent Tools & Error Recovery — fix broken tool workspace paths, tool error handling/failure reporting, complete base tool set (file CRUD, fetch, shell), memory/system prompt loading fixes, Brave Search API skill, workspace permissions
+- Phase 24 added: Tools Actually Working — fix workspace dir auto-creation (ENOENT on first write), agent loop session persistence (re-introduces every turn), tool error recovery (silent failures)
 - [Phase 18]: [18-01]: Two-phase onboarding: infrastructure wizard then conversational Hatch step for personality
 - [Phase 18]: [18-01]: 5 personality presets (Professional/Friendly/Technical/Opinionated/Custom) as markdown templates
 - [Phase 18]: [18-01]: Multi-file identity architecture: SOUL.md + IDENTITY.md + USER.md + STYLE.md + AGENTS.md
@@ -355,5 +358,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 23-03-PLAN.md (Phase 23 complete)
+Stopped at: Completed 24-01-PLAN.md
 Resume file: None
