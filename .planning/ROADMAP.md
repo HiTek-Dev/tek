@@ -401,7 +401,8 @@ Plans:
   4. Desktop chat works without provider errors (uses configured default model)
   5. Desktop agents page shows agent list, create form, and per-agent editing
   6. Limited workspace mode still grants agent access to its own ~/.config/tek/memory/ directory
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 20 to break down)
+- [ ] 20-01-PLAN.md — Memory read/write tools and tool registry registration
+- [ ] 20-02-PLAN.md — Provider validation before streaming and desktop verification
