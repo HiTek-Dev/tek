@@ -16,6 +16,39 @@ import { ThreadManager } from "../memory/thread-manager.js";
 const DEFAULT_SYSTEM_PROMPT = "You are a helpful AI assistant.";
 const logger = createLogger("assembler");
 
+/**
+ * Build the first-contact system prompt for a new agent conversation.
+ * Returns the prompt with agent/user names interpolated, or empty string if config unavailable.
+ */
+function buildFirstContactPrompt(agentId?: string): string {
+	try {
+		const config = loadConfig();
+		if (!config) return "";
+
+		const agentName = agentId
+			? config.agents?.list?.find((a: { id: string }) => a.id === agentId)?.name ?? "your assistant"
+			: "your assistant";
+		const userName = config.userDisplayName ?? "there";
+
+		return [
+			`This is your first conversation with ${userName}. Make it count.`,
+			"",
+			`**Your name is ${agentName}.** Introduce yourself naturally -- who you are, what you're good at, what makes you tick. Draw from your identity and personality sections above.`,
+			"",
+			"**Get to know them:**",
+			"- What are they working on right now?",
+			"- How do they prefer to communicate (brief vs detailed, casual vs formal)?",
+			"- Any tools, languages, or workflows they rely on?",
+			"",
+			"Keep it conversational -- like meeting a sharp new colleague, not filling out a form. Listen actively and respond to what they share before asking the next thing.",
+			"",
+			'**Save what you learn** using the memory_write tool (target: "identity", file: "USER.md") so you remember next time. Write naturally, not as bullet points.',
+		].join("\n");
+	} catch {
+		return "";
+	}
+}
+
 /** Lazy-init singleton instances (matches SessionManager/UsageTracker pattern) */
 let memoryManagerInstance: MemoryManager | null = null;
 let threadManagerInstance: ThreadManager | null = null;
@@ -75,6 +108,10 @@ export function assembleContext(
 	const memoryManager = getMemoryManager();
 	const memoryCtx = memoryManager.getMemoryContext(agentId);
 
+	// Detect first contact: USER.md empty or sparse (< 50 chars means template-only)
+	const isFirstContact = !memoryCtx.user || memoryCtx.user.trim().length < 50;
+	const firstContactPrompt = isFirstContact ? buildFirstContactPrompt(agentId) : "";
+
 	// Compose full system prompt: user prompt + identity files + memory + recent logs
 	const systemParts = [
 		userSystemPrompt,
@@ -82,6 +119,7 @@ export function assembleContext(
 		memoryCtx.identity ? `\n\n# Your Presentation\n${memoryCtx.identity}` : "",
 		memoryCtx.style    ? `\n\n# Communication Style\n${memoryCtx.style}` : "",
 		memoryCtx.user     ? `\n\n# About the User\n${memoryCtx.user}` : "",
+		firstContactPrompt ? `\n\n# First Contact Instructions\n${firstContactPrompt}` : "",
 		memoryCtx.agents   ? `\n\n# Agent Coordination\n${memoryCtx.agents}` : "",
 		memoryCtx.longTermMemory ? `\n\n# Long-Term Memory\n${memoryCtx.longTermMemory}` : "",
 		memoryCtx.recentLogs     ? `\n\n# Recent Activity\n${memoryCtx.recentLogs}` : "",
@@ -100,6 +138,7 @@ export function assembleContext(
 	addSection(sections, "identity", memoryCtx.identity, pricing.inputPerMTok);
 	addSection(sections, "style", memoryCtx.style, pricing.inputPerMTok);
 	addSection(sections, "user_context", memoryCtx.user, pricing.inputPerMTok);
+	addSection(sections, "first_contact", firstContactPrompt, pricing.inputPerMTok);
 	addSection(sections, "agents", memoryCtx.agents, pricing.inputPerMTok);
 	addSection(sections, "long_term_memory", memoryCtx.longTermMemory, pricing.inputPerMTok);
 	addSection(sections, "recent_activity", memoryCtx.recentLogs, pricing.inputPerMTok);
