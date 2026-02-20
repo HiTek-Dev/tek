@@ -9,7 +9,6 @@ import { buildModelOptions } from "../lib/models.js";
 type OnboardingStep =
 	| "welcome"
 	| "mode"
-	| "workspace"
 	| "keys-ask"
 	| "keys-provider"
 	| "keys-input"
@@ -19,8 +18,6 @@ type OnboardingStep =
 	| "model-select"
 	| "model-alias-select"
 	| "model-alias-name"
-	| "hatch-ask"
-	| "hatch-name"
 	| "summary"
 	| "done";
 
@@ -31,33 +28,25 @@ interface ModelAliasEntry {
 
 export interface OnboardingResult {
 	securityMode: SecurityMode;
-	workspaceDir?: string;
 	keys: { provider: Provider; key: string }[];
 	defaultModel?: string;
 	modelAliases?: ModelAliasEntry[];
 	telegramToken?: string;
-	personalityPreset?: string;
-	agentName?: string;
-	userDisplayName?: string;
 }
 
 export interface OnboardingProps {
 	onComplete: (result: OnboardingResult) => void;
 	existingConfig?: {
 		securityMode?: SecurityMode;
-		workspaceDir?: string;
 		defaultModel?: string;
 		modelAliases?: ModelAliasEntry[];
 		configuredProviders?: string[];
-		agentName?: string;
-		userDisplayName?: string;
 	};
 }
 
 export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	const [step, setStep] = useState<OnboardingStep>("welcome");
 	const [mode, setMode] = useState<SecurityMode>(existingConfig?.securityMode ?? "full-control");
-	const [workspaceDir, setWorkspaceDir] = useState(existingConfig?.workspaceDir ?? "");
 	const [keys, setKeys] = useState<{ provider: Provider; key: string }[]>([]);
 	const [currentProvider, setCurrentProvider] = useState<Provider>("anthropic");
 	const [currentKey, setCurrentKey] = useState("");
@@ -74,12 +63,6 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 
 	// Telegram state
 	const [telegramToken, setTelegramToken] = useState("");
-
-	// Hatch (personality) state
-	const [personalityPreset, setPersonalityPreset] = useState<string>("");
-	const [agentName, setAgentName] = useState(existingConfig?.agentName ?? "");
-	const [userDisplayName, setUserDisplayName] = useState(existingConfig?.userDisplayName ?? "");
-	const [hatchSubStep, setHatchSubStep] = useState(0);
 
 	/** Build the list of available models from the full catalog for configured providers. */
 	function buildAvailableModels(): Array<{ label: string; value: string }> {
@@ -102,14 +85,14 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 		setStep("telegram-ask");
 	}
 
-	/** Transition to model-select, or skip to hatch-ask if no models available. */
+	/** Transition to model-select, or skip to summary if no models available. */
 	function goToModelSelect() {
 		const models = buildAvailableModels();
 		if (models.length > 0) {
 			setAvailableModels(models);
 			setStep("model-select");
 		} else {
-			setStep("hatch-ask");
+			setStep("summary");
 		}
 	}
 
@@ -161,35 +144,11 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					options={modeOptions}
 					onChange={(value) => {
 						if (value === "__keep__") {
-							// Preserve existing mode and skip workspace
 							setStep("keys-ask");
 						} else {
 							setMode(value as SecurityMode);
-							if (value === "limited-control") {
-								setStep("workspace");
-							} else {
-								setStep("keys-ask");
-							}
+							setStep("keys-ask");
 						}
-					}}
-				/>
-			</Box>
-		);
-	}
-
-	if (step === "workspace") {
-		return (
-			<Box flexDirection="column" padding={1}>
-				<Text bold>Enter workspace directory path:</Text>
-				<Text dimColor>
-					The agent will be restricted to this directory and its subdirectories.
-				</Text>
-				<Text />
-				<TextInput
-					placeholder="~/workspace"
-					onSubmit={(value) => {
-						setWorkspaceDir(value);
-						setStep("keys-ask");
 					}}
 				/>
 			</Box>
@@ -400,10 +359,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 						onChange={(value) => {
 							if (value === "keep") {
 								setModelAliases(existingConfig!.modelAliases!);
-								setStep("hatch-ask");
+								setStep("summary");
 							} else if (value === "skip") {
 								setModelAliases([]);
-								setStep("hatch-ask");
+								setStep("summary");
 							} else {
 								// "choose" — fall through to MultiSelect
 								setAliasKeepDecided(true);
@@ -428,7 +387,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					visibleOptionCount={8}
 					onSubmit={(selected) => {
 						if (selected.length === 0) {
-							setStep("hatch-ask");
+							setStep("summary");
 						} else {
 							setModelsToAlias(selected);
 							setAliasIndex(0);
@@ -442,7 +401,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 
 	if (step === "model-alias-name") {
 		if (aliasIndex >= modelsToAlias.length) {
-			setStep("hatch-ask");
+			setStep("summary");
 			return null;
 		}
 
@@ -487,92 +446,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 		);
 	}
 
-	if (step === "hatch-ask") {
-		return (
-			<Box flexDirection="column" padding={1}>
-				<Text bold>Personalize your agent?</Text>
-				<Text dimColor>
-					Choose a personality preset or set up later via conversation.
-				</Text>
-				<Text />
-				<Select
-					options={[
-						{ label: "Professional \u2014 Concise, formal, business-appropriate", value: "professional" },
-						{ label: "Friendly \u2014 Conversational, warm, asks follow-ups", value: "friendly" },
-						{ label: "Technical \u2014 Detailed, code-heavy, precise", value: "technical" },
-						{ label: "Opinionated \u2014 Direct, has preferences, personality-forward", value: "opinionated" },
-						{ label: "Custom \u2014 Set up later via conversation", value: "custom" },
-						{ label: "Skip \u2014 Use default personality", value: "skip" },
-					]}
-					onChange={(value) => {
-						if (value === "skip") {
-							setStep("summary");
-						} else if (value === "custom") {
-							setPersonalityPreset("custom");
-							setStep("summary");
-						} else {
-							setPersonalityPreset(value);
-							setHatchSubStep(0);
-							setStep("hatch-name");
-						}
-					}}
-				/>
-			</Box>
-		);
-	}
-
-	if (step === "hatch-name") {
-		if (hatchSubStep === 0) {
-			return (
-				<Box flexDirection="column" padding={1}>
-					<Text bold>What should your agent be called?</Text>
-					<Text dimColor>
-						Give your agent a name that fits its personality.
-					</Text>
-					<Text />
-					<TextInput
-						key={`hatch-${hatchSubStep}`}
-						placeholder="e.g. Atlas, Sage, Tek"
-						onSubmit={(value) => {
-							if (value.trim()) {
-								setAgentName(value.trim());
-							}
-							setHatchSubStep(1);
-						}}
-					/>
-				</Box>
-			);
-		}
-
-		// hatchSubStep === 1
-		return (
-			<Box flexDirection="column" padding={1}>
-				<Text bold>What should the agent call you?</Text>
-				<Text dimColor>
-					Your name or a nickname the agent will use.
-				</Text>
-				<Text />
-				<TextInput
-					key={`hatch-${hatchSubStep}`}
-					placeholder="e.g. your name or a nickname"
-					onSubmit={(value) => {
-						if (value.trim()) {
-							setUserDisplayName(value.trim());
-						}
-						setStep("summary");
-					}}
-				/>
-			</Box>
-		);
-	}
-
 	if (step === "summary") {
-		const personalityLabel = personalityPreset === "custom"
-			? "Custom (will set up on first chat)"
-			: personalityPreset === "skip" || !personalityPreset
-				? "Default"
-				: personalityPreset.charAt(0).toUpperCase() + personalityPreset.slice(1);
-
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text bold color="cyan">
@@ -585,11 +459,6 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 						{mode === "full-control" ? "Full Control" : "Limited Control"}
 					</Text>
 				</Text>
-				{mode === "limited-control" && workspaceDir && (
-					<Text>
-						Workspace: <Text bold>{workspaceDir}</Text>
-					</Text>
-				)}
 				<Text>
 					API keys:{" "}
 					<Text bold>
@@ -621,15 +490,6 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 					</Box>
 				)}
 				<Text>
-					Personality:{" "}
-					<Text bold>{personalityLabel}</Text>
-				</Text>
-				{agentName && (
-					<Text>
-						Agent name: <Text bold>{agentName}</Text>
-					</Text>
-				)}
-				<Text>
 					API endpoint:{" "}
 					<Text bold>will be available at 127.0.0.1:3271</Text>
 				</Text>
@@ -641,16 +501,11 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 						setStep("done");
 						onComplete({
 							securityMode: mode,
-							workspaceDir:
-								mode === "limited-control" ? workspaceDir : undefined,
 							keys,
 							defaultModel: defaultModel || undefined,
 							modelAliases:
 								modelAliases.length > 0 ? modelAliases : undefined,
 							telegramToken: telegramToken || undefined,
-							personalityPreset: personalityPreset || undefined,
-							agentName: agentName || undefined,
-							userDisplayName: userDisplayName || undefined,
 						});
 					}}
 				/>
@@ -664,6 +519,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 			<Text bold color="green">
 				Setup complete!
 			</Text>
+			<Text>
+				Run <Text bold>{CLI_COMMAND} onboard</Text> to create your first agent.
+			</Text>
+			<Text />
 			<Text>
 				Run <Text bold>{CLI_COMMAND} keys list</Text> to see your configured keys.
 			</Text>

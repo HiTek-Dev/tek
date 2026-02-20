@@ -47,6 +47,10 @@ export const AgentDefinitionSchema = z.object({
 	model: z.string().optional(),
 	description: z.string().optional(),
 	accessMode: z.enum(["full", "limited"]).default("full"),
+	workspaceDir: z.string().optional(),
+	personalityPreset: z.string().optional(),
+	purpose: z.string().optional(),
+	createdAt: z.string().datetime().optional(),
 });
 
 export const AgentsConfigSchema = z.object({
