@@ -87,16 +87,16 @@ export function ChatPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header bar */}
-			<div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-900/50">
+			<div className="flex items-center justify-between px-4 py-3 border-b border-surface-overlay bg-surface-primary/50">
 				<div className="flex items-center gap-3">
-					<h1 className="text-lg font-semibold text-gray-100">Chat</h1>
+					<h1 className="text-lg font-semibold text-text-primary">Chat</h1>
 					{agents.length > 0 && (
 						<select
 							value={selectedAgentId ?? ""}
 							onChange={(e) =>
 								setSelectedAgentId(e.target.value || null)
 							}
-							className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-200 focus:border-blue-500 focus:outline-none"
+							className="bg-surface-elevated border border-surface-overlay rounded px-2 py-1 text-sm text-text-primary focus:border-brand-500 focus:outline-none"
 						>
 							{agents.map((a) => (
 								<option key={a.id} value={a.id}>
@@ -109,19 +109,19 @@ export function ChatPage() {
 						<span
 							className={`w-2 h-2 rounded-full ${ws.connected ? "bg-green-400" : "bg-red-400"}`}
 						/>
-						<span className="text-xs text-gray-400">
+						<span className="text-xs text-text-secondary">
 							{ws.connected ? "Connected" : "Disconnected"}
 						</span>
 					</div>
 				</div>
-				<div className="flex items-center gap-3 text-xs text-gray-500">
+				<div className="flex items-center gap-3 text-xs text-text-muted">
 					{chat.sessionId && (
 						<span className="font-mono">
 							{chat.sessionId.slice(0, 8)}
 						</span>
 					)}
 					{chat.model && (
-						<span className="bg-gray-700 text-gray-400 px-2 py-0.5 rounded">
+						<span className="bg-surface-overlay text-text-secondary px-2 py-0.5 rounded">
 							{chat.model}
 						</span>
 					)}
@@ -136,7 +136,7 @@ export function ChatPage() {
 				{chat.messages.length === 0 && !chat.isStreaming && (
 					<div className="flex items-center justify-center h-full">
 						<div className="text-center">
-							<p className="text-gray-500 text-sm">
+							<p className="text-text-muted text-sm">
 								{ws.connected
 									? agents.length === 0
 										? "Create an agent with 'tek onboard' in the terminal to start chatting"
