@@ -8,10 +8,10 @@ interface ConfigSectionProps {
 
 export function ConfigSection({ title, description, children }: ConfigSectionProps) {
   return (
-    <div className="bg-gray-800 rounded-lg p-6 mb-4">
-      <h2 className="text-lg font-semibold text-gray-100">{title}</h2>
+    <div className="bg-surface-secondary rounded-lg p-6 mb-4">
+      <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
       {description && (
-        <p className="text-sm text-gray-400 mt-1">{description}</p>
+        <p className="text-sm text-text-secondary mt-1">{description}</p>
       )}
       <div className="mt-4">{children}</div>
     </div>
