@@ -7,6 +7,7 @@ import { useSessions } from "../hooks/useSessions";
 import { ChatMessage } from "../components/ChatMessage";
 import { StreamingText } from "../components/StreamingText";
 import { ChatInput } from "../components/ChatInput";
+import { ToolApprovalModal } from "../components/modals/ToolApprovalModal";
 
 /**
  * Full chat interface page.
@@ -154,7 +155,11 @@ export function ChatPage() {
 				)}
 
 				{chat.messages.map((msg) => (
-					<ChatMessage key={msg.id} message={msg} />
+					<ChatMessage
+						key={msg.id}
+						message={msg}
+						model={msg.type === "text" && msg.role === "assistant" ? chat.model : null}
+					/>
 				))}
 
 				{chat.isStreaming && (
@@ -177,6 +182,18 @@ export function ChatPage() {
 				onSend={chat.sendMessage}
 				disabled={!ws.connected || chat.isStreaming}
 			/>
+
+			{/* Tool approval modal */}
+			{chat.pendingApprovals.length > 0 && (
+				<ToolApprovalModal
+					toolName={chat.pendingApprovals[0].toolName}
+					toolCallId={chat.pendingApprovals[0].toolCallId}
+					args={chat.pendingApprovals[0].args}
+					risk={chat.pendingApprovals[0].risk}
+					queueSize={chat.pendingApprovals.length}
+					onResponse={chat.handleApproval}
+				/>
+			)}
 		</div>
 	);
 }

@@ -1,8 +1,11 @@
+import { useState } from "react";
 import type { ChatMessage as ChatMessageType } from "../lib/gateway-client";
 import { MarkdownRenderer } from "./chat/MarkdownRenderer";
+import { Badge } from "./ui/Badge";
 
 interface ChatMessageProps {
 	message: ChatMessageType;
+	model?: string | null;
 }
 
 function formatTime(timestamp: string): string {
@@ -14,7 +17,21 @@ function formatTime(timestamp: string): string {
 	}
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+	return (
+		<svg
+			className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke="currentColor"
+			strokeWidth={2}
+		>
+			<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+		</svg>
+	);
+}
+
+export function ChatMessage({ message, model }: ChatMessageProps) {
 	if (message.type === "text") {
 		if (message.role === "user") {
 			return (
@@ -36,7 +53,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
 			return (
 				<div className="flex justify-start">
 					<div className="max-w-[75%]">
-						<p className="text-xs text-gray-500 mb-1">Assistant</p>
+						<div className="flex items-center gap-2 mb-1">
+							<p className="text-xs text-gray-500">Assistant</p>
+							{model && <Badge variant="brand">{model}</Badge>}
+						</div>
 						<div className="bg-surface-elevated/50 border-l-2 border-surface-overlay text-gray-100 rounded-lg rounded-bl-sm px-4 py-3 text-sm leading-relaxed">
 							<MarkdownRenderer content={message.content} />
 						</div>
@@ -61,36 +81,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 	}
 
 	if (message.type === "tool_call") {
-		return (
-			<div className="flex justify-start">
-				<div className="max-w-[85%] bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2">
-					<div className="flex items-center gap-2 mb-1">
-						<span className="text-[10px] font-mono text-brand-400 bg-brand-400/10 px-1.5 py-0.5 rounded">
-							{message.toolName}
-						</span>
-						<span
-							className={`text-[10px] ${message.status === "complete" ? "text-green-400" : message.status === "error" ? "text-red-400" : "text-yellow-400"}`}
-						>
-							{message.status}
-						</span>
-					</div>
-					{message.input && (
-						<pre className="text-[11px] text-gray-400 font-mono overflow-x-auto max-h-24 overflow-y-auto">
-							{message.input.length > 200
-								? `${message.input.slice(0, 200)}...`
-								: message.input}
-						</pre>
-					)}
-					{message.output && (
-						<pre className="text-[11px] text-gray-300 font-mono mt-1 border-t border-gray-700 pt-1 overflow-x-auto max-h-24 overflow-y-auto">
-							{message.output.length > 300
-								? `${message.output.slice(0, 300)}...`
-								: message.output}
-						</pre>
-					)}
-				</div>
-			</div>
-		);
+		return <ToolCallCard message={message} />;
 	}
 
 	if (message.type === "bash_command") {
@@ -126,4 +117,52 @@ export function ChatMessage({ message }: ChatMessageProps) {
 	}
 
 	return null;
+}
+
+function ToolCallCard({
+	message,
+}: {
+	message: Extract<ChatMessageType, { type: "tool_call" }>;
+}) {
+	const [expanded, setExpanded] = useState(message.status === "pending");
+
+	return (
+		<div className="flex justify-start">
+			<div className="max-w-[85%] bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2">
+				<button
+					type="button"
+					onClick={() => setExpanded((prev) => !prev)}
+					className="flex items-center gap-2 w-full text-left"
+				>
+					<ChevronIcon expanded={expanded} />
+					<span className="text-[10px] font-mono text-brand-400 bg-brand-400/10 px-1.5 py-0.5 rounded">
+						{message.toolName}
+					</span>
+					<span
+						className={`text-[10px] ${message.status === "complete" ? "text-green-400" : message.status === "error" ? "text-red-400" : "text-yellow-400"}`}
+					>
+						{message.status}
+					</span>
+				</button>
+				<div
+					className={`transition-all duration-200 overflow-hidden ${expanded ? "max-h-96" : "max-h-0"}`}
+				>
+					{message.input && (
+						<pre className="text-[11px] text-gray-400 font-mono overflow-x-auto max-h-24 overflow-y-auto mt-2">
+							{message.input.length > 200
+								? `${message.input.slice(0, 200)}...`
+								: message.input}
+						</pre>
+					)}
+					{message.output && (
+						<pre className="text-[11px] text-gray-300 font-mono mt-1 border-t border-gray-700 pt-1 overflow-x-auto max-h-24 overflow-y-auto">
+							{message.output.length > 300
+								? `${message.output.slice(0, 300)}...`
+								: message.output}
+						</pre>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 }
