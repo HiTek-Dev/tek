@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [26-01]: FontStyle constants inline rather than importing @shikijs/vscode-textmate transitive dep
 - [26-04]: StatusBar borderless single-line; session ID removed (available via /session command)
 - [26-04]: WelcomeScreen fully static, disappears on first message or streaming start
+- [28-01]: ServerMessage union has 33 variants (not 27 as plan estimated) -- tested all actual variants
+- [28-01]: HeartbeatConfigure fixtures explicitly provide default fields for round-trip equality
 - [28-02]: Budget tier unreachable with DEFAULT_RULES (standard priority 2 catches before budget priority 3); tested with custom rules
 - [28-02]: Mock only registry.js for routeMessage; classifyComplexity and approval-gate are pure functions
 
@@ -82,5 +84,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 28-02-PLAN.md
+Stopped at: Completed 28-01-PLAN.md (Schema Round-Trip Tests)
 Resume file: None
