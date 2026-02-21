@@ -141,9 +141,9 @@ Requirements for the Product Polish milestone. Each maps to roadmap phases.
 
 - [ ] **TEST-01**: WebSocket protocol tests validate serialization/deserialization for all ClientMessage/ServerMessage types
 - [ ] **TEST-02**: Agent loop unit tests with mock Transport and mock streamText cover tool execution flow
-- [ ] **TEST-03**: LLM router unit tests cover classifyComplexity and model selection logic
+- [x] **TEST-03**: LLM router unit tests cover classifyComplexity and model selection logic
 - [ ] **TEST-04**: Config/schema tests validate Zod schema round-trips and migration from older formats
-- [ ] **TEST-05**: Approval gate policy tests cover auto/session/always tier logic
+- [x] **TEST-05**: Approval gate policy tests cover auto/session/always tier logic
 - [ ] **TEST-06**: Context assembly tests verify system prompt construction with soul/memory/identity
 
 ## Future Requirements
@@ -253,9 +253,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSKV-12 | Phase 27 | Pending |
 | TEST-01 | Phase 28 | Pending |
 | TEST-02 | Phase 28 | Pending |
-| TEST-03 | Phase 28 | Pending |
+| TEST-03 | Phase 28 | Complete |
 | TEST-04 | Phase 28 | Pending |
-| TEST-05 | Phase 28 | Pending |
+| TEST-05 | Phase 28 | Complete |
 | TEST-06 | Phase 28 | Pending |
 
 **Coverage:**

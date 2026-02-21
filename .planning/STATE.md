@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** Phase 26 — CLI Visual Overhaul (v0.1 Product Polish)
+**Current focus:** Phase 28 — Testing Foundation (v0.1 Product Polish)
 
 ## Current Position
 
-Phase: 26 of 28 (CLI Visual Overhaul)
-Plan: 4 of 4 (COMPLETE)
-Status: Phase 26 complete
-Last activity: 2026-02-21 — Completed 26-04 (Welcome Screen, StatusBar & Tool Panel)
+Phase: 28 of 28 (Testing Foundation)
+Plan: 2 of 3 (LLM Router & Approval Gate Tests)
+Status: Executing phase 28
+Last activity: 2026-02-21 — Completed 28-02 (LLM Router & Approval Gate Tests)
 
 Progress: [########################..] 86% (24/28 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 44 (36 v0.0 + 8 v0.1)
+- Total plans completed: 45 (36 v0.0 + 9 v0.1)
 - Average duration: 3min
-- Total execution time: 1.35 hours
+- Total execution time: 1.38 hours
 
 **By Phase (v0.1):**
 
@@ -30,7 +30,7 @@ Progress: [########################..] 86% (24/28 phases)
 | 25 | 4/4 | 9min | 2.3min |
 | 26 | 4/4 | 7min | 1.8min |
 | 27 | 0/TBD | - | - |
-| 28 | 0/TBD | - | - |
+| 28 | 2/3 | 2min | 1min |
 
 **Recent Trend:**
 - Last 5 plans: 2min, 1min, 1min, 1min, 1min
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [26-01]: FontStyle constants inline rather than importing @shikijs/vscode-textmate transitive dep
 - [26-04]: StatusBar borderless single-line; session ID removed (available via /session command)
 - [26-04]: WelcomeScreen fully static, disappears on first message or streaming start
+- [28-02]: Budget tier unreachable with DEFAULT_RULES (standard priority 2 catches before budget priority 3); tested with custom rules
+- [28-02]: Mock only registry.js for routeMessage; classifyComplexity and approval-gate are pure functions
 
 ### Pending Todos
 
@@ -80,5 +82,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 26-04-PLAN.md (Phase 26 complete)
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None
