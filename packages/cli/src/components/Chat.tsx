@@ -13,6 +13,8 @@ import { MessageList } from "./MessageList.js";
 import { StreamingResponse } from "./StreamingResponse.js";
 import { InputBar } from "./InputBar.js";
 import { StatusBar } from "./StatusBar.js";
+import { WelcomeScreen } from "./WelcomeScreen.js";
+import { ToolPanel } from "./ToolPanel.js";
 import { ToolApprovalPrompt } from "./ToolApprovalPrompt.js";
 import { SkillApprovalPrompt } from "./SkillApprovalPrompt.js";
 import { PreflightChecklist } from "./PreflightChecklist.js";
@@ -51,6 +53,7 @@ export function Chat({ wsUrl, initialModel, resumeSessionId, agentId, onProxyReq
 		setSessionId,
 		approveToolCall,
 		approvePreflight,
+		toolCalls,
 	} = useChat({ initialModel, resumeSessionId });
 
 	const { send } = useWebSocket({
@@ -173,11 +176,27 @@ export function Chat({ wsUrl, initialModel, resumeSessionId, agentId, onProxyReq
 				usage={usage}
 			/>
 
+			{messages.length === 0 && !isStreaming && <WelcomeScreen />}
+
 			<MessageList messages={messages} />
 
 			{isStreaming && (
 				<StreamingResponse text={streamingText} model={model} />
 			)}
+
+			{toolCalls.length > 0 &&
+				toolCalls[toolCalls.length - 1].status === "pending" && (
+					<ToolPanel
+						toolName={toolCalls[toolCalls.length - 1].toolName}
+						status={toolCalls[toolCalls.length - 1].status}
+						input={
+							typeof toolCalls[toolCalls.length - 1].args === "string"
+								? (toolCalls[toolCalls.length - 1].args as string)
+								: JSON.stringify(toolCalls[toolCalls.length - 1].args, null, 2)
+						}
+						isFocused={!isStreaming && !pendingApproval && !pendingPreflight}
+					/>
+				)}
 
 			{pendingApproval ? (
 				pendingApproval.toolName === "skill_register" ? (
