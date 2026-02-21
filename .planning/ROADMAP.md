@@ -44,7 +44,7 @@
 - [x] **Phase 25: Foundation & Blockers** - Vault extraction, error boundaries, Vitest workspace, WS auto-reconnect (completed 2026-02-20)
 - [x] **Phase 26: CLI Visual Overhaul** - Syntax highlighting, collapsible panels, input history, StatusBar redesign (completed 2026-02-21)
 - [ ] **Phase 27: Desktop UI Overhaul** - Markdown rendering, tool approval modal, conversation history, design system
-- [ ] **Phase 28: Testing Foundation** - MockTransport, WS protocol tests, agent loop tests, approval gate tests
+- [ ] **Phase 28: Testing Foundation** - WS protocol tests, config schema tests, router tests, approval gate tests, agent loop tests, context assembly tests
 
 ## Phase Details
 
@@ -103,7 +103,11 @@ Plans:
   3. LLM router tests verify classifyComplexity returns correct tiers for keyword, length, and default cases; model selection picks the right provider model
   4. Config schema tests validate Zod round-trips for current format and migration from older config shapes
   5. Approval gate tests verify auto/session/always tier logic; context assembly tests verify system prompt includes soul, memory, and identity content
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 28-01-PLAN.md — Zod schema round-trip tests (WS protocol + AppConfig)
+- [ ] 28-02-PLAN.md — Pure function tests (LLM router + approval gate)
+- [ ] 28-03-PLAN.md — Mock-based tests (agent loop + context assembly)
 
 ## Progress
 
@@ -115,4 +119,4 @@ Phase 25 first, then Phases 26, 27, and 28 can run in parallel.
 | 25. Foundation & Blockers | 4/4 | Complete    | 2026-02-20 | - |
 | 26. CLI Visual Overhaul | 4/4 | Complete    | 2026-02-21 | - |
 | 27. Desktop UI Overhaul | v0.1 | 0/TBD | Not started | - |
-| 28. Testing Foundation | v0.1 | 0/TBD | Not started | - |
+| 28. Testing Foundation | v0.1 | 0/3 | Not started | - |
