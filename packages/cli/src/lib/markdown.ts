@@ -1,13 +1,19 @@
 import { marked } from "marked";
 import { markedTerminal } from "marked-terminal";
+import { codeToAnsiSync } from "./shiki.js";
 
 // Configure marked with terminal renderer for CLI markdown display
 marked.use(
-	markedTerminal({
-		width: process.stdout.columns || 80,
-		tab: 2,
-		reflowText: true,
-	}),
+	markedTerminal(
+		{
+			width: process.stdout.columns || 80,
+			tab: 2,
+			reflowText: true,
+		},
+		{
+			highlight: (code: string, lang: string) => codeToAnsiSync(code, lang),
+		},
+	),
 );
 
 /**

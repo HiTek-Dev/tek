@@ -115,11 +115,11 @@ Requirements for the Product Polish milestone. Each maps to roadmap phases.
 
 - [ ] **CLIV-01**: Code blocks in CLI chat display syntax highlighting via shiki
 - [x] **CLIV-02**: Tool call panels are collapsible -- default collapsed showing tool name + status, expand to show args/output
-- [ ] **CLIV-03**: User can cycle through previous messages with up/down arrow keys in input
+- [x] **CLIV-03**: User can cycle through previous messages with up/down arrow keys in input
 - [x] **CLIV-04**: Tool output truncated at ~20 lines with "... (N more lines)" indicator
 - [ ] **CLIV-05**: Empty chat state shows welcome message with agent name, slash commands, and keyboard shortcuts
 - [x] **CLIV-06**: Messages display timestamps (HH:MM) right-aligned and dimmed
-- [ ] **CLIV-07**: User can enter multi-line input (Shift+Enter for newline, Enter to submit)
+- [x] **CLIV-07**: User can enter multi-line input (Shift+Enter for newline, Enter to submit)
 - [ ] **CLIV-08**: StatusBar redesigned with multi-zone layout: logo/connection, model/provider, token count + cost in compact format
 
 ### Desktop Visual
@@ -233,11 +233,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FOUND-03 | Phase 25 | Complete |
 | CLIV-01 | Phase 26 | Pending |
 | CLIV-02 | Phase 26 | Complete |
-| CLIV-03 | Phase 26 | Pending |
+| CLIV-03 | Phase 26 | Complete |
 | CLIV-04 | Phase 26 | Complete |
 | CLIV-05 | Phase 26 | Pending |
 | CLIV-06 | Phase 26 | Complete |
-| CLIV-07 | Phase 26 | Pending |
+| CLIV-07 | Phase 26 | Complete |
 | CLIV-08 | Phase 26 | Pending |
 | DSKV-01 | Phase 27 | Pending |
 | DSKV-02 | Phase 27 | Pending |
