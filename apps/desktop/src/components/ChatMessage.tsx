@@ -1,4 +1,5 @@
 import type { ChatMessage as ChatMessageType } from "../lib/gateway-client";
+import { MarkdownRenderer } from "./chat/MarkdownRenderer";
 
 interface ChatMessageProps {
 	message: ChatMessageType;
@@ -20,7 +21,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				<div className="flex justify-end">
 					<div className="max-w-[75%]">
 						<p className="text-xs text-gray-500 mb-1 text-right">You</p>
-						<div className="bg-blue-600/20 border-l-2 border-blue-500 text-gray-100 rounded-lg rounded-br-sm px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+						<div className="bg-brand-600/20 border-l-2 border-brand-500 text-gray-100 rounded-lg rounded-br-sm px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
 							{message.content}
 						</div>
 						<p className="text-[10px] text-gray-500 mt-1 text-right">
@@ -36,8 +37,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				<div className="flex justify-start">
 					<div className="max-w-[75%]">
 						<p className="text-xs text-gray-500 mb-1">Assistant</p>
-						<div className="bg-gray-800/50 border-l-2 border-gray-600 text-gray-100 rounded-lg rounded-bl-sm px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
-							{message.content}
+						<div className="bg-surface-elevated/50 border-l-2 border-surface-overlay text-gray-100 rounded-lg rounded-bl-sm px-4 py-3 text-sm leading-relaxed">
+							<MarkdownRenderer content={message.content} />
 						</div>
 						<p className="text-[10px] text-gray-500 mt-1">
 							{formatTime(message.timestamp)}
@@ -64,7 +65,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 			<div className="flex justify-start">
 				<div className="max-w-[85%] bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2">
 					<div className="flex items-center gap-2 mb-1">
-						<span className="text-[10px] font-mono text-purple-400 bg-purple-400/10 px-1.5 py-0.5 rounded">
+						<span className="text-[10px] font-mono text-brand-400 bg-brand-400/10 px-1.5 py-0.5 rounded">
 							{message.toolName}
 						</span>
 						<span
