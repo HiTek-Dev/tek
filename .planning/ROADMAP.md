@@ -101,7 +101,7 @@ Plans:
 **Goal:** Build a todo tracking system where agents call a `todo_write` tool to track progress on multi-step tasks, with real-time display in both CLI (Ink) and desktop (React/Tailwind) via `todo.update` WS protocol messages
 **Depends on:** Phase 31
 **Requirements:** [TODO-01, TODO-02, TODO-03, TODO-04, TODO-05, TODO-06, TODO-07]
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 33-01-PLAN.md -- Gateway todo tool, WS protocol extension, tool registry wiring, system prompt
@@ -127,5 +127,4 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 | 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete |
 | 31. Desktop Chat App Rebuild | 5/5 | Complete |
 | 32. Structured Streaming & Chat Formatting | 3/3 | Complete |
-| 33. Todo System Display | 0/3 | Planned |
-| 34. CLI Chat UX Overhaul | 0/TBD | Not started |
+| 33. Todo System Display | 1/3 | In Progress|  | 34. CLI Chat UX Overhaul | 0/TBD | Not started |

@@ -180,13 +180,13 @@ Requirements for the Chat Experience & Providers milestone. Each maps to roadmap
 
 ### Todo System Display in CLI and Desktop (Phase 33)
 
-- [ ] **TODO-01**: Gateway provides a `todo_write` tool that agents can call to create and update a task list during execution, with full-replace semantics (entire list sent each call)
-- [ ] **TODO-02**: WS protocol extended with `todo.update` server message type carrying the full todo list (id, content, status, activeForm) from gateway to connected clients
-- [ ] **TODO-03**: Todo tool is auto-approved (no user approval needed) and registered in the tool registry alongside existing tools
-- [ ] **TODO-04**: Base system prompt includes instruction for agents to use `todo_write` for complex multi-step tasks (3+ steps)
+- [x] **TODO-01**: Gateway provides a `todo_write` tool that agents can call to create and update a task list during execution, with full-replace semantics (entire list sent each call)
+- [x] **TODO-02**: WS protocol extended with `todo.update` server message type carrying the full todo list (id, content, status, activeForm) from gateway to connected clients
+- [x] **TODO-03**: Todo tool is auto-approved (no user approval needed) and registered in the tool registry alongside existing tools
+- [x] **TODO-04**: Base system prompt includes instruction for agents to use `todo_write` for complex multi-step tasks (3+ steps)
 - [ ] **TODO-05**: CLI displays active todos as a compact panel between streaming response and input bar, with spinner for in-progress, checkmark for completed, circle for pending
 - [ ] **TODO-06**: Desktop displays active todos as a compact panel above the chat input, with animated spinner for in-progress, green checkmark for completed, muted circle for pending
-- [ ] **TODO-07**: Todo state is cleared on `chat.stream.start` of the next request so stale todos from previous requests don't persist
+- [x] **TODO-07**: Todo state is cleared on `chat.stream.start` of the next request so stale todos from previous requests don't persist
 
 ## Future Requirements
 

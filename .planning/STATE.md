@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 ## Current Position
 
-Phase: 32 of 34 (Structured Streaming and Chat Formatting)
-Plan: 3 of 3
-Status: Phase complete
-Last activity: 2026-02-22 — Completed 32-03 CLI reasoning and sources display
+Phase: 33 of 34 (Todo System Display in CLI and Desktop)
+Plan: 1 of 3
+Status: In progress
+Last activity: 2026-02-22 — Completed 33-01 Gateway todo system
 
 Progress: [############################------] 82% (28/34 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 59 (36 v0.0 + 14 v0.1 + 9 v0.2)
+- Total plans completed: 60 (36 v0.0 + 14 v0.1 + 10 v0.2)
 - Average duration: 3min
 - Total execution time: 1.74 hours
 
@@ -39,6 +39,7 @@ Progress: [############################------] 82% (28/34 phases)
 | 30 | 1/1 | 3min | 3.0min |
 | 31 | 5/5 | 14min | 2.8min |
 | 32 | 3/3 | 11min | 3.7min |
+| 33 | 1/3 | 3min | 3.0min |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 32-02]: StreamingMessage renders when reasoning OR text present to show early reasoning
 - [Phase 32-03]: Functional state updater pattern for reasoning/sources promotion in stale-closure useCallback
 - [Phase 32-03]: Sources displayed without emoji prefix for clean CLI aesthetic
+- [Phase 33-01]: Used inputSchema (not parameters) to match existing AI SDK v6 tool() pattern in codebase
+- [Phase 33-01]: Todo tool uses auto approval via perTool policy, not wrapToolWithApproval wrapper
+- [Phase 33-01]: activeTodos cleared in both handleChatSend and handlePreflightApproval stream start paths
 
 ### Roadmap Evolution
 
@@ -85,5 +89,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 32-03-PLAN.md (CLI reasoning and sources display)
+Stopped at: Completed 33-01-PLAN.md (Gateway todo system)
 Resume file: None
