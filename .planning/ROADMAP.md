@@ -56,7 +56,7 @@
 - [x] **Phase 31: Desktop Chat App Rebuild** - Opcode-style Tauri chat, gateway status landing, agent selection, streaming display (completed 2026-02-22)
 - [x] **Phase 32: Structured Streaming & Chat Formatting** - JSON streaming protocol, reasoning blocks, source attribution, system prompt formatting (completed 2026-02-22)
 - [x] **Phase 33: Todo System Display in CLI and Desktop** - Todo progress in CLI bottom bar and desktop chat (completed 2026-02-22)
-- [ ] **Phase 34: CLI Chat UX Overhaul** - Fixed bottom input, expandable entry, Claude Code/Kimicode-style terminal
+- [x] **Phase 34: CLI Chat UX Overhaul** - Fixed bottom input, expandable entry, Claude Code/Kimicode-style terminal (completed 2026-02-22)
 
 ## Phase Details
 
@@ -113,7 +113,7 @@ Plans:
 **Goal:** CLI chat mimics Claude Code / Kimicode UX — fixed bottom input area that expands as user types, status section pinned below input, streaming responses scroll above, clean separation between user entry zone and conversation history
 **Depends on:** None (fresh start)
 **Requirements:** [CLIX-01, CLIX-02, CLIX-03, CLIX-04, CLIX-05, CLIX-06, CLIX-07, CLIX-08]
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 34-01-PLAN.md -- Fullscreen layout skeleton, cursor-aware input zone, bottom status bar

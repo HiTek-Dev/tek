@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** v0.2 Chat Experience & Providers — Phases 30-34 (in progress)
+**Current focus:** v0.2 Chat Experience & Providers — Phases 30-34 (complete)
 
 ## Current Position
 
 Phase: 34 of 34 (CLI Chat UX Overhaul)
-Plan: 1 of 2
-Status: In Progress
-Last activity: 2026-02-22 — Completed 34-01 Fullscreen layout
+Plan: 2 of 2
+Status: Complete
+Last activity: 2026-02-22 — Completed 34-02 Inline rendering
 
-Progress: [#################################-] 97% (33/34 phases)
+Progress: [##################################] 100% (34/34 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 63 (36 v0.0 + 14 v0.1 + 13 v0.2)
+- Total plans completed: 64 (36 v0.0 + 14 v0.1 + 14 v0.2)
 - Average duration: 3min
-- Total execution time: 1.89 hours
+- Total execution time: 1.96 hours
 
 **By Phase (v0.1):**
 
@@ -40,7 +40,7 @@ Progress: [#################################-] 97% (33/34 phases)
 | 31 | 5/5 | 14min | 2.8min |
 | 32 | 3/3 | 11min | 3.7min |
 | 33 | 3/3 | 9min | 3.0min |
-| 34 | 1/2 | 3min | 3.0min |
+| 34 | 2/2 | 7min | 3.5min |
 
 ## Accumulated Context
 
@@ -75,6 +75,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 34-01]: Render prop pattern for FullScreenWrapper to pass terminal dimensions
 - [Phase 34-01]: Heuristic message windowing (~3 lines/msg) with overflow hidden for ConversationScroll
 - [Phase 34-01]: isActive prop pattern replaces isStreaming for InputBar (disabled during streaming OR approval)
+- [Phase 34-02]: Unified InlineApproval replaces three separate approval components (ToolApprovalPrompt, SkillApprovalPrompt, PreflightChecklist)
+- [Phase 34-02]: ToolPanel removed from Chat.tsx -- tool calls render inline via MessageBubble/InlineToolCall
+- [Phase 34-02]: Diff heuristic: check first 10 lines for + and - prefixed lines to auto-render InlineDiff
+- [Phase 34-02]: Auto-collapse threshold of 20 changed lines for InlineDiff, Enter key toggle for focused diff
 
 ### Roadmap Evolution
 
@@ -98,5 +102,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 34-01-PLAN.md (Fullscreen layout)
+Stopped at: Completed 34-02-PLAN.md (Inline rendering)
 Resume file: None
