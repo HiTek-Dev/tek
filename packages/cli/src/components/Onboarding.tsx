@@ -363,7 +363,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 			<OllamaDetectStep
 				onModelsFound={(models) => {
 					setOllamaLocalDetected(true);
-					setOllamaModels((prev) => [...prev, ...models]);
+					setOllamaModels((prev) => {
+						const seen = new Set(prev.map((m) => m.value));
+						return [...prev, ...models.filter((m) => !seen.has(m.value))];
+					});
 					setOllamaEndpoints((prev) => [...prev, { name: "localhost", url: "http://localhost:11434" }]);
 					setStep("ollama-remote-ask");
 				}}
@@ -399,7 +402,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 				onSuccess={(url, models) => {
 					const hostname = url.replace(/^https?:\/\//, "").replace(/:\d+$/, "");
 					setOllamaEndpoints((prev) => [...prev, { name: hostname, url }]);
-					setOllamaModels((prev) => [...prev, ...models]);
+					setOllamaModels((prev) => {
+						const seen = new Set(prev.map((m) => m.value));
+						return [...prev, ...models.filter((m) => !seen.has(m.value))];
+					});
 					setOllamaRemoteError("");
 					setStep("ollama-remote-ask");
 				}}
@@ -783,7 +789,8 @@ function OllamaRemoteInputStep({
 		setProbing(true);
 		setProbedUrl(url);
 
-		buildOllamaModelOptions(url).then((models) => {
+		const hostname = url.replace(/^https?:\/\//, "").replace(/:\d+$/, "");
+		buildOllamaModelOptions(url, `ollama-${hostname}`).then((models) => {
 			setProbing(false);
 			if (models.length > 0) {
 				onSuccess(url, models);

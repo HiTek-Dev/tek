@@ -59,7 +59,7 @@ export function useChat({ port, agentId }: UseChatParams): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streamingText, setStreamingText] = useState('');
   const [streamingReasoning, setStreamingReasoning] = useState('');
-  const [streamingRequestId, setStreamingRequestId] = useState<string | null>(null);
+  const [_streamingRequestId, setStreamingRequestId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [usage, setUsage] = useState<UseChatReturn['usage']>(null);

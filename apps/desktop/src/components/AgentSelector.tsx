@@ -27,8 +27,9 @@ export function AgentSelector({
 }: AgentSelectorProps) {
   // Auto-select if only one agent
   useEffect(() => {
-    if (agents.length === 1 && selectedId !== agents[0].id) {
-      onSelect(agents[0].id);
+    const first = agents[0];
+    if (agents.length === 1 && first && selectedId !== first.id) {
+      onSelect(first.id);
     }
   }, [agents, selectedId, onSelect]);
 

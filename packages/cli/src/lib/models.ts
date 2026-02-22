@@ -119,13 +119,15 @@ function formatOllamaModelName(m: OllamaModel): string {
  * Returns empty array if Ollama is not running or unreachable.
  *
  * @param baseUrl - Ollama server base URL (without /v1 suffix)
+ * @param providerPrefix - Provider prefix for model IDs (default: "ollama")
  */
 export async function buildOllamaModelOptions(
 	baseUrl = "http://localhost:11434",
+	providerPrefix = "ollama",
 ): Promise<Array<{ label: string; value: string }>> {
 	const models = await listOllamaModels(baseUrl);
 	return models.map((m) => ({
 		label: formatOllamaModelName(m),
-		value: `ollama:${m.name}`,
+		value: `${providerPrefix}:${m.name}`,
 	}));
 }

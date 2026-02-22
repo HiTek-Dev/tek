@@ -119,7 +119,8 @@ export function InputBar({ onSubmit, isActive, screenWidth: _screenWidth, onHeig
 			}
 
 			// Backspace: delete character before cursor
-			if (key.backspace) {
+			// Check both key.backspace and raw bytes (\x7F, \x08) for terminal compatibility
+			if (key.backspace || input === "\x7F" || input === "\x08") {
 				if (cursorPos > 0) {
 					setText((prev) => prev.slice(0, cursorPos - 1) + prev.slice(cursorPos));
 					setCursorPos((p) => p - 1);

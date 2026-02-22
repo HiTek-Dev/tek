@@ -48,8 +48,9 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
   // Agent auto-selection logic
   useEffect(() => {
     if (selectedAgentId) return; // Already selected
-    if (agents.length === 1) {
-      setSelectedAgentId(agents[0].id);
+    const first = agents[0];
+    if (agents.length === 1 && first) {
+      setSelectedAgentId(first.id);
     } else if (agents.length > 1 && config?.agents?.defaultAgentId) {
       setSelectedAgentId(config.agents.defaultAgentId);
     }

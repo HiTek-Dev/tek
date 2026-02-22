@@ -68,10 +68,12 @@ export function buildRegistry(keys?: {
 		const ep = endpoints[i];
 		// First endpoint uses "ollama" for backward compat; rest use "ollama-{name}"
 		const providerName = i === 0 ? "ollama" : `ollama-${ep.name}`;
-		logger.info(`Registering Ollama provider: ${providerName} (${ep.url})`);
+		// Ensure URL ends with /v1 for OpenAI-compatible API
+		const baseURL = ep.url.endsWith("/v1") ? ep.url : `${ep.url}/v1`;
+		logger.info(`Registering Ollama provider: ${providerName} (${baseURL})`);
 		providers[providerName] = createOpenAICompatible({
 			name: providerName,
-			baseURL: ep.url,
+			baseURL,
 		});
 	}
 
