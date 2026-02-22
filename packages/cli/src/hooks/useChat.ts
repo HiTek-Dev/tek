@@ -10,6 +10,13 @@ export interface PendingApproval {
 	args: unknown;
 }
 
+export interface TodoItem {
+	id: string;
+	content: string;
+	status: "pending" | "in_progress" | "completed";
+	activeForm?: string;
+}
+
 export interface PendingPreflight {
 	requestId: string;
 	steps: Array<{
@@ -71,6 +78,7 @@ export function useChat(opts: UseChatOptions = {}) {
 	const [pendingSources, setPendingSources] = useState<
 		Array<{ url: string; title?: string }>
 	>([]);
+	const [todos, setTodos] = useState<TodoItem[]>([]);
 	const [toolCalls, setToolCalls] = useState<
 		Array<{
 			toolCallId: string;
@@ -99,6 +107,7 @@ export function useChat(opts: UseChatOptions = {}) {
 				setStreamingText("");
 				setStreamingReasoning("");
 				setPendingSources([]);
+				setTodos([]);
 				setIsStreaming(true);
 				setModel(msg.model);
 				break;
@@ -235,6 +244,11 @@ export function useChat(opts: UseChatOptions = {}) {
 				break;
 			}
 
+			case "todo.update": {
+				setTodos(msg.todos);
+				break;
+			}
+
 			case "error":
 				setMessages((prev) => [
 					...prev,
@@ -249,6 +263,7 @@ export function useChat(opts: UseChatOptions = {}) {
 				setStreamingText("");
 				setStreamingReasoning("");
 				setPendingSources([]);
+				setTodos([]);
 				setIsStreaming(false);
 				break;
 
@@ -365,6 +380,7 @@ export function useChat(opts: UseChatOptions = {}) {
 		usage,
 		pendingApproval,
 		pendingPreflight,
+		todos,
 		toolCalls,
 		handleServerMessage,
 		addUserMessage,
