@@ -16,6 +16,7 @@ import type { AgentDefinition } from "@tek/core";
 import {
 	applyPersonalityPreset,
 	ensureMemoryFile,
+	ensurePersonalityFiles,
 	resolveAgentDir,
 } from "@tek/db";
 import {
@@ -73,38 +74,14 @@ export const onboardCommand = new Command("onboard")
 						const agentId = toAgentId(result.agentName);
 						const agentDir = resolveAgentDir(agentId);
 
-						// Apply personality preset to agent directory
-						if (
-							result.personalityPreset &&
-							result.personalityPreset !== "custom" &&
-							result.personalityPreset !== "skip"
-						) {
-							applyPersonalityPreset(
-								result.personalityPreset,
+						// Ensure personality files have actual content, not just stubs
+						if (result.personalityPreset && result.personalityPreset !== "skip") {
+							ensurePersonalityFiles(
 								agentId,
+								result.personalityPreset,
+								result.agentName,
+								result.userDisplayName,
 							);
-						} else if (result.personalityPreset === "custom") {
-							ensureMemoryFile("BOOTSTRAP.md", "BOOTSTRAP.md", agentId);
-						}
-
-						// Write USER.md to agent directory
-						if (result.userDisplayName) {
-							const userPath = resolve(agentDir, "USER.md");
-							const content = `# About the User\n\nName: ${result.userDisplayName}\n`;
-							writeFileSync(userPath, content, "utf-8");
-						}
-
-						// Write SOUL.md header with agent name
-						if (result.agentName) {
-							const soulPath = resolve(agentDir, "SOUL.md");
-							if (!existsSync(soulPath)) {
-								ensureMemoryFile("SOUL.md", "SOUL.md", agentId);
-							}
-							// If the file still doesn't exist (no template), create minimal
-							if (!existsSync(soulPath)) {
-								const content = `# ${result.agentName}\n\nYou are ${result.agentName}, an AI assistant.\n`;
-								writeFileSync(soulPath, content, "utf-8");
-							}
 						}
 
 						// Build agent definition
