@@ -98,12 +98,15 @@ Plans:
 
 ### Phase 33: Todo System Display in CLI and Desktop
 
-**Goal:** Display the existing todo system in the CLI bottom status area and desktop chat interface — showing active tasks, progress, and status updates as agents work, similar to Claude Code's task tracking display
-**Depends on:** Phase 31, Phase 34
-**Plans:** 0 plans
+**Goal:** Build a todo tracking system where agents call a `todo_write` tool to track progress on multi-step tasks, with real-time display in both CLI (Ink) and desktop (React/Tailwind) via `todo.update` WS protocol messages
+**Depends on:** Phase 31
+**Requirements:** [TODO-01, TODO-02, TODO-03, TODO-04, TODO-05, TODO-06, TODO-07]
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 33 to break down)
+- [ ] 33-01-PLAN.md -- Gateway todo tool, WS protocol extension, tool registry wiring, system prompt
+- [ ] 33-02-PLAN.md -- CLI TodoPanel component and useChat todo.update handler
+- [ ] 33-03-PLAN.md -- Desktop TodoPanel component and useChat todo.update handler
 
 ### Phase 34: CLI Chat UX Overhaul
 
@@ -123,5 +126,6 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 |-------|-------|--------|
 | 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete |
 | 31. Desktop Chat App Rebuild | 5/5 | Complete |
-| 32. Structured Streaming & Chat Formatting | 3/3 | Complete    | 2026-02-22 | 33. Todo System Display | 0/TBD | Not started (blocked by 31, 34) |
+| 32. Structured Streaming & Chat Formatting | 3/3 | Complete |
+| 33. Todo System Display | 0/3 | Planned |
 | 34. CLI Chat UX Overhaul | 0/TBD | Not started |
