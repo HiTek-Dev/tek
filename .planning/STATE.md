@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 Phase: 34 of 34 (CLI Chat UX Overhaul)
 Plan: 2 of 2
 Status: Complete
-Last activity: 2026-02-22 — Completed 34-02 Inline rendering
+Last activity: 2026-02-22 — Quick task 9: Fixed tool flow, agent personality, brave search timeout, and added gateway status
 
 Progress: [##################################] 100% (34/34 phases)
 
@@ -98,6 +98,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 - handlers.ts (1,422 lines, zero tests) — characterization tests before any extraction
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 9 | Fix tool flow, agent personality/base training, telegram integration, brave search failures, and desktop chat UI | 2026-02-22 | 70ee6db | Complete | [9-fix-tool-flow-agent-personality-base-tra](./quick/9-fix-tool-flow-agent-personality-base-tra/) |
 
 ## Session Continuity
 
