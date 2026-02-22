@@ -113,7 +113,7 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete   | 2026-02-22 | 31. Desktop Chat App Rebuild | 0/TBD | Not started (blocked by 32) |
+| 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete    | 2026-02-22 | 31. Desktop Chat App Rebuild | 0/TBD | Not started (blocked by 32) |
 | 32. Structured Streaming & Chat Formatting | 0/TBD | Not started |
 | 33. Todo System Display | 0/TBD | Not started (blocked by 31, 34) |
 | 34. CLI Chat UX Overhaul | 0/TBD | Not started |
