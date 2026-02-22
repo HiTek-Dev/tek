@@ -12,6 +12,10 @@
     "./vault": {
       "import": "./dist/vault/index.js",
       "types": "./dist/vault/index.d.ts"
+    },
+    "./ollama/client": {
+      "import": "./dist/ollama/client.js",
+      "types": "./dist/ollama/client.d.ts"
     }
   },
   "scripts": {
