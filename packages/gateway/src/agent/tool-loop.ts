@@ -3,6 +3,7 @@ import type { ModelMessage, LanguageModelUsage } from "ai";
 import { streamText, stepCountIs } from "ai";
 import { createLogger } from "@tek/core";
 import { getRegistry } from "../llm/registry.js";
+import { getReasoningOptions } from "../llm/stream.js";
 import { checkApproval, recordSessionApproval, type ApprovalPolicy } from "./approval-gate.js";
 import { classifyFailurePattern, type StepRecord } from "./failure-detector.js";
 import type { ConnectionState } from "../ws/connection.js";
@@ -61,6 +62,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 
 	let fullText = "";
 
+	const providerOptions = getReasoningOptions(model);
+
 	try {
 		const result = streamText({
 			model: languageModel,
@@ -68,6 +71,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 			system,
 			tools: tools as any,
 			stopWhen: stepCountIs(maxSteps),
+			...(providerOptions ? { providerOptions } : {}),
 			onStepFinish: async (stepResult) => {
 				const record: StepRecord = {
 					stepType: stepHistory.length === 0 ? "initial" : "continue",
@@ -106,6 +110,26 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 						delta: part.text,
 					});
 					fullText += part.text;
+					break;
+				}
+
+				case "reasoning-delta": {
+					transport.send({
+						type: "chat.stream.reasoning",
+						requestId,
+						delta: part.text,
+					});
+					break;
+				}
+
+				case "source": {
+					if (part.sourceType === "url") {
+						transport.send({
+							type: "chat.stream.source",
+							requestId,
+							source: { url: part.url, title: part.title },
+						});
+					}
 					break;
 				}
 

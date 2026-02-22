@@ -14,6 +14,21 @@ import { MemoryManager } from "../memory/memory-manager.js";
 import { ThreadManager } from "../memory/thread-manager.js";
 
 const DEFAULT_SYSTEM_PROMPT = "You are a helpful AI assistant.";
+
+const RESPONSE_FORMAT_PROMPT = [
+	"",
+	"## Response Formatting",
+	"",
+	"Format your responses for readability:",
+	"- Use **markdown** for structured content: headings, lists, emphasis",
+	"- Use fenced code blocks (```language) with the language identifier",
+	"- Use inline `code` for names, paths, commands, and short references",
+	"- Use numbered lists for sequential steps",
+	"- Use > blockquotes for important notes or warnings",
+	"- Keep responses conversational when a simple reply suffices",
+	"- Do NOT wrap entire responses in a single code block",
+].join("\n");
+
 const logger = createLogger("assembler");
 
 /**
@@ -123,6 +138,7 @@ export function assembleContext(
 		memoryCtx.agents   ? `\n\n# Agent Coordination\n${memoryCtx.agents}` : "",
 		memoryCtx.longTermMemory ? `\n\n# Long-Term Memory\n${memoryCtx.longTermMemory}` : "",
 		memoryCtx.recentLogs     ? `\n\n# Recent Activity\n${memoryCtx.recentLogs}` : "",
+		`\n\n${RESPONSE_FORMAT_PROMPT}`,
 	].filter(Boolean).join("");
 
 	// Token budget warning for identity files
@@ -142,6 +158,7 @@ export function assembleContext(
 	addSection(sections, "agents", memoryCtx.agents, pricing.inputPerMTok);
 	addSection(sections, "long_term_memory", memoryCtx.longTermMemory, pricing.inputPerMTok);
 	addSection(sections, "recent_activity", memoryCtx.recentLogs, pricing.inputPerMTok);
+	addSection(sections, "response_format", RESPONSE_FORMAT_PROMPT, pricing.inputPerMTok);
 
 	// History: format prior messages
 	const historyText = sessionMessages
