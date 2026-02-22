@@ -157,6 +157,17 @@ Requirements for the Chat Experience & Providers milestone. Each maps to roadmap
 - [x] **OLLM-03**: User can enter a remote Ollama IP:port during setup, with connectivity validation and model listing
 - [x] **OLLM-04**: Remote Ollama endpoints are saved to config and registered as additional providers in the gateway registry
 
+### Desktop Chat App Rebuild (Phase 31)
+
+- [ ] **DESK-01**: Desktop app launches with a landing view showing gateway connection status (running/stopped/unknown) via runtime.json discovery and health check
+- [ ] **DESK-02**: Landing view auto-transitions to chat when gateway is detected running; shows CLI hint when stopped
+- [ ] **DESK-03**: Desktop connects to gateway via Tauri WebSocket plugin with auto-reconnect (exponential backoff 1s->2s->4s->8s->30s max)
+- [ ] **DESK-04**: User can select from available agents before chatting (auto-selects if only one agent exists)
+- [ ] **DESK-05**: User can type and send messages via auto-resizing textarea with Enter to send
+- [ ] **DESK-06**: Assistant responses stream in real-time with flicker-free markdown rendering via Streamdown
+- [ ] **DESK-07**: User can approve, deny, or session-approve tool calls via modal dialog with argument preview
+- [ ] **DESK-08**: Past sessions listed in collapsible side panel with preview, timestamp, and click-to-resume
+
 ## Future Requirements
 
 Deferred to future milestones. Tracked but not in current roadmap.
@@ -282,12 +293,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OLLM-02 | Phase 30 | Planned |
 | OLLM-03 | Phase 30 | Planned |
 | OLLM-04 | Phase 30 | Planned |
+| DESK-01 | Phase 31 | Planned |
+| DESK-02 | Phase 31 | Planned |
+| DESK-03 | Phase 31 | Planned |
+| DESK-04 | Phase 31 | Planned |
+| DESK-05 | Phase 31 | Planned |
+| DESK-06 | Phase 31 | Planned |
+| DESK-07 | Phase 31 | Planned |
+| DESK-08 | Phase 31 | Planned |
 
 **Coverage:**
-- v0.2 requirements (so far): 4 total
-- Mapped to phases: 4
+- v0.2 requirements (so far): 12 total
+- Mapped to phases: 12
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-15*
-*Last updated: 2026-02-21 after v0.2 Phase 30 planning*
+*Last updated: 2026-02-21 after v0.2 Phase 31 planning*

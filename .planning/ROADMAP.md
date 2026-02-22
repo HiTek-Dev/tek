@@ -74,10 +74,15 @@ Plans:
 
 **Goal:** Rebuild the Tauri desktop app as a polished chat session system modeled on [opcode](https://github.com/winfunc/opcode) — landing page shows gateway connection status and stats, chat selects from available agents (or auto-selects if only one), clean message cards with real-time streaming display
 **Depends on:** Phase 32
-**Plans:** 0 plans
+**Requirements:** [DESK-01, DESK-02, DESK-03, DESK-04, DESK-05, DESK-06, DESK-07, DESK-08]
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 31 to break down)
+- [ ] 31-01-PLAN.md -- Tauri app scaffold with React, Vite, Tailwind v4, shadcn/ui, Rust plugins
+- [ ] 31-02-PLAN.md -- Gateway discovery and Landing view with status display
+- [ ] 31-03-PLAN.md -- WebSocket connection hook and chat state management
+- [ ] 31-04-PLAN.md -- Chat view with message rendering (Streamdown) and input
+- [ ] 31-05-PLAN.md -- Tool approval flow, session list panel, and verification
 
 ### Phase 32: Structured Streaming and Chat Formatting
 
@@ -113,7 +118,8 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete    | 2026-02-22 | 31. Desktop Chat App Rebuild | 0/TBD | Not started (blocked by 32) |
+| 30. Ollama Auto-Discovery & Remote Setup | 1/1 | Complete |
+| 31. Desktop Chat App Rebuild | 0/5 | Planned (blocked by 32) |
 | 32. Structured Streaming & Chat Formatting | 0/TBD | Not started |
 | 33. Todo System Display | 0/TBD | Not started (blocked by 31, 34) |
 | 34. CLI Chat UX Overhaul | 0/TBD | Not started |
