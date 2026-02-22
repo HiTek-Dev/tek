@@ -1,0 +1,38 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for Tek desktop app",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "websocket:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "$HOME/.config/tek/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        {
+          "path": "$HOME/.config/tek/**"
+        }
+      ]
+    },
+    "process:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-open",
+      "allow": [
+        {
+          "name": "open",
+          "cmd": "",
+          "args": true
+        }
+      ]
+    }
+  ]
+}
