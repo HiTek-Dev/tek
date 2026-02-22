@@ -129,5 +129,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 				</Box>
 			);
 		}
+
+		case "sources": {
+			const items = message.sources
+				.map((s, i) => `  [${i + 1}] ${s.title || s.url}`)
+				.join("\n");
+			return (
+				<Box marginBottom={1}>
+					<Text dimColor>{"Sources:\n"}{items}</Text>
+				</Box>
+			);
+		}
 	}
 }

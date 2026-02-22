@@ -37,6 +37,7 @@ export function Chat({ wsUrl, initialModel, resumeSessionId, agentId, onProxyReq
 	const {
 		messages,
 		streamingText,
+		streamingReasoning,
 		isStreaming,
 		sessionId,
 		model,
@@ -181,7 +182,7 @@ export function Chat({ wsUrl, initialModel, resumeSessionId, agentId, onProxyReq
 			<MessageList messages={messages} />
 
 			{isStreaming && (
-				<StreamingResponse text={streamingText} model={model} />
+				<StreamingResponse text={streamingText} reasoningText={streamingReasoning} model={model} />
 			)}
 
 			{toolCalls.length > 0 &&
