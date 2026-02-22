@@ -159,8 +159,8 @@ Requirements for the Chat Experience & Providers milestone. Each maps to roadmap
 
 ### Desktop Chat App Rebuild (Phase 31)
 
-- [ ] **DESK-01**: Desktop app launches with a landing view showing gateway connection status (running/stopped/unknown) via runtime.json discovery and health check
-- [ ] **DESK-02**: Landing view auto-transitions to chat when gateway is detected running; shows CLI hint when stopped
+- [x] **DESK-01**: Desktop app launches with a landing view showing gateway connection status (running/stopped/unknown) via runtime.json discovery and health check
+- [x] **DESK-02**: Landing view auto-transitions to chat when gateway is detected running; shows CLI hint when stopped
 - [ ] **DESK-03**: Desktop connects to gateway via Tauri WebSocket plugin with auto-reconnect (exponential backoff 1s->2s->4s->8s->30s max)
 - [ ] **DESK-04**: User can select from available agents before chatting (auto-selects if only one agent exists)
 - [ ] **DESK-05**: User can type and send messages via auto-resizing textarea with Enter to send
