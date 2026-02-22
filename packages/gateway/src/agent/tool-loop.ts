@@ -159,10 +159,17 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 						toolName,
 						result: part.output,
 					});
+
+					// CRITICAL: Tool results are for LLM context only.
+					// They are NOT added to session history.
+					// Only the final assistant text (fullText) is persisted after loop completion.
+					// This prevents second-turn agent loops from seeing tool artifacts as messages.
+
 					break;
 				}
 
 				case "tool-error": {
+					// Tool error is final — client should see this as tool failure and agent will attempt recovery.
 					const toolCallId = part.toolCallId;
 					const toolName = String(part.toolName);
 					const errorMessage =
@@ -275,6 +282,12 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 			message,
 		});
 		return "";
+	} finally {
+		// Ensure streaming flag is always cleared, even on error
+		if (connState.streaming) {
+			connState.streaming = false;
+			connState.streamRequestId = null;
+		}
 	}
 }
 

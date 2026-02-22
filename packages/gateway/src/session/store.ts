@@ -94,6 +94,10 @@ export function listSessions(): SessionSummary[] {
 
 /**
  * Save a message to the database.
+ *
+ * CRITICAL: Only "user" and "assistant" roles are persisted.
+ * Tool results and other agent-internal messages are NOT added to session history.
+ * This prevents tool-result contamination in multi-turn conversations.
  */
 export function saveMessage(
 	sessionId: string,
@@ -101,6 +105,15 @@ export function saveMessage(
 	content: string,
 	tokenCount?: number,
 ): void {
+	// Validate message role - only user and assistant messages are persisted
+	const validRoles = ["user", "assistant"];
+	if (!validRoles.includes(role)) {
+		console.error(
+			`[SESSION SAFETY] Rejecting message with invalid role: "${role}". Only "user" and "assistant" are allowed. This prevents tool-result contamination.`,
+		);
+		return;
+	}
+
 	const db = getDb();
 	db.insert(messages)
 		.values({

@@ -497,6 +497,10 @@ export async function handleChatSend(
 			});
 
 			// Persist assistant message to session (matches streamToClient pattern)
+			// Agent loop returns accumulated assistant text.
+			// Tool calls/results remain in LLM context (messages array passed to streamText).
+			// Only the final assistant response is added to session history.
+			// This ensures second-turn loops see clean history without tool artifacts.
 			if (agentResponse) {
 				sessionManager.addMessage(sessionId, "assistant", agentResponse);
 			}
