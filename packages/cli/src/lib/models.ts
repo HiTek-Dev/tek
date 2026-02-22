@@ -5,6 +5,8 @@
  * with recommendation tags and display helpers for the Onboarding wizard.
  */
 
+import { listOllamaModels, type OllamaModel } from "@tek/core/ollama/client";
+
 export interface ModelInfo {
 	id: string;
 	displayName: string;
@@ -83,4 +85,47 @@ export function buildModelOptions(provider: string): Array<{ label: string; valu
 			: m.displayName;
 		return { label, value: qualified };
 	});
+}
+
+/**
+ * Format an Ollama model name for display.
+ * Shows parameter size and quantization in parens, disk size in brackets.
+ * Skips "unknown" values from the OpenAI-compat fallback.
+ */
+function formatOllamaModelName(m: OllamaModel): string {
+	let label = m.name;
+
+	const paramSize = m.details?.parameter_size;
+	const quant = m.details?.quantization_level;
+	const hasParam = paramSize && paramSize !== "unknown";
+	const hasQuant = quant && quant !== "unknown";
+
+	if (hasParam && hasQuant) {
+		label += ` (${paramSize} ${quant})`;
+	} else if (hasParam) {
+		label += ` (${paramSize})`;
+	}
+
+	if (m.size > 0) {
+		const sizeGB = (m.size / 1e9).toFixed(1);
+		label += ` [${sizeGB}GB]`;
+	}
+
+	return label;
+}
+
+/**
+ * Build Select-compatible options for Ollama models by probing a server.
+ * Returns empty array if Ollama is not running or unreachable.
+ *
+ * @param baseUrl - Ollama server base URL (without /v1 suffix)
+ */
+export async function buildOllamaModelOptions(
+	baseUrl = "http://localhost:11434",
+): Promise<Array<{ label: string; value: string }>> {
+	const models = await listOllamaModels(baseUrl);
+	return models.map((m) => ({
+		label: formatOllamaModelName(m),
+		value: `ollama:${m.name}`,
+	}));
 }

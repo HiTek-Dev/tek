@@ -80,6 +80,7 @@ export const initCommand = new Command("init")
 							createdAt: new Date().toISOString(),
 							defaultModel: result.defaultModel,
 							modelAliases: result.modelAliases,
+							ollamaEndpoints: result.ollamaEndpoints,
 						};
 						saveConfig(config);
 

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
 import { Select, TextInput, ConfirmInput, MultiSelect } from "@inkjs/ui";
 import { type SecurityMode, DISPLAY_NAME, CLI_COMMAND } from "@tek/core";
 import type { Provider } from "@tek/core/vault";
 import { PROVIDERS } from "@tek/core/vault";
-import { buildModelOptions } from "../lib/models.js";
+import { buildModelOptions, buildOllamaModelOptions } from "../lib/models.js";
 
 type OnboardingStep =
 	| "welcome"
@@ -17,6 +17,9 @@ type OnboardingStep =
 	| "telegram-input"
 	| "brave-ask"
 	| "brave-input"
+	| "ollama-detect"
+	| "ollama-remote-ask"
+	| "ollama-remote-input"
 	| "model-select"
 	| "model-alias-select"
 	| "model-alias-name"
@@ -34,6 +37,7 @@ export interface OnboardingResult {
 	defaultModel?: string;
 	modelAliases?: ModelAliasEntry[];
 	telegramToken?: string;
+	ollamaEndpoints?: Array<{ name: string; url: string }>;
 }
 
 export interface OnboardingProps {
@@ -69,7 +73,14 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 	// Brave Search state
 	const [braveApiKey, setBraveApiKey] = useState("");
 
-	/** Build the list of available models from the full catalog for configured providers. */
+	// Ollama state
+	const [ollamaEndpoints, setOllamaEndpoints] = useState<Array<{ name: string; url: string }>>([]);
+	const [ollamaModels, setOllamaModels] = useState<Array<{ label: string; value: string }>>([]);
+	const [ollamaProbing, setOllamaProbing] = useState(false);
+	const [ollamaLocalDetected, setOllamaLocalDetected] = useState(false);
+	const [ollamaRemoteError, setOllamaRemoteError] = useState("");
+
+	/** Build the list of available models from the full catalog for configured providers, including discovered Ollama models. */
 	function buildAvailableModels(): Array<{ label: string; value: string }> {
 		// Use providers from both newly-entered keys and pre-existing config
 		const providerSet = new Set<string>(keys.map((k) => k.provider));
@@ -81,6 +92,10 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 		const models: Array<{ label: string; value: string }> = [];
 		for (const provider of providerSet) {
 			models.push(...buildModelOptions(provider));
+		}
+		// Include discovered Ollama models
+		if (ollamaModels.length > 0) {
+			models.push(...ollamaModels);
 		}
 		return models;
 	}
@@ -315,7 +330,7 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 				<Text />
 				<ConfirmInput
 					onConfirm={() => setStep("brave-input")}
-					onCancel={() => goToModelSelect()}
+					onCancel={() => setStep("ollama-detect")}
 				/>
 			</Box>
 		);
@@ -336,10 +351,61 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 							setBraveApiKey(value.trim());
 							setKeys((prev) => [...prev, { provider: "brave" as Provider, key: value.trim() }]);
 						}
-						goToModelSelect();
+						setStep("ollama-detect");
 					}}
 				/>
 			</Box>
+		);
+	}
+
+	if (step === "ollama-detect") {
+		return (
+			<OllamaDetectStep
+				onModelsFound={(models) => {
+					setOllamaLocalDetected(true);
+					setOllamaModels((prev) => [...prev, ...models]);
+					setOllamaEndpoints((prev) => [...prev, { name: "localhost", url: "http://localhost:11434" }]);
+					setStep("ollama-remote-ask");
+				}}
+				onSkip={() => goToModelSelect()}
+				onAddRemote={() => setStep("ollama-remote-input")}
+			/>
+		);
+	}
+
+	if (step === "ollama-remote-ask") {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Add a remote Ollama instance?</Text>
+				<Text dimColor>
+					e.g., a GPU server on your LAN at 192.168.1.100:11434
+				</Text>
+				<Text />
+				<ConfirmInput
+					onConfirm={() => {
+						setOllamaRemoteError("");
+						setStep("ollama-remote-input");
+					}}
+					onCancel={() => goToModelSelect()}
+				/>
+			</Box>
+		);
+	}
+
+	if (step === "ollama-remote-input") {
+		return (
+			<OllamaRemoteInputStep
+				error={ollamaRemoteError}
+				onSuccess={(url, models) => {
+					const hostname = url.replace(/^https?:\/\//, "").replace(/:\d+$/, "");
+					setOllamaEndpoints((prev) => [...prev, { name: hostname, url }]);
+					setOllamaModels((prev) => [...prev, ...models]);
+					setOllamaRemoteError("");
+					setStep("ollama-remote-ask");
+				}}
+				onError={(msg) => setOllamaRemoteError(msg)}
+				onSkip={() => goToModelSelect()}
+			/>
 		);
 	}
 
@@ -522,6 +588,14 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 						{braveApiKey ? "configured" : "not configured"}
 					</Text>
 				</Text>
+				<Text>
+					Ollama:{" "}
+					<Text bold>
+						{ollamaEndpoints.length > 0
+							? `${ollamaEndpoints.length} endpoint${ollamaEndpoints.length > 1 ? "s" : ""} (${ollamaModels.length} model${ollamaModels.length !== 1 ? "s" : ""})`
+							: "not configured"}
+					</Text>
+				</Text>
 				{defaultModel && (
 					<Text>
 						Default model: <Text bold>{defaultModel}</Text>
@@ -555,6 +629,8 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 							modelAliases:
 								modelAliases.length > 0 ? modelAliases : undefined,
 							telegramToken: telegramToken || undefined,
+							ollamaEndpoints:
+								ollamaEndpoints.length > 0 ? ollamaEndpoints : undefined,
 						});
 					}}
 				/>
@@ -578,6 +654,172 @@ export function Onboarding({ onComplete, existingConfig }: OnboardingProps) {
 			<Text>
 				Run <Text bold>{CLI_COMMAND} config show</Text> to view your settings.
 			</Text>
+		</Box>
+	);
+}
+
+/**
+ * Sub-component: Ollama auto-detection step.
+ * Probes localhost:11434 on mount and shows discovered models.
+ */
+function OllamaDetectStep({
+	onModelsFound,
+	onSkip,
+	onAddRemote,
+}: {
+	onModelsFound: (models: Array<{ label: string; value: string }>) => void;
+	onSkip: () => void;
+	onAddRemote: () => void;
+}) {
+	const [probing, setProbing] = useState(true);
+	const [models, setModels] = useState<Array<{ label: string; value: string }>>([]);
+	const [probeComplete, setProbeComplete] = useState(false);
+
+	useEffect(() => {
+		let cancelled = false;
+		buildOllamaModelOptions("http://localhost:11434").then((result) => {
+			if (cancelled) return;
+			setModels(result);
+			setProbing(false);
+			setProbeComplete(true);
+		});
+		return () => { cancelled = true; };
+	}, []);
+
+	if (probing) {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Detecting Ollama...</Text>
+				<Text dimColor>Probing localhost:11434 for local models</Text>
+			</Box>
+		);
+	}
+
+	if (probeComplete && models.length > 0) {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold color="green">
+					Found Ollama with {models.length} model{models.length !== 1 ? "s" : ""}:
+				</Text>
+				{models.slice(0, 10).map((m) => (
+					<Text key={m.value}>  {m.label}</Text>
+				))}
+				{models.length > 10 && (
+					<Text dimColor>  ...and {models.length - 10} more</Text>
+				)}
+				<Text />
+				<Select
+					options={[
+						{ label: "Use these models", value: "use" },
+						{ label: "Skip Ollama", value: "skip" },
+					]}
+					onChange={(value) => {
+						if (value === "use") {
+							onModelsFound(models);
+						} else {
+							onSkip();
+						}
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	// No models found / Ollama not running
+	return (
+		<Box flexDirection="column" padding={1}>
+			<Text bold>Ollama not detected on localhost</Text>
+			<Text dimColor>
+				Start Ollama with "ollama serve" to use local models, or add a remote instance.
+			</Text>
+			<Text />
+			<Select
+				options={[
+					{ label: "Add remote Ollama endpoint", value: "remote" },
+					{ label: "Skip", value: "skip" },
+				]}
+				onChange={(value) => {
+					if (value === "remote") {
+						onAddRemote();
+					} else {
+						onSkip();
+					}
+				}}
+			/>
+		</Box>
+	);
+}
+
+/**
+ * Sub-component: Remote Ollama endpoint input step.
+ * Accepts a host:port, probes it, and reports success or error.
+ */
+function OllamaRemoteInputStep({
+	error,
+	onSuccess,
+	onError,
+	onSkip,
+}: {
+	error: string;
+	onSuccess: (url: string, models: Array<{ label: string; value: string }>) => void;
+	onError: (msg: string) => void;
+	onSkip: () => void;
+}) {
+	const [probing, setProbing] = useState(false);
+	const [probedUrl, setProbedUrl] = useState("");
+
+	function handleSubmit(value: string) {
+		const trimmed = value.trim();
+		if (!trimmed) {
+			onSkip();
+			return;
+		}
+
+		// Normalize: prepend http:// if no protocol given
+		const url = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+			? trimmed
+			: `http://${trimmed}`;
+
+		setProbing(true);
+		setProbedUrl(url);
+
+		buildOllamaModelOptions(url).then((models) => {
+			setProbing(false);
+			if (models.length > 0) {
+				onSuccess(url, models);
+			} else {
+				onError(
+					`Could not reach Ollama at ${url}. Ensure the remote server has OLLAMA_HOST=0.0.0.0 configured.`,
+				);
+			}
+		});
+	}
+
+	if (probing) {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text bold>Probing {probedUrl}...</Text>
+			</Box>
+		);
+	}
+
+	return (
+		<Box flexDirection="column" padding={1}>
+			<Text bold>Enter remote Ollama address:</Text>
+			<Text dimColor>
+				Format: host:port (e.g., 192.168.1.100:11434). Press Enter empty to skip.
+			</Text>
+			{error ? (
+				<>
+					<Text />
+					<Text color="red">{error}</Text>
+				</>
+			) : null}
+			<Text />
+			<TextInput
+				placeholder="192.168.1.100:11434"
+				onSubmit={handleSubmit}
+			/>
 		</Box>
 	);
 }
