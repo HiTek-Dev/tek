@@ -34,11 +34,17 @@ export type ReasoningMessage = ChatMessageBase & {
 	content: string;
 };
 
+export type SourceMessage = ChatMessageBase & {
+	type: "sources";
+	sources: Array<{ url: string; title?: string }>;
+};
+
 export type ChatMessage =
 	| TextMessage
 	| ToolCallMessage
 	| BashCommandMessage
-	| ReasoningMessage;
+	| ReasoningMessage
+	| SourceMessage;
 
 // ── Message factory functions ──────────────────────────────────────────
 

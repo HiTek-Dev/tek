@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { nanoid } from "nanoid";
 import { getDefaultModel } from "@tek/core";
 import type { ServerMessage } from "@tek/gateway";
-import type { ChatMessage, TextMessage, ToolCallMessage } from "../lib/gateway-client.js";
+import type { ChatMessage, TextMessage, ToolCallMessage, ReasoningMessage, SourceMessage } from "../lib/gateway-client.js";
 
 export interface PendingApproval {
 	toolCallId: string;
@@ -67,6 +67,10 @@ export function useChat(opts: UseChatOptions = {}) {
 		useState<PendingApproval | null>(null);
 	const [pendingPreflight, setPendingPreflight] =
 		useState<PendingPreflight | null>(null);
+	const [streamingReasoning, setStreamingReasoning] = useState("");
+	const [pendingSources, setPendingSources] = useState<
+		Array<{ url: string; title?: string }>
+	>([]);
 	const [toolCalls, setToolCalls] = useState<
 		Array<{
 			toolCallId: string;
@@ -93,6 +97,8 @@ export function useChat(opts: UseChatOptions = {}) {
 
 			case "chat.stream.start":
 				setStreamingText("");
+				setStreamingReasoning("");
+				setPendingSources([]);
 				setIsStreaming(true);
 				setModel(msg.model);
 				break;
@@ -101,9 +107,30 @@ export function useChat(opts: UseChatOptions = {}) {
 				setStreamingText((prev) => prev + msg.delta);
 				break;
 
+			case "chat.stream.reasoning":
+				setStreamingReasoning((prev) => prev + msg.delta);
+				break;
+
+			case "chat.stream.source":
+				setPendingSources((prev) => [...prev, msg.source]);
+				break;
+
 			case "chat.stream.end":
+				// Promote reasoning to a completed message (before assistant text)
+				setStreamingReasoning((currentReasoning) => {
+					if (currentReasoning) {
+						const reasoningMsg: ReasoningMessage = {
+							id: nanoid(),
+							type: "reasoning",
+							content: currentReasoning,
+							timestamp: new Date().toISOString(),
+						};
+						setMessages((prev) => [...prev, reasoningMsg]);
+					}
+					return "";
+				});
+				// Promote accumulated streaming text to a completed message
 				setStreamingText((current) => {
-					// Promote accumulated streaming text to a completed message
 					if (current) {
 						const assistantMsg: TextMessage = {
 							id: nanoid(),
@@ -115,6 +142,19 @@ export function useChat(opts: UseChatOptions = {}) {
 						setMessages((prev) => [...prev, assistantMsg]);
 					}
 					return "";
+				});
+				// Promote sources to a completed message (after assistant text)
+				setPendingSources((currentSources) => {
+					if (currentSources.length > 0) {
+						const sourceMsg: SourceMessage = {
+							id: nanoid(),
+							type: "sources",
+							sources: [...currentSources],
+							timestamp: new Date().toISOString(),
+						};
+						setMessages((prev) => [...prev, sourceMsg]);
+					}
+					return [];
 				});
 				setIsStreaming(false);
 				// Update usage totals
@@ -207,6 +247,8 @@ export function useChat(opts: UseChatOptions = {}) {
 					},
 				]);
 				setStreamingText("");
+				setStreamingReasoning("");
+				setPendingSources([]);
 				setIsStreaming(false);
 				break;
 
@@ -315,6 +357,7 @@ export function useChat(opts: UseChatOptions = {}) {
 	return {
 		messages,
 		streamingText,
+		streamingReasoning,
 		isStreaming,
 		sessionId,
 		model,
