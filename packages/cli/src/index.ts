@@ -1,5 +1,23 @@
 #!/usr/bin/env node
 
+// Suppress deprecation warning about punycode module used by transitive dependencies
+// Listen for warnings and filter out the punycode one before it's displayed
+process.on("warning", (warning) => {
+	if (
+		typeof warning === "object" &&
+		warning.message &&
+		warning.message.includes("punycode")
+	) {
+		// Silently ignore punycode deprecation warnings
+		return;
+	}
+	// Re-emit other warnings normally
+	process.stderr.write(`${warning.name}: ${warning.message}\n`);
+	if (warning.stack) {
+		process.stderr.write(warning.stack + "\n");
+	}
+});
+
 import { Command } from "commander";
 import chalk from "chalk";
 import { existsSync, renameSync } from "node:fs";
@@ -15,6 +33,8 @@ import { gatewayCommand } from "./commands/gateway.js";
 import { uninstallCommand } from "./commands/uninstall.js";
 import { onboardCommand } from "./commands/onboard.js";
 import { debugCommand } from "./commands/debug.js";
+import { pairCommand } from "./commands/pair.js";
+import { approveCommand, disapproveCommand } from "./commands/approve.js";
 import { discoverGateway } from "./lib/discovery.js";
 
 // Migrate config from old location if present
@@ -47,16 +67,21 @@ program.addCommand(gatewayCommand);
 program.addCommand(uninstallCommand);
 program.addCommand(onboardCommand);
 program.addCommand(debugCommand);
+program.addCommand(pairCommand);
+program.addCommand(approveCommand);
+program.addCommand(disapproveCommand);
 
-// Default action: auto-launch chat when configured and gateway is running
-program.action(async () => {
+program.parse(process.argv);
+
+// Only auto-launch chat if no arguments were provided (i.e., just `tek` with no command)
+if (process.argv.length === 2) {
 	if (!configExists()) {
 		console.log(
 			chalk.yellow(
 				`${DISPLAY_NAME} is not configured. Run "${CLI_COMMAND} init" to get started.`,
 			),
 		);
-		return;
+		process.exit(0);
 	}
 
 	const gateway = discoverGateway();
@@ -69,12 +94,12 @@ program.action(async () => {
 		console.log(chalk.cyan(`  ${CLI_COMMAND} gateway start`));
 		console.log();
 		program.help();
-		return;
+		process.exit(0);
 	}
 
 	// Gateway is running and config exists — launch chat directly
 	// Invoke the chat command's action programmatically
-	await chatCommand.parseAsync([], { from: "user" });
-});
-
-program.parse();
+	(async () => {
+		await chatCommand.parseAsync([], { from: "user" });
+	})();
+}
