@@ -177,49 +177,45 @@ if (isDirectRun) {
 		const logger = createLogger("telegram-bot");
 
 		const telegramToken = getKey("telegram");
-		logger.info(`Telegram token present: ${!!telegramToken}`);
-
 		if (telegramToken) {
-			// Try to import from both package name and file path
-			let startTelegramBot: ((token: string) => Promise<void>) | undefined;
-			let importError: Error | undefined;
+			logger.info(`Telegram bot token configured - initializing in background`);
 
-			try {
-				// Try workspace package import first
-				logger.info("Trying workspace import: @tek/telegram");
-				const telegramPkg = await import("@tek/telegram" as string);
-				startTelegramBot = telegramPkg.startTelegramBot;
-				logger.info(`Workspace import success, startTelegramBot found: ${!!startTelegramBot}`);
-			} catch (e) {
-				importError = e as Error;
-				logger.info(`Workspace import failed: ${importError.message}`);
-				// Fallback to file path import (for dev installations)
+			// Initialize telegram bot asynchronously without blocking gateway startup
+			(async () => {
 				try {
-					// Correct relative path: gateway/dist/index.ts -> ../../telegram/dist/index.js
-					const telegramPath = new URL("../../telegram/dist/index.js", import.meta.url).href;
-					logger.info(`Trying file path import: ${telegramPath}`);
-					const telegramPkg = await import(telegramPath);
-					startTelegramBot = telegramPkg.startTelegramBot;
-					logger.info(`File path import success, startTelegramBot found: ${!!startTelegramBot}`);
-				} catch (e2) {
-					importError = e2 as Error;
-					logger.warn(`File path import also failed: ${importError.message}`);
-				}
-			}
+					const botPath = new URL("../../telegram/dist/bot.js", import.meta.url).href;
+					logger.info(`Loading Telegram bot from: ${botPath}`);
 
-			if (startTelegramBot) {
-				logger.info("Starting Telegram bot...");
-				await startTelegramBot(telegramToken);
-				logger.info("Telegram bot auto-started");
-			} else {
-				logger.warn(`Could not find startTelegramBot function`);
-			}
+					// Import with timeout to prevent hanging
+					const importPromise = import(botPath);
+					const timeoutPromise = new Promise((_, reject) =>
+						setTimeout(() => reject(new Error("Import timeout after 5s")), 5000)
+					);
+
+					const botModule = (await Promise.race([importPromise, timeoutPromise])) as any;
+					const startTelegramBot = botModule.startTelegramBot;
+
+					if (startTelegramBot) {
+						logger.info("Starting Telegram bot with long polling...");
+						// Don't await - the bot runs in an infinite polling loop
+						startTelegramBot(telegramToken)
+							.then(() => logger.info("Telegram bot polling started"))
+							.catch((err: Error | unknown) => logger.warn(`Telegram bot error: ${err instanceof Error ? err.message : String(err)}`));
+					} else {
+						logger.warn(`startTelegramBot export not found`);
+					}
+				} catch (err) {
+					logger.warn(
+						`Telegram bot initialization failed: ${err instanceof Error ? err.message : String(err)}`
+					);
+				}
+			})();
 		}
 	} catch (err) {
 		const { createLogger } = await import("@tek/core");
 		const logger = createLogger("telegram-bot");
 		logger.warn(
-			`Telegram bot startup error: ${err instanceof Error ? err.message : String(err)}`,
+			`Telegram setup error: ${err instanceof Error ? err.message : String(err)}`,
 		);
 	}
 }

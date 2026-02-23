@@ -39,10 +39,13 @@ export async function handleTelegramMessage(
 	bot: Bot,
 ): Promise<void> {
 	const chatId = ctx.chat!.id;
+	logger.info(`[RECEIVED] Message from chat ${chatId}`);
 
 	// Check if user is paired
 	const paired = getPairedUser(chatId);
+	logger.info(`[PAIRING] Chat ${chatId} paired: ${paired ? "yes" : "no"}`);
 	if (!paired) {
+		logger.info(`[REPLY] Sending pairing instruction to ${chatId}`);
 		await ctx.reply(
 			"Please pair first. Send /start for instructions.",
 		);
@@ -50,24 +53,35 @@ export async function handleTelegramMessage(
 	}
 
 	const text = ctx.message?.text;
-	if (!text) return;
+	logger.info(`[TEXT] Message text: "${text}"`);
+	if (!text) {
+		logger.info(`[TEXT] No text found, ignoring`);
+		return;
+	}
 
 	// Get or create transport and connection state
+	logger.info(`[TRANSPORT] Getting or creating transport for ${chatId}`);
 	const transport = getOrCreateTransport(chatId, bot);
+	logger.info(`[TRANSPORT] Transport ID: ${transport.transportId}`);
 	registerChatTransport(chatId, transport.transportId);
 	let connState = getConnectionState(transport.transportId);
+	logger.info(`[CONNECTION] Existing connection: ${connState ? "yes" : "no"}`);
 	if (!connState) {
+		logger.info(`[CONNECTION] Creating new connection`);
 		connState = initConnection(transport.transportId);
+		logger.info(`[CONNECTION] New connection created, session: ${connState.sessionId}`);
 	}
 
 	// Guard against concurrent streams
 	if (connState.streaming) {
+		logger.info(`[STREAMING] Chat ${chatId} already streaming, sending wait message`);
 		await ctx.reply("Still processing your previous message. Please wait.");
 		await ctx.api.sendChatAction(chatId, "typing");
 		return;
 	}
 
 	// Send typing indicator and keep it alive while processing
+	logger.info(`[SENDING] Sending chat message to gateway`);
 	await ctx.api.sendChatAction(chatId, "typing").catch(() => {});
 	const typingInterval = setInterval(() => {
 		bot.api.sendChatAction(chatId, "typing").catch(() => {});
@@ -82,7 +96,12 @@ export async function handleTelegramMessage(
 	};
 
 	try {
+		logger.info(`[GATEWAY] Sending message to gateway (ID: ${chatSendMsg.id})`);
 		await handleChatSend(transport, chatSendMsg, connState);
+		logger.info(`[GATEWAY] Message sent successfully`);
+	} catch (err) {
+		logger.error(`[ERROR] Failed to send message to gateway: ${err instanceof Error ? err.message : String(err)}`);
+		await ctx.reply("Error processing your message. Please try again.");
 	} finally {
 		clearInterval(typingInterval);
 	}
