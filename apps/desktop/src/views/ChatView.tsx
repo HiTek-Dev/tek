@@ -1,27 +1,31 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { useChat } from "@/hooks/useChat";
 import { useConfig } from "@/hooks/useConfig";
+import { useProcessStore } from "@/stores/process-store";
 import { MessageList } from "@/components/MessageList";
 import { ChatInput } from "@/components/ChatInput";
 import { AgentSelector, type Agent } from "@/components/AgentSelector";
 import { ToolApprovalModal } from "@/components/ToolApprovalModal";
 import { SessionList } from "@/components/SessionList";
 import { TodoPanel } from "@/components/TodoPanel";
+import { ModelSelector } from "@/components/ModelSelector";
+import { ModelSwitchDialog } from "@/components/ModelSwitchDialog";
+import { ProcessPanel } from "@/components/ProcessPanel";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Wifi, WifiOff, PanelLeftOpen, PanelLeftClose, PanelRightOpen } from "lucide-react";
 import { createSessionList } from "@/lib/gateway-client";
 
-interface ChatViewProps {
-  sidebarOpen: boolean;
-}
-
-export function ChatView({ sidebarOpen }: ChatViewProps) {
+export function ChatView() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingModelSwitch, setPendingModelSwitch] = useState<string | null>(null);
   const port = useAppStore((s) => s.gateway.port);
   const selectedAgentId = useAppStore((s) => s.selectedAgentId);
   const setSelectedAgentId = useAppStore((s) => s.setSelectedAgentId);
   const sessionId = useAppStore((s) => s.sessionId);
   const setSessionId = useAppStore((s) => s.setSessionId);
+  const togglePanel = useProcessStore((s) => s.togglePanel);
 
   const { config } = useConfig();
 
@@ -100,6 +104,18 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
     [setSessionId, clearMessages],
   );
 
+  const handleModelSwitch = useCallback((newModel: string) => {
+    setPendingModelSwitch(newModel);
+  }, []);
+
+  const handleModelSwitchConfirm = useCallback(
+    (_keepContext: boolean) => {
+      // TODO: Wire to chat.model.switch WS message when gateway handler is fully implemented
+      setPendingModelSwitch(null);
+    },
+    [],
+  );
+
   const wsConnected = wsStatus === "connected";
 
   return (
@@ -119,11 +135,25 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar: agent selector + status info */}
         <div className="flex shrink-0 items-center justify-between border-b px-4 py-2">
-          <AgentSelector
-            agents={agents}
-            selectedId={selectedAgentId}
-            onSelect={setSelectedAgentId}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+            >
+              {sidebarOpen ? (
+                <PanelLeftClose className="size-4" />
+              ) : (
+                <PanelLeftOpen className="size-4" />
+              )}
+            </Button>
+            <AgentSelector
+              agents={agents}
+              selectedId={selectedAgentId}
+              onSelect={setSelectedAgentId}
+            />
+          </div>
 
           <div className="flex items-center gap-2">
             {/* Model / token info */}
@@ -137,6 +167,16 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
                 {usage.totalTokens.toLocaleString()} tokens
               </span>
             )}
+
+            {/* Process panel toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={togglePanel}
+            >
+              <PanelRightOpen className="size-4" />
+            </Button>
 
             {/* WebSocket connection status */}
             {wsConnected ? (
@@ -178,9 +218,20 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
         {/* Todo progress panel */}
         <TodoPanel todos={todos} />
 
-        {/* Chat input (fixed at bottom) */}
-        <ChatInput onSend={sendMessage} disabled={isStreaming} />
+        {/* Model selector + Chat input (fixed at bottom) */}
+        <div className="shrink-0 border-t">
+          <div className="flex items-center px-4 py-1">
+            <ModelSelector
+              currentModel={currentModel}
+              onSwitch={handleModelSwitch}
+            />
+          </div>
+          <ChatInput onSend={sendMessage} disabled={isStreaming} />
+        </div>
       </div>
+
+      {/* Process monitoring panel (right side) */}
+      <ProcessPanel />
 
       {/* Tool Approval Modal */}
       {pendingApproval && pendingApproval.type === "tool_approval" && (
@@ -192,6 +243,17 @@ export function ChatView({ sidebarOpen }: ChatViewProps) {
           risk={pendingApproval.risk}
           onApprove={handleApprove}
           onDeny={handleDeny}
+        />
+      )}
+
+      {/* Model Switch Dialog */}
+      {pendingModelSwitch && currentModel && (
+        <ModelSwitchDialog
+          open
+          currentModel={currentModel}
+          newModel={pendingModelSwitch}
+          onConfirm={handleModelSwitchConfirm}
+          onCancel={() => setPendingModelSwitch(null)}
         />
       )}
     </div>

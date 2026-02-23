@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useAppStore } from '@/stores/app-store';
+import { useProcessStore } from '@/stores/process-store';
 import { useWebSocket, type WebSocketStatus } from './useWebSocket';
 import {
   createChatSend,
@@ -199,6 +200,8 @@ export function useChat({ port, agentId }: UseChatParams): UseChatReturn {
               status: 'running',
             },
           ]);
+          // Forward to process store
+          useProcessStore.getState().addProcess(msg.toolCallId, msg.toolName, 'tool');
           break;
         }
 
@@ -210,6 +213,8 @@ export function useChat({ port, agentId }: UseChatParams): UseChatReturn {
                 : m,
             ),
           );
+          // Forward to process store
+          useProcessStore.getState().endProcess(msg.toolCallId, 'completed', 0, msg.result);
           break;
         }
 
@@ -221,6 +226,8 @@ export function useChat({ port, agentId }: UseChatParams): UseChatReturn {
                 : m,
             ),
           );
+          // Forward to process store
+          useProcessStore.getState().endProcess(msg.toolCallId, 'error', 0);
           break;
         }
 
@@ -258,6 +265,55 @@ export function useChat({ port, agentId }: UseChatParams): UseChatReturn {
               timestamp: Date.now(),
             },
           ]);
+          break;
+        }
+
+        case 'failure.detected': {
+          // Display as inline system message with suggested action
+          setMessages((prev) => [
+            ...prev,
+            {
+              type: 'text',
+              id: crypto.randomUUID(),
+              role: 'system',
+              content: `Failure detected: ${msg.description}${msg.suggestedAction ? `\nSuggested action: ${msg.suggestedAction}` : ''}${msg.affectedTool ? ` (tool: ${msg.affectedTool})` : ''}`,
+              timestamp: Date.now(),
+            },
+          ]);
+          break;
+        }
+
+        case 'subprocess.start': {
+          useProcessStore.getState().addProcess(msg.processId, msg.name, msg.processType);
+          break;
+        }
+
+        case 'subprocess.log': {
+          useProcessStore.getState().addProcessLog(msg.processId, {
+            level: msg.level,
+            message: msg.message,
+            timestamp: msg.timestamp,
+          });
+          break;
+        }
+
+        case 'subprocess.end': {
+          useProcessStore.getState().endProcess(msg.processId, msg.status, msg.durationMs, msg.result);
+          break;
+        }
+
+        case 'gateway.log.entry': {
+          useProcessStore.getState().addGatewayLog({
+            level: msg.level,
+            message: msg.message,
+            timestamp: msg.timestamp,
+            module: msg.module,
+          });
+          break;
+        }
+
+        case 'chat.model.switched': {
+          setCurrentModel(msg.newModel);
           break;
         }
 

@@ -41,6 +41,11 @@ export const ModelAliasSchema = z.object({
 	modelId: z.string(),
 });
 
+export const ModelRoutingSchema = z.object({
+	taskModels: z.record(z.string(), z.string()).optional(),
+	fallbackChain: z.array(z.string()).optional(),
+});
+
 export const AgentDefinitionSchema = z.object({
 	id: z.string(),
 	name: z.string().optional(),
@@ -51,11 +56,29 @@ export const AgentDefinitionSchema = z.object({
 	personalityPreset: z.string().optional(),
 	purpose: z.string().optional(),
 	createdAt: z.string().datetime().optional(),
+	modelRouting: ModelRoutingSchema.optional(),
 });
 
 export const AgentsConfigSchema = z.object({
 	list: z.array(AgentDefinitionSchema).default([]),
 	defaultAgentId: z.string().default(""),
+});
+
+export const ProviderModelSchema = z.object({
+	modelId: z.string(),
+	enabled: z.boolean().default(true),
+	alias: z.string().optional(),
+	tier: z.enum(["high", "standard", "budget"]).optional(),
+});
+
+export const ProviderConfigSchema = z.object({
+	models: z.array(ProviderModelSchema).optional(),
+	customModels: z.array(z.string()).optional(),
+});
+
+export const FallbackChainSchema = z.object({
+	name: z.string(),
+	models: z.array(z.string()),
 });
 
 export const AppConfigSchema = z.object({
@@ -73,6 +96,8 @@ export const AppConfigSchema = z.object({
 	agentName: z.string().optional(),
 	userDisplayName: z.string().optional(),
 	agents: AgentsConfigSchema.optional(),
+	providers: z.record(z.string(), ProviderConfigSchema).optional(),
+	fallbackChains: z.array(FallbackChainSchema).optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
@@ -82,3 +107,7 @@ export type ModelAlias = z.infer<typeof ModelAliasSchema>;
 export type MCPServerConfig = z.infer<typeof MCPServerConfigSchema>;
 export type ToolApprovalConfig = z.infer<typeof ToolApprovalConfigSchema>;
 export type ApprovalTier = z.infer<typeof ApprovalTierSchema>;
+export type ModelRouting = z.infer<typeof ModelRoutingSchema>;
+export type ProviderModel = z.infer<typeof ProviderModelSchema>;
+export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+export type FallbackChain = z.infer<typeof FallbackChainSchema>;

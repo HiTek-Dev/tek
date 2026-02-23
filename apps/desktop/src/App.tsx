@@ -1,10 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useAppStore } from "@/stores/app-store";
+import { useConfig } from "@/hooks/useConfig";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { LandingView } from "@/views/LandingView";
 import { ChatView } from "@/views/ChatView";
+
+const ProvidersView = lazy(() =>
+  import("@/views/ProvidersView").then((m) => ({ default: m.ProvidersView })),
+);
+const ServicesView = lazy(() =>
+  import("@/views/ServicesView").then((m) => ({ default: m.ServicesView })),
+);
+const AgentsView = lazy(() =>
+  import("@/views/AgentsView").then((m) => ({ default: m.AgentsView })),
+);
+const AgentDetailView = lazy(() =>
+  import("@/views/AgentDetailView").then((m) => ({ default: m.AgentDetailView })),
+);
+const GatewayView = lazy(() =>
+  import("@/views/GatewayView").then((m) => ({ default: m.GatewayView })),
+);
+const OnboardingView = lazy(() =>
+  import("@/views/OnboardingView").then((m) => ({ default: m.OnboardingView })),
+);
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const message =
@@ -25,15 +45,75 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   );
 }
 
-export function App() {
+function LazyFallback() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <span className="text-sm text-muted-foreground">Loading...</span>
+    </div>
+  );
+}
+
+function ViewRouter() {
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
-  const setSessionId = useAppStore((s) => s.setSessionId);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { config } = useConfig();
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
+  // First-run detection: force onboarding if not complete
+  useEffect(() => {
+    if (config && !config.onboardingComplete && currentView !== "onboarding" && currentView !== "landing") {
+      setCurrentView("onboarding");
+    }
+  }, [config, currentView, setCurrentView]);
+
+  switch (currentView) {
+    case "landing":
+      return <LandingView />;
+    case "chat":
+      return <ChatView />;
+    case "providers":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <ProvidersView />
+        </Suspense>
+      );
+    case "services":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <ServicesView />
+        </Suspense>
+      );
+    case "agents":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <AgentsView />
+        </Suspense>
+      );
+    case "agent-detail":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <AgentDetailView />
+        </Suspense>
+      );
+    case "gateway":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <GatewayView />
+        </Suspense>
+      );
+    case "onboarding":
+      return (
+        <Suspense fallback={<LazyFallback />}>
+          <OnboardingView />
+        </Suspense>
+      );
+    default:
+      return <LandingView />;
+  }
+}
+
+export function App() {
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const setSessionId = useAppStore((s) => s.setSessionId);
 
   // Cmd+N (Mac) / Ctrl+N: new chat
   useEffect(() => {
@@ -52,12 +132,8 @@ export function App() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <Layout sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar}>
-        {currentView === "landing" ? (
-          <LandingView />
-        ) : (
-          <ChatView sidebarOpen={sidebarOpen} />
-        )}
+      <Layout>
+        <ViewRouter />
       </Layout>
     </ErrorBoundary>
   );

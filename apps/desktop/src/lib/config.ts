@@ -15,6 +15,7 @@ export interface TekConfig {
   };
   defaultModel?: string;
   agentName?: string;
+  onboardingComplete?: boolean;
 }
 
 /**

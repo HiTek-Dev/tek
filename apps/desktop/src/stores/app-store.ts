@@ -1,6 +1,14 @@
 import { create } from "zustand";
 
-type View = "landing" | "chat";
+export type View =
+  | "landing"
+  | "chat"
+  | "providers"
+  | "services"
+  | "agents"
+  | "agent-detail"
+  | "gateway"
+  | "onboarding";
 
 interface GatewayState {
   status: "unknown" | "running" | "stopped";
@@ -12,6 +20,13 @@ interface GatewayState {
 interface AppState {
   currentView: View;
   setCurrentView: (view: View) => void;
+
+  navOpen: boolean;
+  toggleNav: () => void;
+  setNavOpen: (open: boolean) => void;
+
+  agentDetailId: string | null;
+  setAgentDetailId: (id: string | null) => void;
 
   gateway: GatewayState;
   setGateway: (
@@ -28,6 +43,13 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   currentView: "landing",
   setCurrentView: (view) => set({ currentView: view }),
+
+  navOpen: false,
+  toggleNav: () => set((s) => ({ navOpen: !s.navOpen })),
+  setNavOpen: (open) => set({ navOpen: open }),
+
+  agentDetailId: null,
+  setAgentDetailId: (id) => set({ agentDetailId: id }),
 
   gateway: { status: "unknown", port: null, pid: null, startedAt: null },
   setGateway: (info) =>

@@ -10,6 +10,10 @@ export {
 	ModelAliasSchema,
 	AgentDefinitionSchema,
 	AgentsConfigSchema,
+	ModelRoutingSchema,
+	ProviderModelSchema,
+	ProviderConfigSchema,
+	FallbackChainSchema,
 } from "./schema.js";
 export type {
 	AppConfig,
@@ -20,6 +24,10 @@ export type {
 	ToolApprovalConfig,
 	ApprovalTier,
 	OllamaEndpoint,
+	ModelRouting,
+	ProviderModel,
+	ProviderConfig,
+	FallbackChain,
 } from "./schema.js";
 export { loadConfig, saveConfig, configExists, resolveAlias, getDefaultModel } from "./loader.js";
 export { CONFIG_DIR, CONFIG_PATH, DB_PATH, RUNTIME_PATH, LOG_PATH } from "./types.js";

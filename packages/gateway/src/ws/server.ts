@@ -36,6 +36,25 @@ import {
 	handleSoulEvolutionResponse,
 	clearEvolutionRateLimit,
 } from "./handlers.js";
+import {
+	handleVaultKeysList,
+	handleVaultKeysSet,
+	handleVaultKeysDelete,
+	handleVaultKeysTest,
+	handleConfigGet,
+	handleConfigUpdate,
+	handleOllamaDiscover,
+	handleProviderModelsList,
+} from "./vault-handlers.js";
+import {
+	handleAgentIdentityRead,
+	handleAgentIdentityWrite,
+	handleAgentCreate,
+	handleAgentUpdate,
+	handleAgentDelete,
+	handleTelegramUsersList,
+	handleTelegramUsersUpdate,
+} from "./agent-handlers.js";
 
 const logger = createLogger("gateway-ws");
 
@@ -359,6 +378,150 @@ export async function registerGatewayWebSocket(
 						case "soul.evolution.response": {
 							logger.info(`soul.evolution.response for requestId: ${msg.requestId}`);
 							handleSoulEvolutionResponse(transport, msg, connState);
+							break;
+						}
+
+						// ── Vault & Config ──────────────────────────────
+
+						case "vault.keys.list": {
+							handleVaultKeysList(transport, msg);
+							break;
+						}
+
+						case "vault.keys.set": {
+							handleVaultKeysSet(transport, msg);
+							break;
+						}
+
+						case "vault.keys.delete": {
+							handleVaultKeysDelete(transport, msg);
+							break;
+						}
+
+						case "vault.keys.test": {
+							handleVaultKeysTest(transport, msg).catch((err: Error) => {
+								logger.error(`Unhandled vault.keys.test error: ${err.message}`);
+							});
+							break;
+						}
+
+						case "config.get": {
+							handleConfigGet(transport, msg);
+							break;
+						}
+
+						case "config.update": {
+							handleConfigUpdate(transport, msg);
+							break;
+						}
+
+						case "ollama.discover": {
+							handleOllamaDiscover(transport, msg).catch((err: Error) => {
+								logger.error(`Unhandled ollama.discover error: ${err.message}`);
+							});
+							break;
+						}
+
+						case "provider.models.list": {
+							handleProviderModelsList(transport, msg);
+							break;
+						}
+
+						// ── Agent Management ────────────────────────────
+
+						case "agent.identity.read": {
+							handleAgentIdentityRead(transport, msg);
+							break;
+						}
+
+						case "agent.identity.write": {
+							handleAgentIdentityWrite(transport, msg);
+							break;
+						}
+
+						case "agent.create": {
+							handleAgentCreate(transport, msg);
+							break;
+						}
+
+						case "agent.update": {
+							handleAgentUpdate(transport, msg);
+							break;
+						}
+
+						case "agent.delete": {
+							handleAgentDelete(transport, msg);
+							break;
+						}
+
+						case "telegram.users.list": {
+							handleTelegramUsersList(transport, msg).catch((err: Error) => {
+								logger.error(`Unhandled telegram.users.list error: ${err.message}`);
+							});
+							break;
+						}
+
+						case "telegram.users.update": {
+							handleTelegramUsersUpdate(transport, msg).catch((err: Error) => {
+								logger.error(`Unhandled telegram.users.update error: ${err.message}`);
+							});
+							break;
+						}
+
+						// ── Chat Model Switch & Context ─────────────────
+
+						case "chat.model.switch": {
+							logger.info(`chat.model.switch to ${msg.newModel}`);
+							// TODO: implement full model switch handler
+							transport.send({
+								type: "chat.model.switched",
+								id: msg.id,
+								sessionId: msg.sessionId,
+								newModel: msg.newModel,
+								preserved: msg.keepContext,
+							});
+							break;
+						}
+
+						case "context.dump": {
+							logger.info(`context.dump for session ${msg.sessionId}`);
+							// TODO: implement full context dump handler
+							transport.send({
+								type: "context.dump.result",
+								id: msg.id,
+								sessionId: msg.sessionId,
+								messageCount: 0,
+								byteCount: 0,
+							});
+							break;
+						}
+
+						// ── Gateway Logs & Status ───────────────────────
+
+						case "gateway.logs.subscribe": {
+							logger.info("gateway.logs.subscribe from client");
+							// TODO: implement log subscription
+							break;
+						}
+
+						case "gateway.logs.unsubscribe": {
+							logger.info("gateway.logs.unsubscribe from client");
+							// TODO: implement log unsubscription
+							break;
+						}
+
+						case "gateway.status": {
+							const startTime = process.uptime();
+							transport.send({
+								type: "gateway.status.result",
+								id: msg.id,
+								uptime: Math.floor(startTime),
+								port: 3271,
+								pid: process.pid,
+								connections: 1,
+								sessions: 0,
+								providers: [],
+							});
 							break;
 						}
 					}

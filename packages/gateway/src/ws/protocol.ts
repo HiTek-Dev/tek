@@ -239,6 +239,145 @@ const SoulEvolutionResponseSchema = z.object({
 	editedContent: z.string().optional(),
 });
 
+// ── Vault & Config Client Messages ──────────────────────────────────
+
+const VaultKeysListSchema = z.object({
+	type: z.literal("vault.keys.list"),
+	id: z.string(),
+});
+
+const VaultKeysSetSchema = z.object({
+	type: z.literal("vault.keys.set"),
+	id: z.string(),
+	provider: z.string(),
+	key: z.string(),
+});
+
+const VaultKeysDeleteSchema = z.object({
+	type: z.literal("vault.keys.delete"),
+	id: z.string(),
+	provider: z.string(),
+});
+
+const VaultKeysTestSchema = z.object({
+	type: z.literal("vault.keys.test"),
+	id: z.string(),
+	provider: z.string(),
+});
+
+const ConfigGetSchema = z.object({
+	type: z.literal("config.get"),
+	id: z.string(),
+});
+
+const ConfigUpdateSchema = z.object({
+	type: z.literal("config.update"),
+	id: z.string(),
+	patch: z.record(z.string(), z.unknown()),
+});
+
+const OllamaDiscoverSchema = z.object({
+	type: z.literal("ollama.discover"),
+	id: z.string(),
+	url: z.string(),
+});
+
+const ProviderModelsListSchema = z.object({
+	type: z.literal("provider.models.list"),
+	id: z.string(),
+	provider: z.string(),
+});
+
+// ── Agent Management Client Messages ────────────────────────────────
+
+const AgentIdentityReadSchema = z.object({
+	type: z.literal("agent.identity.read"),
+	id: z.string(),
+	agentId: z.string(),
+	file: z.string(),
+});
+
+const AgentIdentityWriteSchema = z.object({
+	type: z.literal("agent.identity.write"),
+	id: z.string(),
+	agentId: z.string(),
+	file: z.string(),
+	content: z.string(),
+});
+
+const AgentCreateSchema = z.object({
+	type: z.literal("agent.create"),
+	id: z.string(),
+	agent: z.object({
+		id: z.string(),
+		name: z.string().optional(),
+		model: z.string().optional(),
+		description: z.string().optional(),
+		personalityPreset: z.string().optional(),
+		purpose: z.string().optional(),
+	}),
+});
+
+const AgentUpdateSchema = z.object({
+	type: z.literal("agent.update"),
+	id: z.string(),
+	agentId: z.string(),
+	patch: z.record(z.string(), z.unknown()),
+});
+
+const AgentDeleteSchema = z.object({
+	type: z.literal("agent.delete"),
+	id: z.string(),
+	agentId: z.string(),
+});
+
+const TelegramUsersListSchema = z.object({
+	type: z.literal("telegram.users.list"),
+	id: z.string(),
+});
+
+const TelegramUsersUpdateSchema = z.object({
+	type: z.literal("telegram.users.update"),
+	id: z.string(),
+	telegramChatId: z.number(),
+	approved: z.boolean(),
+});
+
+// ── Chat Model Switching Client Messages ────────────────────────────
+
+const ChatModelSwitchSchema = z.object({
+	type: z.literal("chat.model.switch"),
+	id: z.string(),
+	sessionId: z.string(),
+	newModel: z.string(),
+	keepContext: z.boolean(),
+});
+
+const ContextDumpSchema = z.object({
+	type: z.literal("context.dump"),
+	id: z.string(),
+	sessionId: z.string(),
+});
+
+// ── Sub-Process & Logs Client Messages ──────────────────────────────
+
+const GatewayLogsSubscribeSchema = z.object({
+	type: z.literal("gateway.logs.subscribe"),
+	id: z.string(),
+});
+
+const GatewayLogsUnsubscribeSchema = z.object({
+	type: z.literal("gateway.logs.unsubscribe"),
+	id: z.string(),
+});
+
+// ── Gateway Status Client Message ───────────────────────────────────
+
+const GatewayStatusSchema = z.object({
+	type: z.literal("gateway.status"),
+	id: z.string(),
+});
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ChatSendSchema,
 	ContextInspectSchema,
@@ -268,6 +407,26 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
 	ScheduleListSchema,
 	HeartbeatConfigureSchema,
 	SoulEvolutionResponseSchema,
+	VaultKeysListSchema,
+	VaultKeysSetSchema,
+	VaultKeysDeleteSchema,
+	VaultKeysTestSchema,
+	ConfigGetSchema,
+	ConfigUpdateSchema,
+	OllamaDiscoverSchema,
+	ProviderModelsListSchema,
+	AgentIdentityReadSchema,
+	AgentIdentityWriteSchema,
+	AgentCreateSchema,
+	AgentUpdateSchema,
+	AgentDeleteSchema,
+	TelegramUsersListSchema,
+	TelegramUsersUpdateSchema,
+	ChatModelSwitchSchema,
+	ContextDumpSchema,
+	GatewayLogsSubscribeSchema,
+	GatewayLogsUnsubscribeSchema,
+	GatewayStatusSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
@@ -299,6 +458,26 @@ export type ScheduleDelete = z.infer<typeof ScheduleDeleteSchema>;
 export type ScheduleList = z.infer<typeof ScheduleListSchema>;
 export type HeartbeatConfigure = z.infer<typeof HeartbeatConfigureSchema>;
 export type SoulEvolutionResponse = z.infer<typeof SoulEvolutionResponseSchema>;
+export type VaultKeysList = z.infer<typeof VaultKeysListSchema>;
+export type VaultKeysSet = z.infer<typeof VaultKeysSetSchema>;
+export type VaultKeysDelete = z.infer<typeof VaultKeysDeleteSchema>;
+export type VaultKeysTest = z.infer<typeof VaultKeysTestSchema>;
+export type ConfigGet = z.infer<typeof ConfigGetSchema>;
+export type ConfigUpdate = z.infer<typeof ConfigUpdateSchema>;
+export type OllamaDiscover = z.infer<typeof OllamaDiscoverSchema>;
+export type ProviderModelsList = z.infer<typeof ProviderModelsListSchema>;
+export type AgentIdentityRead = z.infer<typeof AgentIdentityReadSchema>;
+export type AgentIdentityWrite = z.infer<typeof AgentIdentityWriteSchema>;
+export type AgentCreate = z.infer<typeof AgentCreateSchema>;
+export type AgentUpdate = z.infer<typeof AgentUpdateSchema>;
+export type AgentDelete = z.infer<typeof AgentDeleteSchema>;
+export type TelegramUsersList = z.infer<typeof TelegramUsersListSchema>;
+export type TelegramUsersUpdate = z.infer<typeof TelegramUsersUpdateSchema>;
+export type ChatModelSwitch = z.infer<typeof ChatModelSwitchSchema>;
+export type ContextDump = z.infer<typeof ContextDumpSchema>;
+export type GatewayLogsSubscribe = z.infer<typeof GatewayLogsSubscribeSchema>;
+export type GatewayLogsUnsubscribe = z.infer<typeof GatewayLogsUnsubscribeSchema>;
+export type GatewayStatusRequest = z.infer<typeof GatewayStatusSchema>;
 
 // ── Server Messages (outbound) ─────────────────────────────────────────
 
@@ -711,6 +890,208 @@ const TodoUpdateSchema = z.object({
 	),
 });
 
+// ── Vault & Config Server Messages ──────────────────────────────────
+
+const VaultKeysListResultSchema = z.object({
+	type: z.literal("vault.keys.list.result"),
+	id: z.string(),
+	providers: z.array(z.object({
+		provider: z.string(),
+		configured: z.boolean(),
+	})),
+});
+
+const VaultKeysSetResultSchema = z.object({
+	type: z.literal("vault.keys.set.result"),
+	id: z.string(),
+	provider: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const VaultKeysDeleteResultSchema = z.object({
+	type: z.literal("vault.keys.delete.result"),
+	id: z.string(),
+	provider: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const VaultKeysTestResultSchema = z.object({
+	type: z.literal("vault.keys.test.result"),
+	id: z.string(),
+	provider: z.string(),
+	valid: z.boolean(),
+	error: z.string().optional(),
+});
+
+const ConfigGetResultSchema = z.object({
+	type: z.literal("config.get.result"),
+	id: z.string(),
+	config: z.record(z.string(), z.unknown()),
+});
+
+const ConfigUpdateResultSchema = z.object({
+	type: z.literal("config.update.result"),
+	id: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const OllamaDiscoverResultSchema = z.object({
+	type: z.literal("ollama.discover.result"),
+	id: z.string(),
+	models: z.array(z.object({
+		name: z.string(),
+		size: z.number().optional(),
+		modifiedAt: z.string().optional(),
+	})),
+	error: z.string().optional(),
+});
+
+const ProviderModelsListResultSchema = z.object({
+	type: z.literal("provider.models.list.result"),
+	id: z.string(),
+	provider: z.string(),
+	models: z.array(z.object({
+		modelId: z.string(),
+		name: z.string(),
+		tier: z.enum(["high", "standard", "budget"]).optional(),
+	})),
+});
+
+// ── Agent Management Server Messages ────────────────────────────────
+
+const AgentIdentityReadResultSchema = z.object({
+	type: z.literal("agent.identity.read.result"),
+	id: z.string(),
+	agentId: z.string(),
+	file: z.string(),
+	content: z.string(),
+	exists: z.boolean(),
+});
+
+const AgentIdentityWriteResultSchema = z.object({
+	type: z.literal("agent.identity.write.result"),
+	id: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const AgentCreateResultSchema = z.object({
+	type: z.literal("agent.create.result"),
+	id: z.string(),
+	success: z.boolean(),
+	agentId: z.string().optional(),
+	error: z.string().optional(),
+});
+
+const AgentUpdateResultSchema = z.object({
+	type: z.literal("agent.update.result"),
+	id: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const AgentDeleteResultSchema = z.object({
+	type: z.literal("agent.delete.result"),
+	id: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+const TelegramUsersListResultSchema = z.object({
+	type: z.literal("telegram.users.list.result"),
+	id: z.string(),
+	users: z.array(z.object({
+		id: z.string(),
+		telegramChatId: z.number(),
+		telegramUserId: z.number(),
+		telegramUsername: z.string().nullable(),
+		pairedAt: z.string(),
+		active: z.boolean(),
+		approved: z.boolean(),
+	})),
+});
+
+const TelegramUsersUpdateResultSchema = z.object({
+	type: z.literal("telegram.users.update.result"),
+	id: z.string(),
+	success: z.boolean(),
+	error: z.string().optional(),
+});
+
+// ── Chat Model Switching Server Messages ────────────────────────────
+
+const ChatModelSwitchedSchema = z.object({
+	type: z.literal("chat.model.switched"),
+	id: z.string(),
+	sessionId: z.string(),
+	newModel: z.string(),
+	preserved: z.boolean(),
+});
+
+const ContextDumpResultSchema = z.object({
+	type: z.literal("context.dump.result"),
+	id: z.string(),
+	sessionId: z.string(),
+	messageCount: z.number(),
+	byteCount: z.number(),
+});
+
+// ── Sub-Process & Logs Server Messages ──────────────────────────────
+
+const SubprocessStartSchema = z.object({
+	type: z.literal("subprocess.start"),
+	requestId: z.string(),
+	processId: z.string(),
+	name: z.string(),
+	processType: z.enum(["tool", "sub-agent", "workflow"]),
+});
+
+const SubprocessLogSchema = z.object({
+	type: z.literal("subprocess.log"),
+	requestId: z.string(),
+	processId: z.string(),
+	level: z.enum(["info", "warn", "error"]),
+	message: z.string(),
+	timestamp: z.string(),
+});
+
+const SubprocessEndSchema = z.object({
+	type: z.literal("subprocess.end"),
+	requestId: z.string(),
+	processId: z.string(),
+	status: z.enum(["completed", "error"]),
+	durationMs: z.number(),
+	result: z.unknown().optional(),
+});
+
+const GatewayLogEntrySchema = z.object({
+	type: z.literal("gateway.log.entry"),
+	level: z.enum(["info", "warn", "error", "debug"]),
+	message: z.string(),
+	timestamp: z.string(),
+	module: z.string().optional(),
+});
+
+// ── Gateway Status Server Message ───────────────────────────────────
+
+const GatewayStatusResultSchema = z.object({
+	type: z.literal("gateway.status.result"),
+	id: z.string(),
+	uptime: z.number(),
+	port: z.number(),
+	pid: z.number(),
+	connections: z.number(),
+	sessions: z.number(),
+	providers: z.array(z.object({
+		provider: z.string(),
+		configured: z.boolean(),
+	})),
+	version: z.string().optional(),
+});
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
 	ChatStreamStartSchema,
 	ChatStreamDeltaSchema,
@@ -748,6 +1129,28 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
 	HeartbeatConfiguredSchema,
 	SoulEvolutionProposeSchema,
 	TodoUpdateSchema,
+	VaultKeysListResultSchema,
+	VaultKeysSetResultSchema,
+	VaultKeysDeleteResultSchema,
+	VaultKeysTestResultSchema,
+	ConfigGetResultSchema,
+	ConfigUpdateResultSchema,
+	OllamaDiscoverResultSchema,
+	ProviderModelsListResultSchema,
+	AgentIdentityReadResultSchema,
+	AgentIdentityWriteResultSchema,
+	AgentCreateResultSchema,
+	AgentUpdateResultSchema,
+	AgentDeleteResultSchema,
+	TelegramUsersListResultSchema,
+	TelegramUsersUpdateResultSchema,
+	ChatModelSwitchedSchema,
+	ContextDumpResultSchema,
+	SubprocessStartSchema,
+	SubprocessLogSchema,
+	SubprocessEndSchema,
+	GatewayLogEntrySchema,
+	GatewayStatusResultSchema,
 ]);
 
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
@@ -787,3 +1190,25 @@ export type HeartbeatAlert = z.infer<typeof HeartbeatAlertSchema>;
 export type HeartbeatConfigured = z.infer<typeof HeartbeatConfiguredSchema>;
 export type SoulEvolutionPropose = z.infer<typeof SoulEvolutionProposeSchema>;
 export type TodoUpdate = z.infer<typeof TodoUpdateSchema>;
+export type VaultKeysListResult = z.infer<typeof VaultKeysListResultSchema>;
+export type VaultKeysSetResult = z.infer<typeof VaultKeysSetResultSchema>;
+export type VaultKeysDeleteResult = z.infer<typeof VaultKeysDeleteResultSchema>;
+export type VaultKeysTestResult = z.infer<typeof VaultKeysTestResultSchema>;
+export type ConfigGetResult = z.infer<typeof ConfigGetResultSchema>;
+export type ConfigUpdateResult = z.infer<typeof ConfigUpdateResultSchema>;
+export type OllamaDiscoverResult = z.infer<typeof OllamaDiscoverResultSchema>;
+export type ProviderModelsListResult = z.infer<typeof ProviderModelsListResultSchema>;
+export type AgentIdentityReadResult = z.infer<typeof AgentIdentityReadResultSchema>;
+export type AgentIdentityWriteResult = z.infer<typeof AgentIdentityWriteResultSchema>;
+export type AgentCreateResult = z.infer<typeof AgentCreateResultSchema>;
+export type AgentUpdateResult = z.infer<typeof AgentUpdateResultSchema>;
+export type AgentDeleteResult = z.infer<typeof AgentDeleteResultSchema>;
+export type TelegramUsersListResult = z.infer<typeof TelegramUsersListResultSchema>;
+export type TelegramUsersUpdateResult = z.infer<typeof TelegramUsersUpdateResultSchema>;
+export type ChatModelSwitched = z.infer<typeof ChatModelSwitchedSchema>;
+export type ContextDumpResult = z.infer<typeof ContextDumpResultSchema>;
+export type SubprocessStart = z.infer<typeof SubprocessStartSchema>;
+export type SubprocessLog = z.infer<typeof SubprocessLogSchema>;
+export type SubprocessEnd = z.infer<typeof SubprocessEndSchema>;
+export type GatewayLogEntry = z.infer<typeof GatewayLogEntrySchema>;
+export type GatewayStatusResult = z.infer<typeof GatewayStatusResultSchema>;

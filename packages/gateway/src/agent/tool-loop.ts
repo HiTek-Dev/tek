@@ -59,6 +59,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 	const languageModel = registry.languageModel(model as never);
 
 	const stepHistory: StepRecord[] = [];
+	const toolStartTimes = new Map<string, number>();
 
 	let fullText = "";
 
@@ -145,6 +146,18 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 						toolName,
 						args,
 					});
+
+					// Emit subprocess.start for process monitoring
+					transport.send({
+						type: "subprocess.start",
+						requestId,
+						processId: toolCallId,
+						name: toolName,
+						processType: "tool",
+					});
+
+					// Track start time for duration calculation
+					toolStartTimes.set(toolCallId, Date.now());
 					break;
 				}
 
@@ -157,6 +170,19 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 						requestId,
 						toolCallId,
 						toolName,
+						result: part.output,
+					});
+
+					// Emit subprocess.end for process monitoring
+					const startTime = toolStartTimes.get(toolCallId);
+					const durationMs = startTime ? Date.now() - startTime : 0;
+					toolStartTimes.delete(toolCallId);
+					transport.send({
+						type: "subprocess.end",
+						requestId,
+						processId: toolCallId,
+						status: "completed",
+						durationMs,
 						result: part.output,
 					});
 
@@ -187,6 +213,18 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<string> {
 						toolCallId,
 						toolName,
 						error: errorMessage,
+					});
+
+					// Emit subprocess.end with error status
+					const errStartTime = toolStartTimes.get(toolCallId);
+					const errDurationMs = errStartTime ? Date.now() - errStartTime : 0;
+					toolStartTimes.delete(toolCallId);
+					transport.send({
+						type: "subprocess.end",
+						requestId,
+						processId: toolCallId,
+						status: "error",
+						durationMs: errDurationMs,
 					});
 					break;
 				}
