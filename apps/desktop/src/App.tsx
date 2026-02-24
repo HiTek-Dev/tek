@@ -2,6 +2,11 @@ import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useAppStore } from "@/stores/app-store";
 import { useConfig } from "@/hooks/useConfig";
+import { useGatewayRpc } from "@/hooks/useGatewayRpc";
+import {
+  createVaultKeysList,
+  type VaultKeysListResult,
+} from "@/lib/gateway-client";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { LandingView } from "@/views/LandingView";
@@ -57,6 +62,8 @@ function ViewRouter() {
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
   const { config } = useConfig();
+  const { request, connected } = useGatewayRpc();
+  const setHasConfiguredProvider = useAppStore((s) => s.setHasConfiguredProvider);
 
   // First-run detection: force onboarding if not complete
   useEffect(() => {
@@ -64,6 +71,34 @@ function ViewRouter() {
       setCurrentView("onboarding");
     }
   }, [config, currentView, setCurrentView]);
+
+  // Startup provider check: redirect to providers page if none configured
+  useEffect(() => {
+    if (!connected) return;
+
+    async function checkProviders() {
+      try {
+        const result = await request<VaultKeysListResult>(createVaultKeysList());
+        if (result.type === "vault.keys.list.result" && result.providers) {
+          // LLM providers only (exclude service keys like telegram, brave, tavily)
+          const SERVICE_KEYS = ["telegram", "brave", "tavily"];
+          const hasProvider = result.providers.some(
+            (p) => p.configured && !SERVICE_KEYS.includes(p.provider),
+          );
+          setHasConfiguredProvider(hasProvider);
+
+          // If no providers and not already on providers/onboarding/landing, redirect
+          if (!hasProvider && !["providers", "onboarding", "landing"].includes(currentView)) {
+            setCurrentView("providers");
+          }
+        }
+      } catch {
+        // Gateway may not support this message -- fail open
+      }
+    }
+
+    checkProviders();
+  }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   switch (currentView) {
     case "landing":

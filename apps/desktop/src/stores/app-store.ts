@@ -33,6 +33,9 @@ interface AppState {
     info: { pid: number; port: number; startedAt: string } | null,
   ) => void;
 
+  hasConfiguredProvider: boolean;
+  setHasConfiguredProvider: (v: boolean) => void;
+
   selectedAgentId: string | null;
   setSelectedAgentId: (id: string | null) => void;
 
@@ -63,6 +66,9 @@ export const useAppStore = create<AppState>((set) => ({
           }
         : { status: "stopped", port: null, pid: null, startedAt: null },
     }),
+
+  hasConfiguredProvider: false,
+  setHasConfiguredProvider: (v) => set({ hasConfiguredProvider: v }),
 
   selectedAgentId: null,
   setSelectedAgentId: (id) => set({ selectedAgentId: id }),

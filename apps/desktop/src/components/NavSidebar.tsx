@@ -13,6 +13,7 @@ export function NavSidebar() {
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
   const gatewayStatus = useAppStore((s) => s.gateway.status);
+  const hasConfiguredProvider = useAppStore((s) => s.hasConfiguredProvider);
 
   const navigate = (view: View) => {
     setCurrentView(view);
@@ -41,6 +42,8 @@ export function NavSidebar() {
           label="Agents"
           active={currentView === "agents" || currentView === "agent-detail"}
           onClick={() => navigate("agents")}
+          disabled={!hasConfiguredProvider}
+          tooltip={!hasConfiguredProvider ? "Configure a provider first" : undefined}
         />
         <NavItem
           icon={KeyRound}
