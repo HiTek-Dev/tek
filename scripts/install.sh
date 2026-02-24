@@ -118,16 +118,35 @@ if [ ! -f "$CONFIG_DIR/memory/SOUL.md" ]; then
   echo "Seeded default personality and memory files."
 fi
 
-# 12. Create bin symlink
+# 12. Build and install desktop app to /Applications (macOS)
+if [ "$(uname)" = "Darwin" ]; then
+  TAURI_DIR="$SOURCE_DIR/apps/desktop"
+  if [ -f "$TAURI_DIR/src-tauri/tauri.conf.json" ]; then
+    echo ""
+    echo "Building desktop app..."
+    cd "$TAURI_DIR" && pnpm tauri build --target aarch64-apple-darwin --bundles app 2>&1 | tail -3
+    APP_BUNDLE="$TAURI_DIR/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Tek.app"
+    if [ -d "$APP_BUNDLE" ]; then
+      echo "Installing Tek.app to /Applications..."
+      rm -rf /Applications/Tek.app
+      cp -R "$APP_BUNDLE" /Applications/
+      echo "Tek.app installed."
+    else
+      echo "Warning: Tek.app bundle not found, skipping desktop install."
+    fi
+  fi
+fi
+
+# 13. Create bin symlink
 mkdir -p "$INSTALL_DIR/bin"
 ln -sf "../packages/cli/dist/index.js" "$INSTALL_DIR/bin/tek"
 chmod +x "$INSTALL_DIR/packages/cli/dist/index.js"
 
-# 13. Record install path
+# 14. Record install path
 mkdir -p "$CONFIG_DIR"
 echo "$INSTALL_DIR" > "$CONFIG_DIR/install-path"
 
-# 14. Write .version file (preserve installedAt from existing install)
+# 15. Write .version file (preserve installedAt from existing install)
 VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$SOURCE_DIR/package.json','utf-8')).version || '0.0.0')")
 COMMIT=$(cd "$SOURCE_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
