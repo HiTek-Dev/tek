@@ -40,6 +40,9 @@ const KNOWN_MODELS: Record<string, Array<{ modelId: string; name: string; tier?:
 	venice: [
 		{ modelId: "llama-3.3-70b", name: "Llama 3.3 70B", tier: "standard" },
 		{ modelId: "deepseek-r1-671b", name: "DeepSeek R1 671B", tier: "high" },
+		{ modelId: "dolphin-2.9.3-mistral-7b", name: "Dolphin 2.9.3 Mistral 7B", tier: "budget" },
+		{ modelId: "llama-3.2-3b", name: "Llama 3.2 3B", tier: "budget" },
+		{ modelId: "nous-theta-8b", name: "Nous Theta 8B", tier: "budget" },
 	],
 	ollama: [],
 };
