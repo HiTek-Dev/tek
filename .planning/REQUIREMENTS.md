@@ -201,11 +201,11 @@ Requirements for the Chat Experience & Providers milestone. Each maps to roadmap
 
 ### Desktop UX Polish (Phase 35)
 
-- [ ] **UXP-01**: Gateway start/stop/restart buttons work from desktop app via properly scoped Tauri shell permissions
-- [ ] **UXP-02**: Provider config UI uses inline detail pattern -- clicking a provider hides the grid and shows config form with back button to return
-- [ ] **UXP-03**: Service config UI uses same inline detail pattern as providers -- clicking a service hides grid, shows config form, back button to return
-- [ ] **UXP-04**: Ollama discovery finds local models at http://localhost:11434 and displays them in the model table; provider.models.list for Ollama calls discover endpoint internally
-- [ ] **UXP-05**: Venice key test works correctly -- combined Save & Test flow, expanded known models list (llama-3.3-70b, deepseek-r1-671b, dolphin-2.9.3-mistral-7b, llama-3.2-3b, nous-theta-8b), custom model entry
+- [x] **UXP-01**: Gateway start/stop/restart buttons work from desktop app via properly scoped Tauri shell permissions
+- [x] **UXP-02**: Provider config UI uses inline detail pattern -- clicking a provider hides the grid and shows config form with back button to return
+- [x] **UXP-03**: Service config UI uses same inline detail pattern as providers -- clicking a service hides grid, shows config form, back button to return
+- [x] **UXP-04**: Ollama discovery finds local models at http://localhost:11434 and displays them in the model table; provider.models.list for Ollama calls discover endpoint internally
+- [x] **UXP-05**: Venice key test works correctly -- combined Save & Test flow, expanded known models list (llama-3.3-70b, deepseek-r1-671b, dolphin-2.9.3-mistral-7b, llama-3.2-3b, nous-theta-8b), custom model entry
 - [ ] **UXP-06**: Agents tab disabled in nav sidebar until at least one provider is configured and working
 - [ ] **UXP-07**: App startup check: if no providers configured after gateway connects, redirect user to providers page before unlocking full UI
 - [ ] **UXP-08**: Agent model picker shows provider/model combos (e.g. "venice/llama-3.3-70b") fetched from configured providers, replacing hardcoded model lists

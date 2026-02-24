@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Every interaction with your AI agent is transparent, secure, and under your control -- you see exactly what's being sent, what tools are running, and can approve or skip permissions at any granularity.
-**Current focus:** v0.2 Chat Experience & Providers — Phases 30-34 (complete)
+**Current focus:** v0.3 Desktop UX Polish — Phase 35
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-22 — Milestone v0.3 started
+Phase: 35 (Desktop App UX Polish)
+Plan: 2 of 3
+Status: Executing
+Last activity: 2026-02-24 — Plan 35-02 complete
 
-Progress: — (defining scope)
+Progress: [======---] 2/3 plans complete
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 64 (36 v0.0 + 14 v0.1 + 14 v0.2)
+- Total plans completed: 66 (36 v0.0 + 14 v0.1 + 14 v0.2 + 2 v0.3)
 - Average duration: 3min
 - Total execution time: 1.96 hours
 
@@ -41,6 +41,12 @@ Progress: — (defining scope)
 | 32 | 3/3 | 11min | 3.7min |
 | 33 | 3/3 | 9min | 3.0min |
 | 34 | 2/2 | 7min | 3.5min |
+
+**By Phase (v0.3):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 35 | 2/3 | 7min | 3.5min |
 
 ## Accumulated Context
 
@@ -79,6 +85,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 34-02]: ToolPanel removed from Chat.tsx -- tool calls render inline via MessageBubble/InlineToolCall
 - [Phase 34-02]: Diff heuristic: check first 10 lines for + and - prefixed lines to auto-render InlineDiff
 - [Phase 34-02]: Auto-collapse threshold of 20 changed lines for InlineDiff, Enter key toggle for focused diff
+- [Phase 35-02]: handleProviderModelsList made async with localhost:11434/api/tags fetch for Ollama discovery
+- [Phase 35-02]: Save & Test combined button saves key before testing to eliminate race condition
+- [Phase 35-02]: discoveredModels passed as prop from ProvidersView to ProviderDetail via useEffect merge
+- [Phase 35-01]: Replaced shell:default with shell:allow-open + shell:allow-execute + shell:allow-kill for Tauri v2
+- [Phase 35-01]: Exclusive grid/detail rendering pattern using ternary operator for provider and service views
+- [Phase 35-01]: ArrowLeft back button with muted-foreground hover transition for inline detail navigation
 
 ### Roadmap Evolution
 
@@ -108,6 +120,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-22
-Stopped at: Completed 34-02-PLAN.md (Inline rendering)
+Last session: 2026-02-24
+Stopped at: Completed 35-02-PLAN.md (Ollama/Venice provider fixes)
 Resume file: None

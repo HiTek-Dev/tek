@@ -137,7 +137,7 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 **Goal:** Polish desktop app UX with inline provider/service config flows, fix gateway shell controls, fix Ollama discovery and Venice key testing, gate agents behind provider configuration, and replace hardcoded model lists with dynamic provider/model pickers
 **Depends on:** Phase 34
 **Requirements:** [UXP-01, UXP-02, UXP-03, UXP-04, UXP-05, UXP-06, UXP-07, UXP-08, UXP-09]
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 35-01-PLAN.md -- Gateway shell fix, provider inline detail pattern, service inline detail pattern
