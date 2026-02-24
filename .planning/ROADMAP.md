@@ -131,3 +131,12 @@ Phases 30, 32, and 34 can start in parallel (no dependencies). Phase 31 follows 
 | 32. Structured Streaming & Chat Formatting | 3/3 | Complete |
 | 33. Todo System Display | 3/3 | Complete |
 | 34. CLI Chat UX Overhaul | 0/2 | Not started |
+
+### Phase 35: Desktop app UX polish - provider setup flow, agent gating, service UI, Ollama/Venice fixes, gateway controls
+
+**Goal:** [To be planned]
+**Depends on:** Phase 34
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 35 to break down)

@@ -89,6 +89,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Phase 33 added: Todo System Display in CLI and Desktop
 - Phase 34 added: CLI Chat UX Overhaul (Claude Code / Kimicode style)
 - v0.2 milestone created: Chat Experience & Providers
+- Phase 35 added: Desktop app UX polish - provider setup flow, agent gating, service UI, Ollama/Venice fixes, gateway controls
 
 ### Pending Todos
 
