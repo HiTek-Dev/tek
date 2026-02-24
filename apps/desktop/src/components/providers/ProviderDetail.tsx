@@ -27,6 +27,7 @@ interface ProviderDetailProps {
   onTest: (provider: string) => Promise<{ valid: boolean; error?: string }>;
   onDiscover?: (url: string) => void;
   onModels?: (provider: string) => Promise<Array<{ modelId: string; name: string; tier?: string }>>;
+  discoveredModels?: Array<{ modelId: string; name: string; tier: string }>;
 }
 
 export function ProviderDetail({
@@ -37,6 +38,7 @@ export function ProviderDetail({
   onTest,
   onDiscover,
   onModels,
+  discoveredModels,
 }: ProviderDetailProps) {
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -74,6 +76,18 @@ export function ProviderDetail({
   useEffect(() => {
     fetchModels();
   }, [fetchModels]);
+
+  // Merge discovered Ollama models into model table
+  useEffect(() => {
+    if (discoveredModels && discoveredModels.length > 0) {
+      setModels(discoveredModels.map((m) => ({
+        modelId: m.modelId,
+        name: m.name,
+        enabled: true,
+        tier: m.tier,
+      })));
+    }
+  }, [discoveredModels]);
 
   const handleToggle = (modelId: string, enabled: boolean) => {
     setModels((prev) =>

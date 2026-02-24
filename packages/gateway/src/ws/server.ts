@@ -423,7 +423,9 @@ export async function registerGatewayWebSocket(
 						}
 
 						case "provider.models.list": {
-							handleProviderModelsList(transport, msg);
+							handleProviderModelsList(transport, msg).catch((err: Error) => {
+								logger.error(`Unhandled provider.models.list error: ${err.message}`);
+							});
 							break;
 						}
 

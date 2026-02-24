@@ -39,6 +39,9 @@ export function ProvidersView() {
   );
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [discoveredModels, setDiscoveredModels] = useState<
+    Array<{ modelId: string; name: string; tier: string }>
+  >([]);
 
   // Fetch configured status on mount and when connection changes
   const fetchProviders = useCallback(async () => {
@@ -108,8 +111,14 @@ export function ProvidersView() {
     if (!connected) return;
     try {
       const msg = createOllamaDiscover(url);
-      await request<OllamaDiscoverResult>(msg);
-      // Discovery results would feed into a ModelTable in a future iteration
+      const result = await request<OllamaDiscoverResult>(msg);
+      if (result.type === "ollama.discover.result" && result.models && result.models.length > 0) {
+        setDiscoveredModels(result.models.map(m => ({
+          modelId: m.name,
+          name: m.name.replace(/:latest$/, ""),
+          tier: "standard",
+        })));
+      }
     } catch {
       // Error handling could be added here
     }
@@ -195,6 +204,9 @@ export function ProvidersView() {
               selected.provider === "ollama" ? handleDiscover : undefined
             }
             onModels={handleModels}
+            discoveredModels={
+              selected.provider === "ollama" ? discoveredModels : undefined
+            }
           />
         )}
       </div>

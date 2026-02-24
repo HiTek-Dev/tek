@@ -274,7 +274,31 @@ export async function handleOllamaDiscover(transport: Transport, msg: OllamaDisc
 	}
 }
 
-export function handleProviderModelsList(transport: Transport, msg: ProviderModelsList): void {
+export async function handleProviderModelsList(transport: Transport, msg: ProviderModelsList): Promise<void> {
+	if (msg.provider === "ollama") {
+		// Try to discover local Ollama models instead of returning empty array
+		try {
+			const res = await fetch("http://localhost:11434/api/tags");
+			if (res.ok) {
+				const data = (await res.json()) as { models?: Array<{ name: string; size?: number }> };
+				const models = (data.models ?? []).map((m) => ({
+					modelId: m.name,
+					name: m.name.replace(/:latest$/, ""),
+					tier: "standard" as const,
+				}));
+				transport.send({
+					type: "provider.models.list.result",
+					id: msg.id,
+					provider: msg.provider,
+					models,
+				});
+				return;
+			}
+		} catch {
+			// Ollama not running, fall through to empty list
+		}
+	}
+
 	const models = KNOWN_MODELS[msg.provider] ?? [];
 	transport.send({
 		type: "provider.models.list.result",
